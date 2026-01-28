@@ -1,8 +1,76 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="dashboard-container">
+    <div class="page-header">
+        <h1>Dashboard</h1>
+        <p class="text-muted">Bienvenido a Garth HMS</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-primary">
+                    <i class="fas fa-bed"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>0</h3>
+                    <p>Habitaciones Ocupadas</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-success">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>0</h3>
+                    <p>Reservas Hoy</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-warning">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>0</h3>
+                    <p>Huéspedes Activos</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-info">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>$0</h3>
+                    <p>Ingresos Hoy</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Sistema Inicializado</h5>
+                    <p class="card-text">
+                        El sistema está listo. Ve a <strong>Configuración</strong> para empezar a configurar tu hotel.
+                    </p>
+                    <a asp-controller="Configuration" asp-action="Index" class="btn btn-primary">
+                        <i class="fas fa-cog"></i> Ir a Configuración
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
