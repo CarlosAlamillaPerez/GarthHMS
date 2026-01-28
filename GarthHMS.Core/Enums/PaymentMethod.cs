@@ -6,7 +6,17 @@ using System.Threading.Tasks;
 
 namespace GarthHMS.Core.Enums
 {
-    internal class PaymentMethod
+    /// <summary>
+    /// Métodos de pago aceptados
+    /// </summary>
+    public enum PaymentMethod
     {
+        Cash = 1,           // Efectivo
+        Card = 2,           // Tarjeta débito/crédito
+        Transfer = 3,       // Transferencia bancaria
+        Deposit = 4,        // Depósito bancario
+        MercadoPago = 5,    // MercadoPago
+        PayPal = 6,         // PayPal
+        Other = 99          // Otro método
     }
 }
