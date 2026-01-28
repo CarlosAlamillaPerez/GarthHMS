@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35208.52
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GarthHMS.Web", "GarthHMS.Web.csproj", "{AE49CF68-B1FA-4304-AB17-9DD64D92E048}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GarthHMS.Core", "..\GarthHMS.Core\GarthHMS.Core.csproj", "{B3E67A98-428F-42A7-9E7F-ECE53AF66CF7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GarthHMS.Infrastructure", "..\GarthHMS.Infrastructure\GarthHMS.Infrastructure.csproj", "{9CB32AF8-9F0C-49AB-880F-8329C3BA2FFB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GarthHMS.Application", "..\GarthHMS.Application\GarthHMS.Application.csproj", "{54A467D0-F4C2-4AFA-9D3A-92F990C05002}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AE49CF68-B1FA-4304-AB17-9DD64D92E048}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE49CF68-B1FA-4304-AB17-9DD64D92E048}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE49CF68-B1FA-4304-AB17-9DD64D92E048}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE49CF68-B1FA-4304-AB17-9DD64D92E048}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B3E67A98-428F-42A7-9E7F-ECE53AF66CF7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B3E67A98-428F-42A7-9E7F-ECE53AF66CF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B3E67A98-428F-42A7-9E7F-ECE53AF66CF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B3E67A98-428F-42A7-9E7F-ECE53AF66CF7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9CB32AF8-9F0C-49AB-880F-8329C3BA2FFB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9CB32AF8-9F0C-49AB-880F-8329C3BA2FFB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9CB32AF8-9F0C-49AB-880F-8329C3BA2FFB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9CB32AF8-9F0C-49AB-880F-8329C3BA2FFB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54A467D0-F4C2-4AFA-9D3A-92F990C05002}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54A467D0-F4C2-4AFA-9D3A-92F990C05002}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54A467D0-F4C2-4AFA-9D3A-92F990C05002}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54A467D0-F4C2-4AFA-9D3A-92F990C05002}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {84094A4D-3617-4E28-A040-5FF62863D4EC}
+	EndGlobalSection
+EndGlobal
