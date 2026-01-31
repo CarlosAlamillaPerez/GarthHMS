@@ -151,7 +151,13 @@ namespace GarthHMS.Web.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al crear tipo de habitación");
-                return Json(new { success = false, message = "Error al crear el tipo de habitación" });
+
+                // En desarrollo, mostrar el error completo
+                var errorMessage = ex.InnerException != null
+                    ? $"{ex.Message} - Inner: {ex.InnerException.Message}"
+                    : ex.Message;
+
+                return Json(new { success = false, message = errorMessage });
             }
         }
 

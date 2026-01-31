@@ -1,15 +1,16 @@
 ﻿// ============================================================================
 // ROOM TYPES - Gestión de Tipos de Habitación
-// Usa Partial Views + AJAX + SweetAlert2
+// Usa Bootstrap Table (estilo local) + Partial Views + AJAX + SweetAlert2
 // ============================================================================
 
-let roomTypesData = [];
+let $table;
 
 // ============================================================================
 // INICIALIZACIÓN
 // ============================================================================
 
 $(document).ready(function () {
+    $table = $('#roomTypesTable');
     loadRoomTypes();
     setupEventHandlers();
 });
@@ -19,16 +20,6 @@ $(document).ready(function () {
 // ============================================================================
 
 function setupEventHandlers() {
-    // Búsqueda en tiempo real
-    $('#searchInput').on('keyup', function () {
-        filterTable();
-    });
-
-    // Filtro por estado
-    $('#filterActive').on('change', function () {
-        filterTable();
-    });
-
     // Submit formulario crear
     $(document).on('submit', '#createForm', async function (e) {
         e.preventDefault();
@@ -48,93 +39,56 @@ function setupEventHandlers() {
 
 async function loadRoomTypes() {
     try {
-        showTableLoading('roomTypesTable', 7);
-
         const response = await fetch('/RoomTypes/GetAll');
         const result = await response.json();
 
         if (result.success) {
-            roomTypesData = result.data;
-            renderTable(roomTypesData);
+            // Cargar datos en Bootstrap Table
+            $table.bootstrapTable('load', result.data);
         } else {
             showErrorToast(result.message || 'Error al cargar los tipos de habitación');
-            showTableEmpty('roomTypesTable', 7, 'Error al cargar los datos');
+            $table.bootstrapTable('load', []);
         }
     } catch (error) {
         console.error('Error loading room types:', error);
         showErrorToast('Error al cargar los datos');
-        showTableEmpty('roomTypesTable', 7, 'Error al cargar los datos');
+        $table.bootstrapTable('load', []);
     }
 }
 
 // ============================================================================
-// RENDERIZADO DE TABLA
+// FORMATTERS (Bootstrap Table)
 // ============================================================================
 
-function renderTable(data) {
-    const tbody = $('#roomTypesTable tbody');
-    tbody.empty();
-
-    if (data.length === 0) {
-        showTableEmpty('roomTypesTable', 7, 'No hay tipos de habitación registrados');
-        return;
+function priceFormatter(value, row) {
+    if (value === null || value === undefined || value === 0) {
+        return '<span class="text-muted">$0.00</span>';
     }
-
-    data.forEach(roomType => {
-        const statusBadge = roomType.isActive
-            ? '<span class="badge bg-success">Activo</span>'
-            : '<span class="badge bg-secondary">Inactivo</span>';
-
-        const row = `
-            <tr>
-                <td><strong>${roomType.code}</strong></td>
-                <td>${roomType.name}</td>
-                <td>${roomType.capacityDisplay}</td>
-                <td>$${roomType.basePriceNightly.toFixed(2)}</td>
-                <td>$${roomType.basePriceHourly.toFixed(2)}</td>
-                <td>${statusBadge}</td>
-                <td class="text-end">
-                    <button class="btn btn-sm btn-info" onclick="viewDetails('${roomType.roomTypeId}')" title="Ver detalles">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn btn-sm btn-warning" onclick="openEditModal('${roomType.roomTypeId}')" title="Editar">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="openDeleteModal('${roomType.roomTypeId}')" title="Eliminar">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `;
-        tbody.append(row);
-    });
+    return '<strong>$' + parseFloat(value).toFixed(2) + '</strong>';
 }
 
-// ============================================================================
-// FILTRADO
-// ============================================================================
-
-function filterTable() {
-    const searchText = $('#searchInput').val().toLowerCase();
-    const filterActive = $('#filterActive').val();
-
-    let filtered = roomTypesData;
-
-    // Filtrar por búsqueda
-    if (searchText) {
-        filtered = filtered.filter(rt =>
-            rt.name.toLowerCase().includes(searchText) ||
-            rt.code.toLowerCase().includes(searchText)
-        );
+function statusFormatter(value, row) {
+    if (value) {
+        return '<span class="badge bg-success"><i class="fas fa-check-circle"></i> Activo</span>';
+    } else {
+        return '<span class="badge bg-secondary"><i class="fas fa-times-circle"></i> Inactivo</span>';
     }
+}
 
-    // Filtrar por estado
-    if (filterActive !== '') {
-        const isActive = filterActive === 'true';
-        filtered = filtered.filter(rt => rt.isActive === isActive);
-    }
-
-    renderTable(filtered);
+function actionsFormatter(value, row) {
+    return `
+        <div class="btn-group" role="group">
+            <button class="btn btn-sm btn-info" onclick="viewDetails('${row.roomTypeId}')" title="Ver detalles">
+                <i class="fas fa-eye"></i>
+            </button>
+            <button class="btn btn-sm btn-warning" onclick="openEditModal('${row.roomTypeId}')" title="Editar">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="openDeleteModal('${row.roomTypeId}')" title="Eliminar">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
 }
 
 // ============================================================================
@@ -185,14 +139,15 @@ async function handleCreate() {
         if (result.success) {
             Swal.close();
             showSuccessToast(result.message);
-            await loadRoomTypes();
+            await loadRoomTypes(); // Recargar tabla
         } else {
-            showErrorToast(result.message);
+            showErrorToast(result.message || 'Error desconocido');
+            console.error('Error del servidor:', result);
         }
     } catch (error) {
         hideLoading();
         console.error('Error creating room type:', error);
-        showErrorToast('Error al crear el tipo de habitación');
+        showErrorToast(`Error: ${error.message || 'Error al crear el tipo de habitación'}`);
     }
 }
 
@@ -244,14 +199,15 @@ async function handleUpdate() {
         if (result.success) {
             Swal.close();
             showSuccessToast(result.message);
-            await loadRoomTypes();
+            await loadRoomTypes(); // Recargar tabla
         } else {
-            showErrorToast(result.message);
+            showErrorToast(result.message || 'Error desconocido');
+            console.error('Error del servidor:', result);
         }
     } catch (error) {
         hideLoading();
         console.error('Error updating room type:', error);
-        showErrorToast('Error al actualizar el tipo de habitación');
+        showErrorToast(`Error: ${error.message || 'Error al actualizar el tipo de habitación'}`);
     }
 }
 
@@ -315,7 +271,7 @@ async function confirmDeleteAction(roomTypeId) {
         if (result.success) {
             Swal.close();
             showSuccessToast(result.message);
-            await loadRoomTypes();
+            await loadRoomTypes(); // Recargar tabla
         } else {
             showErrorToast(result.message);
         }

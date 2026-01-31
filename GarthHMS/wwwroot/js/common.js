@@ -158,11 +158,33 @@ function getFormData(formId) {
     const data = {};
 
     for (let [key, value] of formData.entries()) {
-        // Si el campo es un checkbox
-        if (form.elements[key] && form.elements[key].type === 'checkbox') {
-            data[key] = form.elements[key].checked;
-        } else {
+        const element = form.elements[key];
+
+        if (!element) {
             data[key] = value;
+            continue;
+        }
+
+        // Si es checkbox
+        if (element.type === 'checkbox') {
+            data[key] = element.checked;
+        }
+        // Si es un campo numérico
+        else if (element.type === 'number') {
+            // Si está vacío, enviar null en lugar de string vacío
+            if (value === '' || value === null) {
+                data[key] = null;
+            } else {
+                // Convertir a número (int o decimal)
+                data[key] = element.step && element.step.includes('.')
+                    ? parseFloat(value)
+                    : parseInt(value);
+            }
+        }
+        // Si es un campo de texto
+        else {
+            // Si está vacío, enviar null en lugar de string vacío para campos opcionales
+            data[key] = value === '' ? null : value;
         }
     }
 
