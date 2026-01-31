@@ -1,328 +1,262 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using GarthHMS.Core.DTOs;
+using GarthHMS.Core.DTOs.RoomType;
 using GarthHMS.Core.Entities;
 using GarthHMS.Core.Interfaces.Repositories;
 using GarthHMS.Core.Interfaces.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using System.Security.Claims;
 
 namespace GarthHMS.Application.Services
 {
     /// <summary>
-    /// Servicio para gestión de tipos de habitación
+    /// Servicio de tipos de habitación con lógica de negocio y validaciones
     /// </summary>
     public class RoomTypeService : IRoomTypeService
     {
         private readonly IRoomTypeRepository _roomTypeRepository;
         private readonly ILogger<RoomTypeService> _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public RoomTypeService(
             IRoomTypeRepository roomTypeRepository,
-            ILogger<RoomTypeService> logger)
+            ILogger<RoomTypeService> logger,
+            IHttpContextAccessor httpContextAccessor)
         {
             _roomTypeRepository = roomTypeRepository;
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
         }
 
-        // CRUD
+        private Guid CurrentHotelId => GetCurrentHotelId();
+        private Guid CurrentUserId => GetCurrentUserId();
 
-        public async Task<(bool Success, int RoomTypeId, string? ErrorMessage)> CreateRoomTypeAsync(
-            int hotelId,
-            string typeName,
-            string? description,
-            int maxOccupancy,
-            decimal basePrice,
-            decimal? weekendPrice,
-            string? amenitiesJson,
-            int createdBy)
+        public async Task<IEnumerable<RoomTypeResponseDto>> GetAllAsync()
         {
-            try
-            {
-                // Validar que el nombre no exista
-                var nameExists = await _roomTypeRepository.TypeNameExistsAsync(hotelId, typeName);
-                if (nameExists)
-                {
-                    return (false, 0, "Ya existe un tipo de habitación con ese nombre");
-                }
-
-                // Validar precio base
-                if (basePrice <= 0)
-                {
-                    return (false, 0, "El precio base debe ser mayor a 0");
-                }
-
-                var roomType = new RoomType
-                {
-                    HotelId = hotelId,
-                    TypeName = typeName,
-                    Description = description,
-                    MaxOccupancy = maxOccupancy,
-                    BasePrice = basePrice,
-                    WeekendPrice = weekendPrice,
-                    AmenitiesJson = amenitiesJson ?? "[]",
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    CreatedBy = createdBy
-                };
-
-                var roomTypeId = await _roomTypeRepository.CreateAsync(roomType);
-
-                if (roomTypeId > 0)
-                {
-                    _logger.LogInformation("Room type created: {TypeName} for hotel {HotelId} by user {CreatedBy}", 
-                        typeName, hotelId, createdBy);
-                    return (true, roomTypeId, null);
-                }
-
-                return (false, 0, "Error al crear el tipo de habitación");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating room type {TypeName} for hotel {HotelId}", typeName, hotelId);
-                return (false, 0, "Error al crear el tipo de habitación");
-            }
+            var roomTypes = await _roomTypeRepository.GetByHotelAsync(CurrentHotelId);
+            return roomTypes.Select(rt => MapToResponseDto(rt));
         }
 
-        public async Task<(bool Success, string? ErrorMessage)> UpdateRoomTypeAsync(
-            int roomTypeId,
-            string typeName,
-            string? description,
-            int maxOccupancy,
-            decimal basePrice,
-            decimal? weekendPrice,
-            string? amenitiesJson,
-            int updatedBy)
+        public async Task<IEnumerable<RoomTypeResponseDto>> GetAllActiveAsync()
         {
-            try
-            {
-                var roomType = await _roomTypeRepository.GetByIdAsync(roomTypeId);
-                if (roomType == null)
-                {
-                    return (false, "Tipo de habitación no encontrado");
-                }
-
-                // Validar nombre único (excluyendo el actual)
-                var nameExists = await _roomTypeRepository.TypeNameExistsAsync(
-                    roomType.HotelId, typeName, roomTypeId);
-                if (nameExists)
-                {
-                    return (false, "Ya existe un tipo de habitación con ese nombre");
-                }
-
-                // Validar precio
-                if (basePrice <= 0)
-                {
-                    return (false, "El precio base debe ser mayor a 0");
-                }
-
-                roomType.TypeName = typeName;
-                roomType.Description = description;
-                roomType.MaxOccupancy = maxOccupancy;
-                roomType.BasePrice = basePrice;
-                roomType.WeekendPrice = weekendPrice;
-                roomType.AmenitiesJson = amenitiesJson ?? "[]";
-                roomType.UpdatedAt = DateTime.UtcNow;
-                roomType.UpdatedBy = updatedBy;
-
-                var result = await _roomTypeRepository.UpdateAsync(roomType);
-
-                if (result)
-                {
-                    _logger.LogInformation("Room type {RoomTypeId} updated by user {UpdatedBy}", roomTypeId, updatedBy);
-                    return (true, null);
-                }
-
-                return (false, "Error al actualizar el tipo de habitación");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating room type {RoomTypeId}", roomTypeId);
-                return (false, "Error al actualizar el tipo de habitación");
-            }
+            var roomTypes = await _roomTypeRepository.GetAllActiveAsync(CurrentHotelId);
+            return roomTypes.Select(rt => MapToResponseDto(rt));
         }
 
-        public async Task<(bool Success, string? ErrorMessage)> DeleteRoomTypeAsync(int roomTypeId, int deletedBy)
+        public async Task<RoomTypeResponseDto?> GetByIdAsync(Guid roomTypeId)
         {
-            try
-            {
-                // Verificar si hay habitaciones asociadas
-                var totalRooms = await _roomTypeRepository.GetTotalRoomsCountAsync(roomTypeId);
-                if (totalRooms > 0)
-                {
-                    return (false, $"No se puede eliminar. Hay {totalRooms} habitaciones asociadas a este tipo");
-                }
+            var roomType = await _roomTypeRepository.GetByIdAsync(roomTypeId);
 
-                // Desactivar en lugar de eliminar
-                var roomType = await _roomTypeRepository.GetByIdAsync(roomTypeId);
-                if (roomType == null)
-                {
-                    return (false, "Tipo de habitación no encontrado");
-                }
-
-                roomType.IsActive = false;
-                roomType.UpdatedAt = DateTime.UtcNow;
-                roomType.UpdatedBy = deletedBy;
-
-                var result = await _roomTypeRepository.UpdateAsync(roomType);
-
-                if (result)
-                {
-                    _logger.LogInformation("Room type {RoomTypeId} deleted by user {DeletedBy}", roomTypeId, deletedBy);
-                    return (true, null);
-                }
-
-                return (false, "Error al eliminar el tipo de habitación");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error deleting room type {RoomTypeId}", roomTypeId);
-                return (false, "Error al eliminar el tipo de habitación");
-            }
-        }
-
-        // CONSULTAS
-
-        public async Task<RoomTypeDto?> GetRoomTypeByIdAsync(int roomTypeId)
-        {
-            try
-            {
-                var roomType = await _roomTypeRepository.GetByIdAsync(roomTypeId);
-                return roomType == null ? null : MapToDto(roomType);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting room type {RoomTypeId}", roomTypeId);
+            if (roomType == null)
                 return null;
-            }
+
+            // Validar multi-tenancy
+            if (roomType.HotelId != CurrentHotelId)
+                throw new UnauthorizedAccessException("No tiene permiso para acceder a este tipo de habitación");
+
+            return MapToResponseDto(roomType);
         }
 
-        public async Task<List<RoomTypeDto>> GetRoomTypesByHotelAsync(int hotelId)
+        public async Task<Guid> CreateAsync(CreateRoomTypeDto dto)
         {
-            try
+            // 1. Validar que el código no exista
+            if (await _roomTypeRepository.CodeExistsAsync(CurrentHotelId, dto.Code))
+                throw new InvalidOperationException($"Ya existe un tipo de habitación con el código '{dto.Code}'");
+
+            // 2. Validar que el nombre no exista
+            if (await _roomTypeRepository.NameExistsAsync(CurrentHotelId, dto.Name))
+                throw new InvalidOperationException($"Ya existe un tipo de habitación con el nombre '{dto.Name}'");
+
+            // 3. Validar capacidades
+            if (dto.MaxCapacity < dto.BaseCapacity)
+                throw new InvalidOperationException("La capacidad máxima debe ser mayor o igual a la capacidad base");
+
+            // 4. Validar precios (por ahora validación básica, después agregaremos validación según operation_mode)
+            if (dto.BasePriceNightly <= 0 && dto.BasePriceHourly <= 0)
+                throw new InvalidOperationException("Debe especificar al menos un precio (por noche o por hora)");
+
+            // 5. Validar cargo de mascota
+            if (dto.AllowsPets && dto.PetCharge < 0)
+                throw new InvalidOperationException("El cargo por mascota no puede ser negativo");
+
+            // 6. Crear el modelo
+            var roomType = new RoomType
             {
-                var roomTypes = await _roomTypeRepository.GetByHotelIdAsync(hotelId);
-                return roomTypes.Select(MapToDto).ToList();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting room types for hotel {HotelId}", hotelId);
-                return new List<RoomTypeDto>();
-            }
+                HotelId = CurrentHotelId,
+                Name = dto.Name,
+                Code = dto.Code.ToUpper(),
+                Description = dto.Description,
+                BaseCapacity = dto.BaseCapacity,
+                MaxCapacity = dto.MaxCapacity,
+                BasePriceNightly = dto.BasePriceNightly,
+                BasePriceHourly = dto.BasePriceHourly,
+                ExtraPersonCharge = dto.ExtraPersonCharge,
+                AllowsPets = dto.AllowsPets,
+                PetCharge = dto.PetCharge,
+                SizeSqm = dto.SizeSqm,
+                BedType = dto.BedType,
+                ViewType = dto.ViewType,
+                DisplayOrder = dto.DisplayOrder,
+                CreatedBy = CurrentUserId
+            };
+
+            // Asignar amenidades y fotos
+            roomType.Amenities = dto.Amenities ?? new List<string>();
+            roomType.PhotoUrls = dto.PhotoUrls ?? new List<string>();
+
+            // 7. Guardar
+            var roomTypeId = await _roomTypeRepository.CreateAsync(roomType);
+
+            _logger.LogInformation("Tipo de habitación creado: {Name} ({Code}) - ID: {RoomTypeId}",
+                dto.Name, dto.Code, roomTypeId);
+
+            return roomTypeId;
         }
 
-        public async Task<List<RoomTypeDto>> GetActiveRoomTypesAsync(int hotelId)
+        public async Task UpdateAsync(UpdateRoomTypeDto dto)
         {
-            try
-            {
-                var roomTypes = await _roomTypeRepository.GetAllActiveAsync(hotelId);
-                return roomTypes.Select(MapToDto).ToList();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting active room types for hotel {HotelId}", hotelId);
-                return new List<RoomTypeDto>();
-            }
+            // 1. Validar que exista
+            var existingRoomType = await _roomTypeRepository.GetByIdAsync(dto.RoomTypeId);
+            if (existingRoomType == null)
+                throw new KeyNotFoundException($"No se encontró el tipo de habitación con ID {dto.RoomTypeId}");
+
+            // 2. Validar multi-tenancy
+            if (existingRoomType.HotelId != CurrentHotelId)
+                throw new UnauthorizedAccessException("No tiene permiso para modificar este tipo de habitación");
+
+            // 3. Validar que el código no exista (excluyendo el actual)
+            if (await _roomTypeRepository.CodeExistsAsync(CurrentHotelId, dto.Code, dto.RoomTypeId))
+                throw new InvalidOperationException($"Ya existe otro tipo de habitación con el código '{dto.Code}'");
+
+            // 4. Validar que el nombre no exista (excluyendo el actual)
+            if (await _roomTypeRepository.NameExistsAsync(CurrentHotelId, dto.Name, dto.RoomTypeId))
+                throw new InvalidOperationException($"Ya existe otro tipo de habitación con el nombre '{dto.Name}'");
+
+            // 5. Validar capacidades
+            if (dto.MaxCapacity < dto.BaseCapacity)
+                throw new InvalidOperationException("La capacidad máxima debe ser mayor o igual a la capacidad base");
+
+            // 6. Validar precios
+            if (dto.BasePriceNightly <= 0 && dto.BasePriceHourly <= 0)
+                throw new InvalidOperationException("Debe especificar al menos un precio (por noche o por hora)");
+
+            // 7. Actualizar el modelo
+            existingRoomType.Name = dto.Name;
+            existingRoomType.Code = dto.Code.ToUpper();
+            existingRoomType.Description = dto.Description;
+            existingRoomType.BaseCapacity = dto.BaseCapacity;
+            existingRoomType.MaxCapacity = dto.MaxCapacity;
+            existingRoomType.BasePriceNightly = dto.BasePriceNightly;
+            existingRoomType.BasePriceHourly = dto.BasePriceHourly;
+            existingRoomType.ExtraPersonCharge = dto.ExtraPersonCharge;
+            existingRoomType.AllowsPets = dto.AllowsPets;
+            existingRoomType.PetCharge = dto.PetCharge;
+            existingRoomType.SizeSqm = dto.SizeSqm;
+            existingRoomType.BedType = dto.BedType;
+            existingRoomType.ViewType = dto.ViewType;
+            existingRoomType.DisplayOrder = dto.DisplayOrder;
+            existingRoomType.Amenities = dto.Amenities ?? new List<string>();
+            existingRoomType.PhotoUrls = dto.PhotoUrls ?? new List<string>();
+            existingRoomType.UpdatedAt = DateTime.UtcNow;
+
+            // 8. Guardar
+            await _roomTypeRepository.UpdateAsync(existingRoomType);
+
+            _logger.LogInformation("Tipo de habitación actualizado: {Name} ({Code}) - ID: {RoomTypeId}",
+                dto.Name, dto.Code, dto.RoomTypeId);
         }
 
-        // ESTADO
-
-        public async Task<bool> ActivateRoomTypeAsync(int roomTypeId, int updatedBy)
+        public async Task DeleteAsync(Guid roomTypeId)
         {
-            try
-            {
-                var roomType = await _roomTypeRepository.GetByIdAsync(roomTypeId);
-                if (roomType == null)
-                    return false;
+            // 1. Validar que exista
+            var roomType = await _roomTypeRepository.GetByIdAsync(roomTypeId);
+            if (roomType == null)
+                throw new KeyNotFoundException($"No se encontró el tipo de habitación con ID {roomTypeId}");
 
-                roomType.IsActive = true;
-                roomType.UpdatedAt = DateTime.UtcNow;
-                roomType.UpdatedBy = updatedBy;
+            // 2. Validar multi-tenancy
+            if (roomType.HotelId != CurrentHotelId)
+                throw new UnauthorizedAccessException("No tiene permiso para eliminar este tipo de habitación");
 
-                return await _roomTypeRepository.UpdateAsync(roomType);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error activating room type {RoomTypeId}", roomTypeId);
-                return false;
-            }
+            // 3. TODO: Validar que no tenga habitaciones ocupadas
+            // Esta validación la implementaremos cuando tengamos el módulo de habitaciones
+
+            // 4. Eliminar (soft delete)
+            await _roomTypeRepository.DeleteAsync(roomTypeId);
+
+            _logger.LogInformation("Tipo de habitación eliminado: {RoomTypeId}", roomTypeId);
         }
 
-        public async Task<bool> DeactivateRoomTypeAsync(int roomTypeId, int updatedBy)
+        public async Task<bool> CodeExistsAsync(string code, Guid? excludeRoomTypeId = null)
         {
-            try
-            {
-                var roomType = await _roomTypeRepository.GetByIdAsync(roomTypeId);
-                if (roomType == null)
-                    return false;
-
-                roomType.IsActive = false;
-                roomType.UpdatedAt = DateTime.UtcNow;
-                roomType.UpdatedBy = updatedBy;
-
-                return await _roomTypeRepository.UpdateAsync(roomType);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error deactivating room type {RoomTypeId}", roomTypeId);
-                return false;
-            }
+            return await _roomTypeRepository.CodeExistsAsync(CurrentHotelId, code, excludeRoomTypeId);
         }
 
-        // VALIDACIONES
-
-        public async Task<bool> TypeNameExistsAsync(int hotelId, string typeName, int? excludeRoomTypeId = null)
+        public async Task<bool> NameExistsAsync(string name, Guid? excludeRoomTypeId = null)
         {
-            try
-            {
-                return await _roomTypeRepository.TypeNameExistsAsync(hotelId, typeName, excludeRoomTypeId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error checking if type name exists {TypeName}", typeName);
-                return false;
-            }
+            return await _roomTypeRepository.NameExistsAsync(CurrentHotelId, name, excludeRoomTypeId);
         }
 
-        // ESTADÍSTICAS
-
-        public async Task<(int Total, int Available)> GetRoomCountsAsync(int roomTypeId)
+        public async Task ReorderAsync(Dictionary<Guid, int> newOrders)
         {
-            try
+            foreach (var order in newOrders)
             {
-                var total = await _roomTypeRepository.GetTotalRoomsCountAsync(roomTypeId);
-                var available = await _roomTypeRepository.GetAvailableRoomsCountAsync(roomTypeId);
-                return (total, available);
+                await _roomTypeRepository.UpdateDisplayOrderAsync(order.Key, order.Value);
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting room counts for type {RoomTypeId}", roomTypeId);
-                return (0, 0);
-            }
+
+            _logger.LogInformation("Tipos de habitación reordenados: {Count} elementos", newOrders.Count);
         }
 
-        // HELPERS
+        #region Helper Methods
 
-        private static RoomTypeDto MapToDto(RoomType roomType)
+        private RoomTypeResponseDto MapToResponseDto(RoomType roomType)
         {
-            return new RoomTypeDto
+            return new RoomTypeResponseDto
             {
                 RoomTypeId = roomType.RoomTypeId,
-                TypeName = roomType.TypeName,
+                HotelId = roomType.HotelId,
+                Name = roomType.Name,
+                Code = roomType.Code,
                 Description = roomType.Description,
-                MaxOccupancy = roomType.MaxOccupancy,
-                TotalRooms = roomType.TotalRooms,
-                BasePrice = roomType.BasePrice,
-                WeekendPrice = roomType.WeekendPrice,
-                IsActive = roomType.IsActive
+                BaseCapacity = roomType.BaseCapacity,
+                MaxCapacity = roomType.MaxCapacity,
+                BasePriceNightly = roomType.BasePriceNightly,
+                BasePriceHourly = roomType.BasePriceHourly,
+                ExtraPersonCharge = roomType.ExtraPersonCharge,
+                AllowsPets = roomType.AllowsPets,
+                PetCharge = roomType.PetCharge,
+                SizeSqm = roomType.SizeSqm,
+                BedType = roomType.BedType,
+                ViewType = roomType.ViewType,
+                Amenities = roomType.Amenities,
+                PhotoUrls = roomType.PhotoUrls,
+                DisplayOrder = roomType.DisplayOrder,
+                IsActive = roomType.IsActive,
+                CreatedAt = roomType.CreatedAt,
+                UpdatedAt = roomType.UpdatedAt
             };
         }
+
+        private Guid GetCurrentHotelId()
+        {
+            var hotelIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("HotelId")?.Value;
+            if (string.IsNullOrEmpty(hotelIdClaim) || !Guid.TryParse(hotelIdClaim, out var hotelId))
+                throw new UnauthorizedAccessException("No se pudo obtener el HotelId del usuario actual");
+
+            return hotelId;
+        }
+
+        private Guid GetCurrentUserId()
+        {
+            var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+                throw new UnauthorizedAccessException("No se pudo obtener el UserId del usuario actual");
+
+            return userId;
+        }
+
+        #endregion
     }
 }

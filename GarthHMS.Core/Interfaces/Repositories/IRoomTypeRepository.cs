@@ -1,31 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using GarthHMS.Core.Entities;
+﻿using GarthHMS.Core.Entities;
 
 namespace GarthHMS.Core.Interfaces.Repositories
 {
-    /// <summary>
-    /// Contrato para operaciones de datos de tipos de habitación
-    /// </summary>
     public interface IRoomTypeRepository
     {
-        // CRUD
-        Task<RoomType?> GetByIdAsync(int roomTypeId);
-        Task<int> CreateAsync(RoomType roomType);
-        Task<bool> UpdateAsync(RoomType roomType);
-        Task<bool> DeleteAsync(int roomTypeId);
-
-        // CONSULTAS
-        Task<List<RoomType>> GetByHotelIdAsync(int hotelId);
-        Task<List<RoomType>> GetAllActiveAsync(int hotelId);
-        Task<bool> TypeNameExistsAsync(int hotelId, string typeName, int? excludeRoomTypeId = null);
-
-        // ESTADÍSTICAS
-        Task<int> GetTotalRoomsCountAsync(int roomTypeId);
-        Task<int> GetAvailableRoomsCountAsync(int roomTypeId);
+        Task<RoomType?> GetByIdAsync(Guid roomTypeId);
+        Task<IEnumerable<RoomType>> GetByHotelAsync(Guid hotelId);
+        Task<IEnumerable<RoomType>> GetAllActiveAsync(Guid hotelId);
+        Task<RoomType?> GetByCodeAsync(Guid hotelId, string code);
+        Task<Guid> CreateAsync(RoomType roomType);
+        Task UpdateAsync(RoomType roomType);
+        Task DeleteAsync(Guid roomTypeId);
+        Task<bool> CodeExistsAsync(Guid hotelId, string code, Guid? excludeRoomTypeId = null);
+        Task<bool> NameExistsAsync(Guid hotelId, string name, Guid? excludeRoomTypeId = null);
+        Task UpdateDisplayOrderAsync(Guid roomTypeId, int newOrder);
+        Task UpdatePricesAsync(Guid roomTypeId, decimal basePriceNightly, decimal basePriceHourly);
     }
 }

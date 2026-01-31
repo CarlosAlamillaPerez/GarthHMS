@@ -1,0 +1,134 @@
+﻿@model GarthHMS.Core.DTOs.RoomType.RoomTypeResponseDto
+
+<div class="text-start">
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <strong>Código:</strong>
+            <p class="text-muted">@Model.Code</p>
+        </div>
+        <div class="col-md-6">
+            <strong>Estado:</strong>
+            <p>
+                @if (Model.IsActive)
+                {
+                    <span class="badge bg-success">Activo</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">Inactivo</span>
+                }
+            </p>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <strong>Nombre:</strong>
+        <p class="text-muted">@Model.Name</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.Description))
+    {
+        <div class="mb-3">
+            <strong>Descripción:</strong>
+            <p class="text-muted">@Model.Description</p>
+        </div>
+    }
+
+    <hr>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <strong>Capacidad Base:</strong>
+            <p class="text-muted">@Model.BaseCapacity persona(s)</p>
+        </div>
+        <div class="col-md-6">
+            <strong>Capacidad Máxima:</strong>
+            <p class="text-muted">@Model.MaxCapacity persona(s)</p>
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <strong>Precio Base (Noche):</strong>
+            <p class="text-muted">$@Model.BasePriceNightly.ToString("N2")</p>
+        </div>
+        <div class="col-md-6">
+            <strong>Precio Base (Hora):</strong>
+            <p class="text-muted">$@Model.BasePriceHourly.ToString("N2")</p>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <strong>Cargo Persona Extra:</strong>
+            <p class="text-muted">$@Model.ExtraPersonCharge.ToString("N2")</p>
+        </div>
+        <div class="col-md-6">
+            <strong>Permite Mascotas:</strong>
+            <p class="text-muted">
+                @if (Model.AllowsPets)
+                {
+                    <i class="fas fa-check text-success"></i>
+                    <span>
+                        Sí (Cargo: $@Model.PetCharge.ToString("N2"))
+                    </span>
+                }
+                else
+                {
+                    <i class="fas fa-times text-danger"></i>
+                    <span>No</span>
+                }
+            </p>
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="row mb-3">
+        @if (Model.SizeSqm.HasValue)
+        {
+            <div class="col-md-4">
+                <strong>Tamaño:</strong>
+                <p class="text-muted">@Model.SizeSqm.Value.ToString("N2") m²</p>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(Model.BedType))
+        {
+            <div class="col-md-4">
+                <strong>Tipo de Cama:</strong>
+                <p class="text-muted">@Model.BedType</p>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(Model.ViewType))
+        {
+            <div class="col-md-4">
+                <strong>Tipo de Vista:</strong>
+                <p class="text-muted">@Model.ViewType</p>
+            </div>
+        }
+    </div>
+
+    <hr>
+
+    <div class="row">
+        <div class="col-md-6">
+            <strong>Creado:</strong>
+            <p class="text-muted"><small>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small></p>
+        </div>
+        <div class="col-md-6">
+            <strong>Última Actualización:</strong>
+            <p class="text-muted"><small>@Model.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</small></p>
+        </div>
+    </div>
+
+    <div class="text-end mt-4">
+        <button type="button" class="btn btn-secondary" onclick="Swal.close()">
+            <i class="fas fa-times"></i> Cerrar
+        </button>
+        <button type="button" class="btn btn-warning" onclick="Swal.close(); openEditModal('@Model.RoomTypeId')">
+            <i class="fas fa-edit"></i> Editar
+        </button>
+    </div>
+</div>

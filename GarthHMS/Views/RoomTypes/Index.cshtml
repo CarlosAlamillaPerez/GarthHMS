@@ -1,0 +1,71 @@
+﻿@{
+    ViewData["Title"] = "Tipos de Habitación";
+}
+
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1 class="page-title">
+                <i class="fas fa-bed"></i> Tipos de Habitación
+            </h1>
+            <p class="text-muted">Gestiona las categorías de habitaciones del hotel</p>
+        </div>
+        <div class="col-auto">
+            <button type="button" class="btn btn-primary" onclick="openCreateModal()">
+                <i class="fas fa-plus"></i> Nuevo Tipo
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <div class="input-group" style="max-width: 400px;">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Buscar por nombre o código...">
+                </div>
+            </div>
+            <div class="col-auto">
+                <select class="form-select" id="filterActive" style="width: 150px;">
+                    <option value="">Todos</option>
+                    <option value="true" selected>Activos</option>
+                    <option value="false">Inactivos</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover" id="roomTypesTable">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Capacidad</th>
+                        <th>Precio/Noche</th>
+                        <th>Precio/Hora</th>
+                        <th>Estado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Se llena dinámicamente con JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+@await Html.PartialAsync("_CreateModal")
+@await Html.PartialAsync("_EditModal")
+@await Html.PartialAsync("_DeleteModal")
+@await Html.PartialAsync("_ViewDetailsModal")
+
+@section Scripts {
+    <script src="~/js/room-types.js"></script>
+}

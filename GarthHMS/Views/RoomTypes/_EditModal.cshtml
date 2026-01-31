@@ -1,0 +1,136 @@
+﻿@model GarthHMS.Core.DTOs.RoomType.RoomTypeResponseDto
+
+<form id="editForm" class="text-start">
+    <input type="hidden" id="editRoomTypeId" name="RoomTypeId" value="@Model.RoomTypeId">
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="editName" class="form-label">Nombre <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="editName" name="Name" value="@Model.Name" required maxlength="50">
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="editCode" class="form-label">Código <span class="text-danger">*</span></label>
+                <input type="text" class="form-control text-uppercase" id="editCode" name="Code" value="@Model.Code" required maxlength="10">
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label for="editDescription" class="form-label">Descripción</label>
+        <textarea class="form-control" id="editDescription" name="Description" rows="2" maxlength="500">@Model.Description</textarea>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="editBaseCapacity" class="form-label">Capacidad Base <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" id="editBaseCapacity" name="BaseCapacity" value="@Model.BaseCapacity" required min="1" max="20">
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="editMaxCapacity" class="form-label">Capacidad Máxima <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" id="editMaxCapacity" name="MaxCapacity" value="@Model.MaxCapacity" required min="1" max="20">
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="editBasePriceNightly" class="form-label">Precio Base (Noche)</label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" class="form-control" id="editBasePriceNightly" name="BasePriceNightly" value="@Model.BasePriceNightly" step="0.01" min="0">
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="editBasePriceHourly" class="form-label">Precio Base (Hora)</label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" class="form-control" id="editBasePriceHourly" name="BasePriceHourly" value="@Model.BasePriceHourly" step="0.01" min="0">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="editExtraPersonCharge" class="form-label">Cargo Persona Extra</label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" class="form-control" id="editExtraPersonCharge" name="ExtraPersonCharge" value="@Model.ExtraPersonCharge" step="0.01" min="0">
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label d-block">Mascotas</label>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="editAllowsPets" name="AllowsPets" @(Model.AllowsPets ? "checked" : "")>
+                    <label class="form-check-label" for="editAllowsPets">Permite Mascotas</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" id="editPetChargeGroup" style="display: @(Model.AllowsPets ? "block" : "none");">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="editPetCharge" class="form-label">Cargo por Mascota</label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" class="form-control" id="editPetCharge" name="PetCharge" value="@Model.PetCharge" step="0.01" min="0">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="mb-3">
+                <label for="editSizeSqm" class="form-label">Tamaño (m²)</label>
+                <input type="number" class="form-control" id="editSizeSqm" name="SizeSqm" value="@Model.SizeSqm" step="0.01" min="0">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="mb-3">
+                <label for="editBedType" class="form-label">Tipo de Cama</label>
+                <input type="text" class="form-control" id="editBedType" name="BedType" value="@Model.BedType" maxlength="50">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="mb-3">
+                <label for="editViewType" class="form-label">Tipo de Vista</label>
+                <input type="text" class="form-control" id="editViewType" name="ViewType" value="@Model.ViewType" maxlength="50">
+            </div>
+        </div>
+    </div>
+
+    <div class="text-end mt-3">
+        <button type="button" class="btn btn-secondary me-2" onclick="Swal.close()">
+            <i class="fas fa-times"></i> Cancelar
+        </button>
+        <button type="submit" class="btn btn-warning">
+            <i class="fas fa-save"></i> Actualizar
+        </button>
+    </div>
+</form>
+
+<script>
+    // Mostrar/ocultar cargo por mascota
+    $('#editAllowsPets').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('#editPetChargeGroup').slideDown();
+        } else {
+            $('#editPetChargeGroup').slideUp();
+            $('#editPetCharge').val(0);
+        }
+    });
+</script>
