@@ -4,6 +4,8 @@ using GarthHMS.Infrastructure.Data;
 using GarthHMS.Infrastructure.Repositories;
 using GarthHMS.Application.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -71,6 +73,35 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IHotelService, HotelService>();
 builder.Services.AddScoped<IRoomTypeService, RoomTypeService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
+
+
+// ============================================
+// CONFIGURACIÓN DE DAPPER
+// ============================================
+Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
+
+var assembly = typeof(GarthHMS.Core.Entities.User).Assembly;
+var entityTypes = assembly.GetTypes()
+    .Where(t => t.Namespace == "GarthHMS.Core.Entities");
+
+foreach (var type in entityTypes)
+{
+    var map = new Dapper.CustomPropertyTypeMap(
+        type,
+        (t, columnName) =>
+        {
+            var prop = t.GetProperties().FirstOrDefault(p =>
+            {
+                var attr = p.GetCustomAttribute<ColumnAttribute>();
+                return attr != null
+                    ? attr.Name.Equals(columnName, StringComparison.OrdinalIgnoreCase)
+                    : p.Name.Equals(columnName, StringComparison.OrdinalIgnoreCase);
+            });
+            return prop;
+        }
+    );
+    Dapper.SqlMapper.SetTypeMap(type, map);
+}
 
 // ========================================
 // BUILD APP

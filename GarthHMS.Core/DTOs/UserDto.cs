@@ -8,13 +8,10 @@ using GarthHMS.Core.Enums;
 
 namespace GarthHMS.Core.DTOs
 {
-    /// <summary>
-    /// DTO para mostrar información de usuario
-    /// </summary>
     public class UserDto
     {
-        public int UserId { get; set; }
-        public int? HotelId { get; set; }
+        public Guid UserId { get; set; }
+        public Guid HotelId { get; set; }
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;

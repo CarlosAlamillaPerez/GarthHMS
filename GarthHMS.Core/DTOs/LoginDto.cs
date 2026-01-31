@@ -8,13 +8,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace GarthHMS.Core.DTOs
 {
-    /// <summary>
-    /// DTO para login
-    /// </summary>
     public class LoginDto
     {
         [Required(ErrorMessage = "El email es requerido")]
-        [EmailAddress(ErrorMessage = "Email inválido")]
+        [EmailAddress(ErrorMessage = "El formato del email no es válido")]
         public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "La contraseña es requerida")]

@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-
 using GarthHMS.Core.DTOs;
 using GarthHMS.Core.Entities;
 using GarthHMS.Core.Enums;
@@ -13,9 +11,6 @@ using Microsoft.Extensions.Logging;
 
 namespace GarthHMS.Application.Services
 {
-    /// <summary>
-    /// Servicio para gestión de usuarios
-    /// </summary>
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
@@ -32,72 +27,65 @@ namespace GarthHMS.Application.Services
             _logger = logger;
         }
 
-        // CRUD
-
-        public async Task<(bool Success, int UserId, string? ErrorMessage)> CreateUserAsync(
+        public async Task<(bool Success, Guid UserId, string? ErrorMessage)> CreateUserAsync(
             string firstName,
             string lastName,
             string email,
             string password,
             string? phone,
-            int? hotelId,
-            UserRole role,
-            decimal maxDiscountPercent,
-            int createdBy)
+            Guid hotelId,
+            Guid roleId,
+            Guid createdBy)
         {
             try
             {
-                // Validar que el email no exista
                 var emailExists = await _userRepository.EmailExistsAsync(email);
                 if (emailExists)
                 {
-                    return (false, 0, "El email ya está registrado");
+                    return (false, Guid.Empty, "El email ya está registrado");
                 }
 
-                // Hashear contraseña
                 var passwordHash = await _authService.HashPasswordAsync(password);
 
-                // Crear entidad
                 var user = new User
                 {
                     HotelId = hotelId,
+                    RoleId = roleId,
+                    Username = email.Split('@')[0],
                     FirstName = firstName,
                     LastName = lastName,
                     Email = email,
                     Phone = phone,
                     PasswordHash = passwordHash,
-                    UserRole = role,
-                    MaxDiscountPercent = maxDiscountPercent,
+                    MustChangePassword = true,
                     IsActive = true,
-                    EmailConfirmed = false,
                     CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
                     CreatedBy = createdBy
                 };
 
                 var userId = await _userRepository.CreateAsync(user);
 
-                if (userId > 0)
+                if (userId != Guid.Empty)
                 {
-                    _logger.LogInformation("User created successfully: {Email} by user {CreatedBy}", email, createdBy);
+                    _logger.LogInformation("User created: {Email}", email);
                     return (true, userId, null);
                 }
 
-                return (false, 0, "Error al crear el usuario");
+                return (false, Guid.Empty, "Error al crear el usuario");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating user {Email}", email);
-                return (false, 0, "Error al crear el usuario");
+                _logger.LogError(ex, "Error creating user: {Email}", email);
+                return (false, Guid.Empty, "Error al crear el usuario");
             }
         }
 
         public async Task<(bool Success, string? ErrorMessage)> UpdateUserAsync(
-            int userId,
+            Guid userId,
             string firstName,
             string lastName,
-            string? phone,
-            decimal maxDiscountPercent,
-            int updatedBy)
+            string? phone)
         {
             try
             {
@@ -110,32 +98,24 @@ namespace GarthHMS.Application.Services
                 user.FirstName = firstName;
                 user.LastName = lastName;
                 user.Phone = phone;
-                user.MaxDiscountPercent = maxDiscountPercent;
                 user.UpdatedAt = DateTime.UtcNow;
-                user.UpdatedBy = updatedBy;
 
-                var result = await _userRepository.UpdateAsync(user);
+                await _userRepository.UpdateAsync(user);
 
-                if (result)
-                {
-                    _logger.LogInformation("User {UserId} updated successfully by user {UpdatedBy}", userId, updatedBy);
-                    return (true, null);
-                }
-
-                return (false, "Error al actualizar el usuario");
+                _logger.LogInformation("User updated: {UserId}", userId);
+                return (true, null);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating user {UserId}", userId);
+                _logger.LogError(ex, "Error updating user: {UserId}", userId);
                 return (false, "Error al actualizar el usuario");
             }
         }
 
-        public async Task<(bool Success, string? ErrorMessage)> DeleteUserAsync(int userId, int deletedBy)
+        public async Task<(bool Success, string? ErrorMessage)> DeleteUserAsync(Guid userId)
         {
             try
             {
-                // En lugar de eliminar físicamente, desactivamos el usuario
                 var user = await _userRepository.GetByIdAsync(userId);
                 if (user == null)
                 {
@@ -144,28 +124,20 @@ namespace GarthHMS.Application.Services
 
                 user.IsActive = false;
                 user.UpdatedAt = DateTime.UtcNow;
-                user.UpdatedBy = deletedBy;
 
-                var result = await _userRepository.UpdateAsync(user);
+                await _userRepository.UpdateAsync(user);
 
-                if (result)
-                {
-                    _logger.LogInformation("User {UserId} deleted (deactivated) by user {DeletedBy}", userId, deletedBy);
-                    return (true, null);
-                }
-
-                return (false, "Error al eliminar el usuario");
+                _logger.LogInformation("User deleted: {UserId}", userId);
+                return (true, null);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting user {UserId}", userId);
+                _logger.LogError(ex, "Error deleting user: {UserId}", userId);
                 return (false, "Error al eliminar el usuario");
             }
         }
 
-        // CONSULTAS
-
-        public async Task<UserDto?> GetUserByIdAsync(int userId)
+        public async Task<UserDto?> GetUserByIdAsync(Guid userId)
         {
             try
             {
@@ -174,7 +146,7 @@ namespace GarthHMS.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting user {UserId}", userId);
+                _logger.LogError(ex, "Error getting user: {UserId}", userId);
                 return null;
             }
         }
@@ -188,26 +160,26 @@ namespace GarthHMS.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting user by email {Email}", email);
+                _logger.LogError(ex, "Error getting user: {Email}", email);
                 return null;
             }
         }
 
-        public async Task<List<UserDto>> GetUsersByHotelAsync(int hotelId)
+        public async Task<List<UserDto>> GetUsersByHotelAsync(Guid hotelId)
         {
             try
             {
-                var users = await _userRepository.GetByHotelIdAsync(hotelId);
+                var users = await _userRepository.GetByHotelAsync(hotelId);
                 return users.Select(MapToDto).ToList();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting users for hotel {HotelId}", hotelId);
+                _logger.LogError(ex, "Error getting users for hotel: {HotelId}", hotelId);
                 return new List<UserDto>();
             }
         }
 
-        public async Task<List<UserDto>> GetActiveUsersAsync(int hotelId)
+        public async Task<List<UserDto>> GetActiveUsersAsync(Guid hotelId)
         {
             try
             {
@@ -216,14 +188,12 @@ namespace GarthHMS.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting active users for hotel {HotelId}", hotelId);
+                _logger.LogError(ex, "Error getting active users: {HotelId}", hotelId);
                 return new List<UserDto>();
             }
         }
 
-        // ESTADO
-
-        public async Task<bool> ActivateUserAsync(int userId, int updatedBy)
+        public async Task<bool> ActivateUserAsync(Guid userId)
         {
             try
             {
@@ -233,18 +203,19 @@ namespace GarthHMS.Application.Services
 
                 user.IsActive = true;
                 user.UpdatedAt = DateTime.UtcNow;
-                user.UpdatedBy = updatedBy;
 
-                return await _userRepository.UpdateAsync(user);
+                await _userRepository.UpdateAsync(user);
+                _logger.LogInformation("User activated: {UserId}", userId);
+                return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error activating user {UserId}", userId);
+                _logger.LogError(ex, "Error activating user: {UserId}", userId);
                 return false;
             }
         }
 
-        public async Task<bool> DeactivateUserAsync(int userId, int updatedBy)
+        public async Task<bool> DeactivateUserAsync(Guid userId)
         {
             try
             {
@@ -254,20 +225,19 @@ namespace GarthHMS.Application.Services
 
                 user.IsActive = false;
                 user.UpdatedAt = DateTime.UtcNow;
-                user.UpdatedBy = updatedBy;
 
-                return await _userRepository.UpdateAsync(user);
+                await _userRepository.UpdateAsync(user);
+                _logger.LogInformation("User deactivated: {UserId}", userId);
+                return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deactivating user {UserId}", userId);
+                _logger.LogError(ex, "Error deactivating user: {UserId}", userId);
                 return false;
             }
         }
 
-        // VALIDACIONES
-
-        public async Task<bool> EmailExistsAsync(string email, int? excludeUserId = null)
+        public async Task<bool> EmailExistsAsync(string email, Guid? excludeUserId = null)
         {
             try
             {
@@ -275,12 +245,10 @@ namespace GarthHMS.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error checking if email exists {Email}", email);
+                _logger.LogError(ex, "Error checking email: {Email}", email);
                 return false;
             }
         }
-
-        // HELPERS
 
         private static UserDto MapToDto(User user)
         {
@@ -293,11 +261,11 @@ namespace GarthHMS.Application.Services
                 FullName = user.FullName,
                 Email = user.Email,
                 Phone = user.Phone,
-                AvatarUrl = user.AvatarUrl,
-                UserRole = user.UserRole,
-                UserRoleText = user.UserRole.ToString(),
+                AvatarUrl = user.PhotoUrl,
+                UserRole = UserRole.SuperAdmin,
+                UserRoleText = "SuperAdmin",
                 IsActive = user.IsActive,
-                MaxDiscountPercent = user.MaxDiscountPercent
+                MaxDiscountPercent = 100
             };
         }
     }

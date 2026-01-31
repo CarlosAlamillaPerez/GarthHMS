@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
 using GarthHMS.Core.DTOs;
 
 namespace GarthHMS.Core.Interfaces.Services
@@ -19,10 +18,10 @@ namespace GarthHMS.Core.Interfaces.Services
 
         // VALIDACIONES
         Task<bool> ValidatePasswordAsync(string email, string password);
-        Task<UserDto?> GetCurrentUserAsync(int userId);
+        Task<UserDto?> GetCurrentUserAsync(Guid userId); // ← CAMBIO: Guid
 
         // PASSWORD
-        Task<bool> ChangePasswordAsync(int userId, string currentPassword, string newPassword);
+        Task<bool> ChangePasswordAsync(Guid userId, string currentPassword, string newPassword); // ← CAMBIO: Guid
         Task<string> HashPasswordAsync(string password);
         Task<bool> VerifyPasswordAsync(string password, string hash);
     }
