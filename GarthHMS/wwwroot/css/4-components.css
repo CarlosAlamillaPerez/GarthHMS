@@ -1,0 +1,537 @@
+/* ============================================================================
+   GARTH HMS - COMPONENTES REUTILIZABLES
+   Botones, cards, badges, forms y otros componentes
+   ============================================================================ */
+
+/* ========================================
+   BOTONES (Sobrescribe Bootstrap)
+   ======================================== */
+.btn {
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    transition: var(--transition-fast);
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.btn:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Botón Primario (Teal) */
+.btn-primary {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: white !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: var(--primary-hover) !important;
+    border-color: var(--primary-hover) !important;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Botón Success */
+.btn-success {
+    background-color: var(--success) !important;
+    border-color: var(--success) !important;
+    color: white !important;
+}
+
+.btn-success:hover,
+.btn-success:focus {
+    background-color: #2F855A !important;
+    border-color: #2F855A !important;
+}
+
+/* Botón Danger */
+.btn-danger {
+    background-color: var(--danger) !important;
+    border-color: var(--danger) !important;
+    color: white !important;
+}
+
+.btn-danger:hover,
+.btn-danger:focus {
+    background-color: var(--danger-hover, #C53030) !important;
+    border-color: var(--danger-hover, #C53030) !important;
+}
+
+/* Botón Warning */
+.btn-warning {
+    background-color: var(--warning) !important;
+    border-color: var(--warning) !important;
+    color: white !important;
+}
+
+.btn-warning:hover,
+.btn-warning:focus {
+    background-color: #B7791F !important;
+    border-color: #B7791F !important;
+}
+
+/* Botón Info */
+.btn-info {
+    background-color: var(--info) !important;
+    border-color: var(--info) !important;
+    color: white !important;
+}
+
+.btn-info:hover,
+.btn-info:focus {
+    background-color: #3182CE !important;
+    border-color: #3182CE !important;
+}
+
+/* Botón Secondary */
+.btn-secondary {
+    background-color: var(--text-secondary) !important;
+    border-color: var(--text-secondary) !important;
+    color: white !important;
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus {
+    background-color: #5a6268 !important;
+    border-color: #5a6268 !important;
+}
+
+/* Tamaños de botones */
+.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+.btn-lg {
+    padding: 0.875rem 1.75rem;
+    font-size: 1.125rem;
+}
+
+.btn-block {
+    width: 100%;
+    justify-content: center;
+}
+
+/* Grupo de botones */
+.btn-group .btn {
+    margin: 0 2px;
+}
+
+/* ========================================
+   CARDS
+   ======================================== */
+.card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-fast);
+    margin-bottom: 1.5rem;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.card-text {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+/* ========================================
+   STAT CARDS (Para Dashboard)
+   ======================================== */
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.stat-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--border-radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.stat-icon.bg-primary {
+    background-color: var(--primary);
+}
+
+.stat-icon.bg-success {
+    background-color: var(--success);
+}
+
+.stat-icon.bg-warning {
+    background-color: var(--warning);
+}
+
+.stat-icon.bg-info {
+    background-color: var(--info);
+}
+
+.stat-icon.bg-danger {
+    background-color: var(--danger);
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-content h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.stat-content p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* ========================================
+   BADGES
+   ======================================== */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.35em 0.65em;
+    font-size: 0.875em;
+    font-weight: 500;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: var(--border-radius-sm);
+}
+
+/* Badge Colors */
+.badge.bg-primary,
+.bg-primary {
+    background-color: var(--primary) !important;
+}
+
+.badge.bg-success,
+.bg-success {
+    background-color: var(--success) !important;
+}
+
+.badge.bg-danger,
+.bg-danger {
+    background-color: var(--danger) !important;
+}
+
+.badge.bg-warning,
+.bg-warning {
+    background-color: var(--warning) !important;
+    color: #212529 !important;
+}
+
+.badge.bg-info,
+.bg-info {
+    background-color: var(--info) !important;
+}
+
+.badge.bg-secondary,
+.bg-secondary {
+    background-color: var(--text-secondary) !important;
+}
+
+/* Estados de Habitación */
+.badge-available {
+    background-color: var(--room-available);
+    color: white;
+}
+
+.badge-occupied {
+    background-color: var(--room-occupied);
+    color: white;
+}
+
+.badge-dirty {
+    background-color: var(--room-dirty);
+    color: #212529;
+}
+
+.badge-cleaning {
+    background-color: var(--room-cleaning);
+    color: white;
+}
+
+.badge-blocked {
+    background-color: var(--room-blocked);
+    color: white;
+}
+
+.badge-maintenance {
+    background-color: var(--room-maintenance);
+    color: white;
+}
+
+/* ========================================
+   FORMULARIOS
+   ======================================== */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    transition: var(--transition-fast);
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(43, 164, 154, 0.1);
+}
+
+.form-control:disabled {
+    background-color: var(--bg-surface-alt);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Input con icono */
+.input-icon {
+    position: relative;
+}
+
+.input-icon i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+}
+
+.input-icon .form-control {
+    padding-left: 3rem;
+}
+
+/* Checkbox */
+.form-check {
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.form-check-input {
+    width: 18px;
+    height: 18px;
+    margin-right: 0.5rem;
+    cursor: pointer;
+}
+
+.form-check-label {
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Mensajes de error */
+.text-danger {
+    color: var(--danger) !important;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+/* Validación */
+.form-control.is-valid {
+    border-color: var(--success);
+}
+
+.form-control.is-invalid {
+    border-color: var(--danger);
+}
+
+/* ========================================
+   ALERTS - Colores Suaves
+   ======================================== */
+.alert {
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: var(--border-radius);
+}
+
+.alert-success {
+    background-color: rgba(56, 161, 105, 0.15);
+    border-color: var(--success);
+    color: #2F855A;
+}
+
+.alert-warning {
+    background-color: rgba(214, 158, 46, 0.15);
+    border-color: var(--warning);
+    color: #B7791F;
+}
+
+.alert-danger {
+    background-color: rgba(229, 62, 62, 0.15);
+    border-color: var(--danger);
+    color: #C53030;
+}
+
+.alert-info {
+    background-color: rgba(66, 153, 225, 0.15);
+    border-color: var(--info);
+    color: #2C5282;
+}
+
+/* ========================================
+   SPINNERS (Loading)
+   ======================================== */
+.spinner-border {
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    vertical-align: text-bottom;
+    border: 0.25em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border 0.75s linear infinite;
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.2em;
+}
+
+.text-primary .spinner-border {
+    color: var(--primary);
+}
+
+@keyframes spinner-border {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ========================================
+   ROW Y COLUMNAS (Básico)
+   ======================================== */
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: -0.75rem;
+}
+
+.row > * {
+    padding: 0.75rem;
+}
+
+.col {
+    flex: 1;
+}
+
+.col-auto {
+    flex: 0 0 auto;
+}
+
+/* ========================================
+   ALINEACIÓN
+   ======================================== */
+.align-items-center {
+    align-items: center;
+}
+
+.justify-content-between {
+    justify-content: space-between;
+}
+
+.justify-content-center {
+    justify-content: center;
+}
+
+/* ========================================
+   BOTONES DE TABLA (Acciones) - Colores Pastel
+   ======================================== */
+.btn-group .btn-sm.btn-info {
+    background-color: var(--btn-view) !important;
+    border-color: var(--btn-view) !important;
+    color: white !important;
+}
+
+.btn-group .btn-sm.btn-info:hover,
+.btn-group .btn-sm.btn-info:focus {
+    background-color: var(--btn-view-hover) !important;
+    border-color: var(--btn-view-hover) !important;
+}
+
+.btn-group .btn-sm.btn-warning {
+    background-color: var(--btn-edit) !important;
+    border-color: var(--btn-edit) !important;
+    color: white !important;
+}
+
+.btn-group .btn-sm.btn-warning:hover,
+.btn-group .btn-sm.btn-warning:focus {
+    background-color: var(--btn-edit-hover) !important;
+    border-color: var(--btn-edit-hover) !important;
+}
+
+.btn-group .btn-sm.btn-danger {
+    background-color: var(--btn-delete) !important;
+    border-color: var(--btn-delete) !important;
+    color: white !important;
+}
+
+.btn-group .btn-sm.btn-danger:hover,
+.btn-group .btn-sm.btn-danger:focus {
+    background-color: var(--btn-delete-hover) !important;
+    border-color: var(--btn-delete-hover) !important;
+}

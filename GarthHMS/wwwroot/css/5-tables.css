@@ -1,0 +1,283 @@
+/* ============================================================================
+   GARTH HMS - BOOTSTRAP TABLE PERSONALIZADO
+   Estilos para Bootstrap Table con paleta oficial
+   ============================================================================ */
+
+/* ========================================
+   TOOLBAR
+   ======================================== */
+.bootstrap-table .fixed-table-toolbar {
+    background-color: var(--bg-body);
+    border-bottom: 1px solid var(--border-color);
+    padding: 12px 15px;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.bootstrap-table .fixed-table-toolbar .bs-bars,
+.bootstrap-table .fixed-table-toolbar .search,
+.bootstrap-table .fixed-table-toolbar .columns {
+    margin: 0;
+}
+
+.bootstrap-table .fixed-table-toolbar .search input {
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+}
+
+.bootstrap-table .fixed-table-toolbar .search input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.2rem rgba(43, 164, 154, 0.25);
+    outline: none;
+}
+
+/* ========================================
+   BOTONES DEL TOOLBAR
+   ======================================== */
+.bootstrap-table .fixed-table-toolbar button {
+    background-color: var(--bg-surface) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--border-radius-sm) !important;
+    padding: 8px 12px !important;
+    color: var(--text-primary) !important;
+    transition: var(--transition-fast) !important;
+}
+
+.bootstrap-table .fixed-table-toolbar button:hover {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+/* ========================================
+   TABLA
+   ======================================== */
+.bootstrap-table .fixed-table-container {
+    border: none;
+}
+
+.bootstrap-table .table {
+    margin-bottom: 0;
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+}
+
+/* THEAD (Header de la tabla) */
+.bootstrap-table .table thead th {
+    background-color: var(--primary);
+    color: #fff;
+    border: none;
+    font-weight: 600;
+    padding: 12px;
+    vertical-align: middle;
+}
+
+.bootstrap-table .table thead th .th-inner {
+    padding: 0;
+}
+
+.bootstrap-table .table thead th .sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Iconos de ordenamiento */
+.bootstrap-table .table thead th .both {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='101' height='101' view-box='0 0 101 101' preserveAspectRatio='none'%3e%3cpath fill='white' opacity='.5' d='M51 1l25 23 24 22H1l25-22zM51 101l25-23 24-22H1l25 22z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 0.65rem;
+    padding-right: 1.5rem;
+}
+
+.bootstrap-table .table thead th .asc {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='101' height='101' view-box='0 0 101 101' preserveAspectRatio='none'%3e%3cpath fill='white' d='M51 1l25 23 24 22H1l25-22z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 0.65rem;
+    padding-right: 1.5rem;
+}
+
+.bootstrap-table .table thead th .desc {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='101' height='101' view-box='0 0 101 101' preserveAspectRatio='none'%3e%3cpath fill='white' d='M51 101l25-23 24-22H1l25 22z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 0.65rem;
+    padding-right: 1.5rem;
+}
+
+/* TBODY (Cuerpo de la tabla) */
+.bootstrap-table .table tbody tr {
+    transition: var(--transition-fast);
+}
+
+.bootstrap-table .table tbody tr:hover {
+    background-color: rgba(43, 164, 154, 0.1);
+}
+
+.bootstrap-table .table tbody td {
+    vertical-align: middle;
+    padding: 12px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* ========================================
+   PAGINACIÓN
+   ======================================== */
+.bootstrap-table .fixed-table-pagination {
+    padding: 15px;
+    background-color: var(--bg-body);
+    border-top: 1px solid var(--border-color);
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+
+.bootstrap-table .pagination {
+    margin: 0;
+}
+
+.bootstrap-table .page-link {
+    color: var(--primary);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    margin: 0 2px;
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition-fast);
+}
+
+.bootstrap-table .page-link:hover {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+.bootstrap-table .page-item.active .page-link {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+.bootstrap-table .page-item.disabled .page-link {
+    color: var(--text-muted);
+    pointer-events: none;
+    background-color: var(--bg-surface-alt);
+    border-color: var(--border-color);
+}
+
+/* ========================================
+   NO DATA / LOADING
+   ======================================== */
+.bootstrap-table .no-records-found {
+    padding: 40px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+/* ========================================
+   SEARCH HIGHLIGHT
+   ======================================== */
+.bootstrap-table mark {
+    background-color: rgba(43, 164, 154, 0.3);
+    padding: 2px 4px;
+    border-radius: var(--border-radius-sm);
+    color: var(--text-primary);
+}
+
+/* ========================================
+   DROPDOWN (Columns, Export)
+   ======================================== */
+.bootstrap-table .dropdown-menu {
+    background-color: var(--bg-surface);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+}
+
+.bootstrap-table .dropdown-item {
+    padding: 8px 16px;
+    transition: var(--transition-fast);
+    color: var(--text-primary);
+}
+
+.bootstrap-table .dropdown-item:hover {
+    background-color: rgba(43, 164, 154, 0.1);
+    color: var(--primary);
+}
+
+/* ========================================
+   KEEP-OPEN (Columns dropdown)
+   ======================================== */
+.bootstrap-table .keep-open {
+    padding: 0px;
+}
+
+.bootstrap-table .keep-open label {
+    display: block;
+    margin: 5px 0;
+    cursor: pointer;
+    color: var(--text-primary);
+}
+
+.bootstrap-table .keep-open input[type="checkbox"] {
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 768px) {
+    .bootstrap-table .fixed-table-toolbar {
+        padding: 10px;
+    }
+
+    .bootstrap-table .fixed-table-toolbar .search {
+        margin-bottom: 10px;
+    }
+
+    .bootstrap-table .table {
+        font-size: 0.875rem;
+    }
+
+    .bootstrap-table .table thead th,
+    .bootstrap-table .table tbody td {
+        padding: 8px;
+    }
+}
+
+/* ========================================
+   SWAL + BOOTSTRAP TABLE FIX
+   ======================================== */
+.swal-bootstrap-table {
+    z-index: var(--z-modal) !important;
+}
+
+.swal-bootstrap-table .swal2-container {
+    z-index: calc(var(--z-modal) + 1) !important;
+}
+
+/* ========================================
+   TABLE UTILITIES
+   ======================================== */
+
+/* Alineación de texto en celdas */
+.table .text-center {
+    text-align: center;
+}
+
+.table .text-right {
+    text-align: right;
+}
+
+.table .text-left {
+    text-align: left;
+}
+
+/* Tabla responsiva básica */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}

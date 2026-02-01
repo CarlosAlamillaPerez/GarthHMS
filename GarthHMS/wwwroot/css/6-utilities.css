@@ -1,0 +1,442 @@
+/* ============================================================================
+   GARTH HMS - UTILIDADES
+   Clases de utilidad específicas del sistema (que Bootstrap no tiene)
+   ============================================================================ */
+
+/* ========================================
+   COLORES DE TEXTO PERSONALIZADOS
+   ======================================== */
+.text-teal {
+    color: var(--primary) !important;
+}
+
+.text-primary-custom {
+    color: var(--primary) !important;
+}
+
+.text-sand {
+    color: var(--secondary) !important;
+}
+
+.text-indigo {
+    color: var(--tertiary) !important;
+}
+
+/* Sobrescribe el text-muted de Bootstrap */
+.text-muted {
+    color: var(--text-secondary) !important;
+}
+
+/* ========================================
+   BACKGROUNDS PERSONALIZADOS
+   ======================================== */
+.bg-teal {
+    background-color: var(--primary) !important;
+    color: white !important;
+}
+
+.bg-sand {
+    background-color: var(--secondary) !important;
+}
+
+.bg-indigo {
+    background-color: var(--tertiary) !important;
+    color: white !important;
+}
+
+.bg-body {
+    background-color: var(--bg-body) !important;
+}
+
+.bg-surface {
+    background-color: var(--bg-surface) !important;
+}
+
+.bg-surface-alt {
+    background-color: var(--bg-surface-alt) !important;
+}
+
+/* ========================================
+   ESTADOS DE HABITACIÓN (Backgrounds)
+   ======================================== */
+.bg-room-available {
+    background-color: var(--room-available) !important;
+    color: white !important;
+}
+
+.bg-room-occupied {
+    background-color: var(--room-occupied) !important;
+    color: white !important;
+}
+
+.bg-room-dirty {
+    background-color: var(--room-dirty) !important;
+    color: #212529 !important;
+}
+
+.bg-room-cleaning {
+    background-color: var(--room-cleaning) !important;
+    color: white !important;
+}
+
+.bg-room-blocked {
+    background-color: var(--room-blocked) !important;
+    color: white !important;
+}
+
+.bg-room-maintenance {
+    background-color: var(--room-maintenance) !important;
+    color: white !important;
+}
+
+/* ========================================
+   BORDES PERSONALIZADOS
+   ======================================== */
+.border-primary {
+    border-color: var(--primary) !important;
+}
+
+.border-teal {
+    border-color: var(--primary) !important;
+}
+
+.border-success {
+    border-color: var(--success) !important;
+}
+
+.border-warning {
+    border-color: var(--warning) !important;
+}
+
+.border-danger {
+    border-color: var(--danger) !important;
+}
+
+.border-info {
+    border-color: var(--info) !important;
+}
+
+/* ========================================
+   SOMBRAS PERSONALIZADAS
+   ======================================== */
+.shadow-primary {
+    box-shadow: var(--shadow-primary) !important;
+}
+
+.shadow-primary-lg {
+    box-shadow: var(--shadow-primary-lg) !important;
+}
+
+.shadow-teal {
+    box-shadow: 0 4px 12px rgba(43, 164, 154, 0.2) !important;
+}
+
+.shadow-none {
+    box-shadow: none !important;
+}
+
+.shadow-sm-custom {
+    box-shadow: var(--shadow-sm) !important;
+}
+
+.shadow-md-custom {
+    box-shadow: var(--shadow-md) !important;
+}
+
+.shadow-lg-custom {
+    box-shadow: var(--shadow-lg) !important;
+}
+
+/* ========================================
+   BORDER RADIUS
+   ======================================== */
+.rounded-custom {
+    border-radius: var(--border-radius) !important;
+}
+
+.rounded-lg-custom {
+    border-radius: var(--border-radius-lg) !important;
+}
+
+.rounded-sm-custom {
+    border-radius: var(--border-radius-sm) !important;
+}
+
+/* ========================================
+   TRANSICIONES
+   ======================================== */
+.transition {
+    transition: var(--transition);
+}
+
+.transition-fast {
+    transition: var(--transition-fast);
+}
+
+.transition-slow {
+    transition: var(--transition-slow);
+}
+
+.transition-none {
+    transition: none !important;
+}
+
+/* ========================================
+   CURSOR
+   ======================================== */
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.cursor-not-allowed {
+    cursor: not-allowed;
+}
+
+.cursor-default {
+    cursor: default;
+}
+
+/* ========================================
+   OVERFLOW
+   ======================================== */
+.overflow-hidden {
+    overflow: hidden;
+}
+
+.overflow-auto {
+    overflow: auto;
+}
+
+.overflow-scroll {
+    overflow: scroll;
+}
+
+/* ========================================
+   POSITION
+   ======================================== */
+.position-relative {
+    position: relative;
+}
+
+.position-absolute {
+    position: absolute;
+}
+
+.position-fixed {
+    position: fixed;
+}
+
+.position-sticky {
+    position: sticky;
+}
+
+/* ========================================
+   DISPLAY
+   ======================================== */
+.d-flex {
+    display: flex !important;
+}
+
+.d-inline-flex {
+    display: inline-flex !important;
+}
+
+.d-block {
+    display: block !important;
+}
+
+.d-inline-block {
+    display: inline-block !important;
+}
+
+.d-none {
+    display: none !important;
+}
+
+/* ========================================
+   FLEXBOX UTILITIES
+   ======================================== */
+.flex-column {
+    flex-direction: column;
+}
+
+.flex-row {
+    flex-direction: row;
+}
+
+.flex-wrap {
+    flex-wrap: wrap;
+}
+
+.flex-nowrap {
+    flex-wrap: nowrap;
+}
+
+.flex-grow-1 {
+    flex-grow: 1;
+}
+
+.flex-shrink-0 {
+    flex-shrink: 0;
+}
+
+.gap-1 {
+    gap: 0.25rem;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.gap-3 {
+    gap: 1rem;
+}
+
+.gap-4 {
+    gap: 1.5rem;
+}
+
+.gap-5 {
+    gap: 3rem;
+}
+
+/* ========================================
+   WIDTH Y HEIGHT
+   ======================================== */
+.w-25 {
+    width: 25% !important;
+}
+
+.w-50 {
+    width: 50% !important;
+}
+
+.w-75 {
+    width: 75% !important;
+}
+
+.w-100 {
+    width: 100% !important;
+}
+
+.w-auto {
+    width: auto !important;
+}
+
+.h-100 {
+    height: 100% !important;
+}
+
+.h-auto {
+    height: auto !important;
+}
+
+/* ========================================
+   OPACIDAD
+   ======================================== */
+.opacity-0 {
+    opacity: 0;
+}
+
+.opacity-25 {
+    opacity: 0.25;
+}
+
+.opacity-50 {
+    opacity: 0.5;
+}
+
+.opacity-75 {
+    opacity: 0.75;
+}
+
+.opacity-100 {
+    opacity: 1;
+}
+
+/* ========================================
+   Z-INDEX
+   ======================================== */
+.z-1 {
+    z-index: 1;
+}
+
+.z-2 {
+    z-index: 2;
+}
+
+.z-3 {
+    z-index: 3;
+}
+
+/* ========================================
+   EFECTOS ESPECIALES
+   ======================================== */
+.hover-lift {
+    transition: var(--transition-fast);
+}
+
+.hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.hover-scale {
+    transition: var(--transition-fast);
+}
+
+.hover-scale:hover {
+    transform: scale(1.05);
+}
+
+.hover-primary {
+    transition: var(--transition-fast);
+}
+
+.hover-primary:hover {
+    color: var(--primary);
+}
+
+/* ========================================
+   LOADING STATE
+   ======================================== */
+.is-loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.is-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid var(--primary);
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border 0.75s linear infinite;
+}
+
+/* ========================================
+   RESPONSIVE HELPERS
+   ======================================== */
+@media (max-width: 576px) {
+    .d-sm-none {
+        display: none !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .d-md-none {
+        display: none !important;
+    }
+}
+
+@media (max-width: 992px) {
+    .d-lg-none {
+        display: none !important;
+    }
+}

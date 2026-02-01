@@ -1,0 +1,125 @@
+/* ============================================================================
+   GARTH HMS - SISTEMA DE VARIABLES CSS
+   Paleta de colores oficial y variables del sistema
+   ============================================================================ */
+
+:root {
+    /* ========================================
+       COLORES PRINCIPALES (Paleta Oficial)
+       ======================================== */
+    --primary: #2BA49A;              /* Teal - Color principal */
+    --primary-dark: #238377;         /* Teal oscuro */
+    --primary-light: #3DB5AB;        /* Teal claro */
+    --primary-hover: #248a81;        /* Hover state */
+    
+    --secondary: #D9C9B6;            /* Sand - Color secundario */
+    --tertiary: #5162B5;             /* Indigo - Color terciario */
+    
+    /* ========================================
+       COLORES FUNCIONALES (Estados) - Colores Suaves
+       ======================================== */
+    --success: #38A169;              /* Verde suave - Éxito/Disponible */
+    --success-light: #68D391;        /* Verde claro para hover */
+    --warning: #D69E2E;              /* Amarillo suave - Advertencia/Pendiente */
+    --warning-light: #ECC94B;        /* Amarillo claro para hover */
+    --danger: #E53E3E;               /* Rojo suave - Error/Urgente */
+    --danger-light: #FC8181;         /* Rojo claro para hover */
+    --info: #4299E1;                 /* Azul suave - Información */
+    --info-light: #63B3ED;           /* Azul claro para hover */
+    
+    /* ========================================
+       BACKGROUNDS (Tema Claro)
+       ======================================== */
+    --bg-body: #F8F9FA;              /* Fondo general de la página */
+    --bg-surface: #FFFFFF;           /* Cards, modales, tablas */
+    --bg-surface-alt: #E9ECEF;       /* Secciones alternativas, headers */
+    
+    /* ========================================
+       TEXTOS (Tema Claro)
+       ======================================== */
+    --text-primary: #212529;         /* Texto principal (casi negro) */
+    --text-secondary: #6C757D;       /* Texto secundario (gris medio) */
+    --text-muted: #ADB5BD;           /* Texto terciario/deshabilitado */
+    
+    /* ========================================
+       BORDES Y LÍNEAS
+       ======================================== */
+    --border-color: #DEE2E6;         /* Color de bordes estándar */
+    --border-radius: 8px;            /* Radio de bordes normal */
+    --border-radius-lg: 12px;        /* Radio de bordes grande */
+    --border-radius-sm: 6px;         /* Radio de bordes pequeño */
+    
+    /* ========================================
+       SOMBRAS (Elevación)
+       ======================================== */
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);           /* Sombra pequeña */
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);            /* Sombra media */
+    --shadow-lg: 0 10px 25px rgba(0,0,0,0.15);         /* Sombra grande */
+    --shadow-xl: 0 20px 40px rgba(0,0,0,0.2);          /* Sombra extra grande */
+    
+    /* Sombras de color primario */
+    --shadow-primary: 0 4px 12px rgba(43, 164, 154, 0.2);
+    --shadow-primary-lg: 0 8px 20px rgba(43, 164, 154, 0.3);
+    
+    /* ========================================
+       ESTADOS DE HABITACIÓN (Específicos) - Colores Suaves
+       ======================================== */
+    --room-available: #38A169;       /* Verde suave - Disponible */
+    --room-occupied: #4299E1;        /* Azul suave - Ocupada */
+    --room-dirty: #D69E2E;           /* Amarillo suave - Sucia */
+    --room-cleaning: #5162B5;        /* Indigo - En limpieza */
+    --room-blocked: #E53E3E;         /* Rojo suave - Bloqueada */
+    --room-maintenance: #ED8936;     /* Naranja suave - Mantenimiento */
+    
+    /* ========================================
+       PRIORIDADES (Semáforo) - Colores Suaves
+       ======================================== */
+    --priority-urgent: #E53E3E;      /* Rojo suave - Urgente */
+    --priority-normal: #D69E2E;      /* Amarillo suave - Normal */
+    --priority-low: #38A169;         /* Verde suave - Baja prioridad */
+    
+    /* ========================================
+       BOTONES DE ACCIÓN (Tablas) - Colores Pastel
+       ======================================== */
+    --btn-view: #4299E1;             /* Azul claro - Ver/Info */
+    --btn-view-hover: #3182CE;       /* Azul más oscuro para hover */
+    --btn-edit: #D69E2E;             /* Amarillo suave - Editar */
+    --btn-edit-hover: #B7791F;       /* Amarillo más oscuro para hover */
+    --btn-delete: #E53E3E;           /* Rojo suave - Eliminar */
+    --btn-delete-hover: #C53030;     /* Rojo más oscuro para hover */
+    
+    /* ========================================
+       LAYOUT (Dimensiones)
+       ======================================== */
+    --sidebar-width: 260px;
+    --sidebar-collapsed-width: 70px;
+    --header-height: 65px;
+    
+    /* ========================================
+       TRANSICIONES
+       ======================================== */
+    --transition: all 0.3s ease;
+    --transition-fast: all 0.15s ease;
+    --transition-slow: all 0.5s ease;
+    
+    /* ========================================
+       ESPACIADOS (Sistema de 8px)
+       ======================================== */
+    --spacing-xs: 0.25rem;   /* 4px */
+    --spacing-sm: 0.5rem;    /* 8px */
+    --spacing-md: 1rem;      /* 16px */
+    --spacing-lg: 1.5rem;    /* 24px */
+    --spacing-xl: 2rem;      /* 32px */
+    --spacing-2xl: 3rem;     /* 48px */
+    
+    /* ========================================
+       Z-INDEX (Capas)
+       ======================================== */
+    --z-dropdown: 1000;
+    --z-sticky: 1020;
+    --z-fixed: 1030;
+    --z-modal-backdrop: 1040;
+    --z-modal: 1050;
+    --z-popover: 1060;
+    --z-tooltip: 1070;
+}

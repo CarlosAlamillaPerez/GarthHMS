@@ -75,34 +75,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ========================================
-    // ACTIVE NAV ITEM
+    // ACTIVE NAV LINK
     // ========================================
     const currentPath = window.location.pathname;
-    const navItems = document.querySelectorAll('.nav-item');
+    const navLinks = document.querySelectorAll('.nav-item');
 
-    navItems.forEach(item => {
-        const href = item.getAttribute('href');
-        if (href && currentPath.includes(href)) {
-            navItems.forEach(nav => nav.classList.remove('active'));
-            item.classList.add('active');
+    navLinks.forEach(link => {
+        if (link.getAttribute('href') === currentPath) {
+            link.classList.add('active');
+        } else {
+            link.classList.remove('active');
         }
     });
-
-    // ========================================
-    // MOBILE SIDEBAR
-    // ========================================
-    if (window.innerWidth <= 768) {
-        if (sidebarToggle && sidebar) {
-            sidebarToggle.addEventListener('click', function () {
-                sidebar.classList.toggle('show');
-            });
-
-            // Cerrar sidebar al hacer click en un link
-            navItems.forEach(item => {
-                item.addEventListener('click', function () {
-                    sidebar.classList.remove('show');
-                });
-            });
-        }
-    }
 });

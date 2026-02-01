@@ -1,0 +1,377 @@
+/* ============================================================================
+   GARTH HMS - TEMA OSCURO
+   Implementación completa del tema oscuro
+   ============================================================================ */
+
+/* ========================================
+   VARIABLES DEL TEMA OSCURO
+   ======================================== */
+[data-theme="dark"] {
+    /* Backgrounds */
+    --bg-body: #1A1D23;
+    --bg-surface: #22262E;
+    --bg-surface-alt: #2A2F3A;
+    /* Textos */
+    --text-primary: #E9ECEF;
+    --text-secondary: #ADB5BD;
+    --text-muted: #6C757D;
+    /* Bordes */
+    --border-color: #3A3F4A;
+    /* Sombras - Ajustadas para dark mode */
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
+    --shadow-lg: 0 10px 25px rgba(0,0,0,0.5);
+    --shadow-xl: 0 20px 40px rgba(0,0,0,0.6);
+}
+
+    /* ========================================
+   LAYOUT - DARK MODE
+   ======================================== */
+
+    /* Header */
+    [data-theme="dark"] .main-header {
+        background-color: var(--bg-surface);
+        border-bottom-color: var(--border-color);
+    }
+
+    /* Sidebar */
+    [data-theme="dark"] .sidebar {
+        background-color: var(--bg-surface);
+        border-right-color: var(--border-color);
+    }
+
+    [data-theme="dark"] .nav-item {
+        color: var(--text-primary);
+    }
+
+        [data-theme="dark"] .nav-item:hover {
+            background-color: rgba(43, 164, 154, 0.15);
+        }
+
+        [data-theme="dark"] .nav-item.active {
+            background-color: rgba(43, 164, 154, 0.2);
+        }
+
+    /* Main Content */
+    [data-theme="dark"] .main-content {
+        background-color: var(--bg-body);
+    }
+
+    /* ========================================
+   COMPONENTS - DARK MODE
+   ======================================== */
+
+    /* Cards */
+    [data-theme="dark"] .card {
+        background-color: var(--bg-surface);
+        border-color: var(--border-color);
+    }
+
+    [data-theme="dark"] .stat-card {
+        background-color: var(--bg-surface);
+        border-color: var(--border-color);
+    }
+
+    /* Dropdown Menu */
+    [data-theme="dark"] .dropdown-menu {
+        background-color: var(--bg-surface);
+        border-color: var(--border-color);
+        box-shadow: var(--shadow-lg);
+    }
+
+    [data-theme="dark"] .dropdown-item {
+        color: var(--text-primary);
+    }
+
+        [data-theme="dark"] .dropdown-item:hover {
+            background-color: rgba(43, 164, 154, 0.15);
+        }
+
+    [data-theme="dark"] .dropdown-divider {
+        background-color: var(--border-color);
+    }
+
+    /* ========================================
+   FORMULARIOS - DARK MODE
+   ======================================== */
+    [data-theme="dark"] .form-control {
+        background-color: var(--bg-body);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+    }
+
+        [data-theme="dark"] .form-control:focus {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            border-color: var(--primary);
+        }
+
+        [data-theme="dark"] .form-control:disabled {
+            background-color: var(--bg-surface-alt);
+            color: var(--text-muted);
+        }
+
+    [data-theme="dark"] .form-check-label {
+        color: var(--text-primary);
+    }
+
+    /* ========================================
+   LOGIN PAGE - DARK MODE
+   ======================================== */
+    [data-theme="dark"] .login-container {
+        background: linear-gradient(135deg, #1a3a3a 0%, #2a3563 100%);
+    }
+
+    [data-theme="dark"] .login-box {
+        background-color: var(--bg-surface);
+    }
+
+    [data-theme="dark"] .login-header h1 {
+        color: var(--primary);
+    }
+
+    [data-theme="dark"] .login-header p {
+        color: var(--text-secondary);
+    }
+
+    [data-theme="dark"] .login-footer {
+        border-top-color: var(--border-color);
+    }
+
+    /* ========================================
+   BOOTSTRAP TABLE - DARK MODE
+   ======================================== */
+    [data-theme="dark"] .bootstrap-table .fixed-table-toolbar {
+        background-color: var(--bg-surface);
+        border-bottom-color: var(--border-color);
+    }
+
+        [data-theme="dark"] .bootstrap-table .fixed-table-toolbar .search input {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        [data-theme="dark"] .bootstrap-table .fixed-table-toolbar button {
+            background-color: var(--bg-surface);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+            [data-theme="dark"] .bootstrap-table .fixed-table-toolbar button:hover {
+                background-color: var(--primary);
+                border-color: var(--primary);
+                color: #fff;
+            }
+
+    [data-theme="dark"] .bootstrap-table .table {
+        background-color: var(--bg-surface);
+        color: var(--text-primary);
+    }
+
+        [data-theme="dark"] .bootstrap-table .table thead th {
+            background-color: #1a5d56; /* Teal oscuro */
+            color: #fff;
+        }
+
+        [data-theme="dark"] .bootstrap-table .table tbody tr:hover {
+            background-color: rgba(43, 164, 154, 0.2);
+        }
+
+        [data-theme="dark"] .bootstrap-table .table tbody td {
+            border-top-color: var(--border-color);
+        }
+
+    [data-theme="dark"] .bootstrap-table .fixed-table-pagination {
+        background-color: var(--bg-surface);
+        border-top-color: var(--border-color);
+    }
+
+    [data-theme="dark"] .bootstrap-table .page-link {
+        background-color: var(--bg-surface);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+    }
+
+        [data-theme="dark"] .bootstrap-table .page-link:hover {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+        }
+
+    [data-theme="dark"] .bootstrap-table .page-item.active .page-link {
+        background-color: var(--primary);
+        border-color: var(--primary);
+        color: #fff;
+    }
+
+    [data-theme="dark"] .bootstrap-table .dropdown-menu {
+        background-color: var(--bg-surface);
+        border-color: var(--border-color);
+    }
+
+    [data-theme="dark"] .bootstrap-table .dropdown-item {
+        color: var(--text-primary);
+    }
+
+        [data-theme="dark"] .bootstrap-table .dropdown-item:hover {
+            background-color: rgba(43, 164, 154, 0.2);
+        }
+
+    [data-theme="dark"] .bootstrap-table .no-records-found {
+        color: var(--text-secondary);
+    }
+
+    /* ========================================
+   SWEETALERT2 - DARK MODE
+   ======================================== */
+    [data-theme="dark"] .swal2-popup {
+        background-color: var(--bg-surface);
+        color: var(--text-primary);
+    }
+
+    [data-theme="dark"] .swal2-title {
+        color: var(--text-primary);
+    }
+
+    [data-theme="dark"] .swal2-content {
+        color: var(--text-secondary);
+    }
+
+    [data-theme="dark"] .swal2-input,
+    [data-theme="dark"] .swal2-textarea {
+        background-color: var(--bg-body);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+    }
+
+        [data-theme="dark"] .swal2-input:focus,
+        [data-theme="dark"] .swal2-textarea:focus {
+            border-color: var(--primary);
+        }
+
+    [data-theme="dark"] .swal2-validation-message {
+        background-color: var(--bg-surface-alt);
+        color: var(--text-primary);
+    }
+
+    /* ========================================
+   ALERTS - DARK MODE (Colores Suaves)
+   ======================================== */
+    [data-theme="dark"] .alert-success {
+        background-color: rgba(56, 161, 105, 0.25);
+        border-color: var(--success);
+        color: #68D391;
+    }
+
+    [data-theme="dark"] .alert-warning {
+        background-color: rgba(214, 158, 46, 0.25);
+        border-color: var(--warning);
+        color: #ECC94B;
+    }
+
+    [data-theme="dark"] .alert-danger {
+        background-color: rgba(229, 62, 62, 0.25);
+        border-color: var(--danger);
+        color: #FC8181;
+    }
+
+    [data-theme="dark"] .alert-info {
+        background-color: rgba(66, 153, 225, 0.25);
+        border-color: var(--info);
+        color: #63B3ED;
+    }
+
+    /* ========================================
+   THEME TOGGLE BUTTON
+   ======================================== */
+    [data-theme="dark"] .btn-icon#themeToggle {
+        color: var(--text-secondary);
+    }
+
+        [data-theme="dark"] .btn-icon#themeToggle:hover {
+            color: var(--primary);
+        }
+
+    /* ========================================
+   SCROLLBAR - DARK MODE
+   ======================================== */
+    [data-theme="dark"] ::-webkit-scrollbar-track {
+        background: var(--bg-surface);
+    }
+
+    [data-theme="dark"] ::-webkit-scrollbar-thumb {
+        background: var(--text-muted);
+    }
+
+        [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+    /* ========================================
+   BADGES - DARK MODE
+   ======================================== */
+    /* Los badges mantienen sus colores originales en dark mode para visibilidad */
+
+    /* ========================================
+   BUTTONS - DARK MODE
+   ======================================== */
+    /* Los botones mantienen sus colores originales en dark mode para consistencia */
+
+    /* ========================================
+   UTILIDADES - DARK MODE
+   ======================================== */
+    [data-theme="dark"] .text-muted {
+        color: var(--text-secondary) !important;
+    }
+
+    [data-theme="dark"] .border {
+        border-color: var(--border-color) !important;
+    }
+
+    /* ========================================
+   MODALES BOOTSTRAP - DARK MODE
+   ======================================== */
+    [data-theme="dark"] .modal-content {
+        background-color: var(--bg-surface);
+        color: var(--text-primary);
+    }
+
+    [data-theme="dark"] .modal-header {
+        border-bottom-color: var(--border-color);
+    }
+
+    [data-theme="dark"] .modal-footer {
+        border-top-color: var(--border-color);
+    }
+
+    [data-theme="dark"] .close {
+        color: var(--text-primary);
+        opacity: 0.8;
+    }
+
+    /* ========================================
+   TOOLTIPS - DARK MODE
+   ======================================== */
+    [data-theme="dark"] .tooltip-inner {
+        background-color: var(--bg-surface-alt);
+        color: var(--text-primary);
+    }
+
+    /* ========================================
+   POPOVERS - DARK MODE
+   ======================================== */
+    [data-theme="dark"] .popover {
+        background-color: var(--bg-surface);
+        border-color: var(--border-color);
+    }
+
+    [data-theme="dark"] .popover-header {
+        background-color: var(--bg-surface-alt);
+        border-bottom-color: var(--border-color);
+        color: var(--text-primary);
+    }
+
+    [data-theme="dark"] .popover-body {
+        color: var(--text-primary);
+    }
