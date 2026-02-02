@@ -6,33 +6,33 @@
     <div class="row">
         <div class="col-md-6">
             <div class="mb-3">
-                <label for="editName" class="form-label">Nombre <span class="text-danger">*</span></label>
+                <label for="editName" class="form-label d-flex align-items-center justify-content-center">Nombre <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" id="editName" name="Name" value="@Model.Name" required maxlength="50">
             </div>
         </div>
         <div class="col-md-6">
             <div class="mb-3">
-                <label for="editCode" class="form-label">Código <span class="text-danger">*</span></label>
+                <label for="editCode" class="form-label d-flex align-items-center justify-content-center">Código <span class="text-danger">*</span></label>
                 <input type="text" class="form-control text-uppercase" id="editCode" name="Code" value="@Model.Code" required maxlength="10">
             </div>
         </div>
     </div>
 
     <div class="mb-3">
-        <label for="editDescription" class="form-label">Descripción</label>
+        <label for="editDescription" class="form-label d-flex align-items-center justify-content-center">Descripción</label>
         <textarea class="form-control" id="editDescription" name="Description" rows="2" maxlength="500">@Model.Description</textarea>
     </div>
 
     <div class="row">
         <div class="col-md-6">
             <div class="mb-3">
-                <label for="editBaseCapacity" class="form-label">Capacidad Base <span class="text-danger">*</span></label>
+                <label for="editBaseCapacity" class="form-label d-flex align-items-center justify-content-center">Capacidad Base <span class="text-danger">*</span></label>
                 <input type="number" class="form-control" id="editBaseCapacity" name="BaseCapacity" value="@Model.BaseCapacity" required min="1" max="20">
             </div>
         </div>
         <div class="col-md-6">
             <div class="mb-3">
-                <label for="editMaxCapacity" class="form-label">Capacidad Máxima <span class="text-danger">*</span></label>
+                <label for="editMaxCapacity" class="form-label d-flex align-items-center justify-content-center">Capacidad Máxima <span class="text-danger">*</span></label>
                 <input type="number" class="form-control" id="editMaxCapacity" name="MaxCapacity" value="@Model.MaxCapacity" required min="1" max="20">
             </div>
         </div>

@@ -1,0 +1,80 @@
+﻿@model GarthHMS.Core.DTOs.Room.CreateRoomDto
+
+<form id="createForm">
+    <div class="row">
+        <!-- Tipo de Habitación -->
+        <div class="col-md-6">
+            <div class="form-group mb-3">
+                <label asp-for="RoomTypeId" class="form-label d-flex align-items-center justify-content-center">
+                    Tipo de Habitación <span class="text-danger">*</span>
+                </label>
+                <select asp-for="RoomTypeId" class="form-select">
+                    <option value="">Seleccione un tipo...</option>
+                    @if (ViewBag.RoomTypes != null)
+                    {
+                        foreach (var roomType in ViewBag.RoomTypes)
+                        {
+                            <option value="@roomType.RoomTypeId">@roomType.Code - @roomType.Name</option>
+                        }
+                    }
+                </select>
+                <span asp-validation-for="RoomTypeId" class="text-danger"></span>
+            </div>
+        </div>
+
+        <!-- Número de Habitación -->
+        <div class="col-md-6">
+            <div class="form-group mb-3">
+                <label asp-for="RoomNumber" class="form-label d-flex align-items-center justify-content-center">
+                    Número de Habitación <span class="text-danger">*</span>
+                </label>
+                <input asp-for="RoomNumber" class="form-control" placeholder="Ej: 101, 201A" maxlength="10" />
+                <span asp-validation-for="RoomNumber" class="text-danger"></span>
+                <small class="text-muted">Máximo 10 caracteres</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Piso -->
+        <div class="col-md-6">
+            <div class="form-group mb-3">
+                <label asp-for="Floor" class="form-label d-flex align-items-center justify-content-center">
+                    Piso <span class="text-danger">*</span>
+                </label>
+                <input asp-for="Floor" type="number" class="form-control" value="1" min="0" max="100" />
+                <span asp-validation-for="Floor" class="text-danger"></span>
+                <small class="text-muted">0 = Planta Baja</small>
+            </div>
+        </div>
+
+        <!-- Notas -->
+        <div class="col-md-6">
+            <div class="form-group mb-3">
+                <label asp-for="Notes" class="form-label d-flex align-items-center justify-content-center">Notas</label>
+                <textarea asp-for="Notes" class="form-control" rows="2" maxlength="500" placeholder="Información adicional..."></textarea>
+                <span asp-validation-for="Notes" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información adicional -->
+    <div class="alert alert-info d-flex align-items-center" role="alert">
+        <i class="fas fa-info-circle me-2"></i>
+        <div>
+            <strong>Nota:</strong> La habitación se creará con estado "Disponible" por defecto.
+            Podrás cambiar el estado después de crearla.
+        </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="mt-4 text-end">
+        <button type="button" class="btn btn-secondary" onclick="Swal.close()">
+            <i class="fas fa-times"></i> Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Guardar Habitación
+        </button>
+    </div>
+</form>
+

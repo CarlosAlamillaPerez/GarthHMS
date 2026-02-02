@@ -1,0 +1,97 @@
+﻿@{
+    ViewData["Title"] = "Habitaciones";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-door-open text-primary"></i> Habitaciones
+            </h2>
+            <p class="text-muted mb-0">Gestión de habitaciones físicas del hotel</p>
+        </div>
+        <button class="btn btn-primary" onclick="openCreateModal()">
+            <i class="fas fa-plus-circle"></i> Nueva Habitación
+        </button>
+    </div>
+
+    <!-- Filtros rápidos -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Estado</label>
+                    <select id="filterStatus" class="form-select" onchange="filterByStatus()">
+                        <option value="">Todos los estados</option>
+                        <option value="Available">Disponible</option>
+                        <option value="Occupied">Ocupada</option>
+                        <option value="Dirty">Sucia</option>
+                        <option value="Cleaning">En Limpieza</option>
+                        <option value="Maintenance">Mantenimiento</option>
+                        <option value="Reserved">Reservada</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Piso</label>
+                    <select id="filterFloor" class="form-select" onchange="filterByFloor()">
+                        <option value="">Todos los pisos</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Tipo</label>
+                    <select id="filterType" class="form-select" onchange="filterByType()">
+                        <option value="">Todos los tipos</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-secondary w-100" onclick="clearFilters()">
+                        <i class="fas fa-undo"></i> Limpiar Filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de habitaciones -->
+    <div class="card">
+        <div class="card-body">
+            <div id="toolbar" class="mb-3">
+                <button class="btn btn-sm btn-outline-secondary" onclick="loadRooms()">
+                    <i class="fas fa-sync-alt"></i> Recargar
+                </button>
+            </div>
+
+            <table id="roomsTable"
+                   class="table table-hover text-center"
+                   data-toggle="table"
+                   data-toolbar="#toolbar"
+                   data-search="true"
+                   data-show-refresh="true"
+                   data-show-columns="true"
+                   data-show-export="true"
+                   data-pagination="true"
+                   data-page-size="25"
+                   data-page-list="[10,25,50,100]"
+                   data-sort-name="roomNumber"
+                   data-sort-order="asc">
+                <thead>
+                    <tr>
+                        <th data-field="roomNumber" data-sortable="true">Número</th>
+                        <th data-field="roomTypeName" data-sortable="true">Tipo</th>
+                        <th data-field="floor" data-sortable="true" data-formatter="floorFormatter">Piso</th>
+                        <th data-field="status" data-sortable="true" data-formatter="statusFormatter">Estado</th>
+                        <th data-field="isOccupied" data-formatter="occupancyFormatter">Ocupación</th>
+                        <th data-field="notes" data-formatter="notesFormatter">Notas</th>
+                        <th data-field="isActive" data-formatter="activeFormatter">Activo</th>
+                        <th data-field="actions" data-formatter="actionsFormatter">Acciones</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/rooms.js"></script>
+}

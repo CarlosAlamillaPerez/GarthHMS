@@ -1,65 +1,102 @@
-﻿using System;
+﻿// GarthHMS.Core/Interfaces/Services/IRoomService.cs
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-
-using GarthHMS.Core.DTOs;
+using GarthHMS.Core.DTOs.Room;
 using GarthHMS.Core.Enums;
 
 namespace GarthHMS.Core.Interfaces.Services
 {
     /// <summary>
-    /// Contrato para servicios de gestión de habitaciones
+    /// Contrato para servicios de gestión de habitaciones con lógica de negocio
     /// </summary>
     public interface IRoomService
     {
+        // ====================================================================
         // CRUD
-        //Task<(bool Success, int RoomId, string? ErrorMessage)> CreateRoomAsync(
-        //    int hotelId,
-        //    int roomTypeId,
-        //    string roomNumber,
-        //    string? floor,
-        //    string? location,
-        //    bool allowsPets,
-        //    bool isSmoking,
-        //    bool isAccessible,
-        //    int createdBy
-        //);
+        // ====================================================================
 
-        //Task<(bool Success, string? ErrorMessage)> UpdateRoomAsync(
-        //    int roomId,
-        //    string roomNumber,
-        //    string? floor,
-        //    string? location,
-        //    bool allowsPets,
-        //    bool isSmoking,
-        //    bool isAccessible,
-        //    int updatedBy
-        //);
+        /// <summary>
+        /// Obtiene todas las habitaciones del hotel actual
+        /// </summary>
+        Task<IEnumerable<RoomResponseDto>> GetAllAsync();
 
-        //Task<(bool Success, string? ErrorMessage)> DeleteRoomAsync(int roomId, int deletedBy);
+        /// <summary>
+        /// Obtiene todas las habitaciones activas del hotel actual
+        /// </summary>
+        Task<IEnumerable<RoomResponseDto>> GetAllActiveAsync();
 
-        //// CONSULTAS
-        //Task<RoomDto?> GetRoomByIdAsync(int roomId);
-        //Task<RoomDto?> GetRoomByNumberAsync(int hotelId, string roomNumber);
-        //Task<List<RoomDto>> GetRoomsByHotelAsync(int hotelId);
-        //Task<List<RoomDto>> GetRoomsByTypeAsync(int roomTypeId);
-        //Task<List<RoomDto>> GetRoomsByStatusAsync(int hotelId, RoomStatus status);
-        //Task<List<RoomDto>> GetActiveRoomsAsync(int hotelId);
+        /// <summary>
+        /// Obtiene una habitación por su ID
+        /// </summary>
+        Task<RoomResponseDto?> GetByIdAsync(Guid roomId);
 
-        //// ESTADO
-        //Task<(bool Success, string? ErrorMessage)> UpdateRoomStatusAsync(int roomId, RoomStatus newStatus, int updatedBy);
-        //Task<(bool Success, string? ErrorMessage)> BlockRoomAsync(int roomId, string reason, DateTime? blockedUntil, int updatedBy);
-        //Task<(bool Success, string? ErrorMessage)> UnblockRoomAsync(int roomId, int updatedBy);
+        /// <summary>
+        /// Crea una nueva habitación
+        /// Validaciones:
+        /// - Número de habitación único por hotel
+        /// - Tipo de habitación debe existir y pertenecer al mismo hotel
+        /// - Piso válido (>= 0)
+        /// </summary>
+        Task<Guid> CreateAsync(CreateRoomDto dto);
 
-        //// DISPONIBILIDAD
-        //Task<List<RoomDto>> GetAvailableRoomsAsync(int hotelId, DateTime checkIn, DateTime checkOut);
-        //Task<List<RoomDto>> GetAvailableRoomsByTypeAsync(int roomTypeId, DateTime checkIn, DateTime checkOut);
-        //Task<bool> IsRoomAvailableAsync(int roomId, DateTime checkIn, DateTime checkOut);
+        /// <summary>
+        /// Actualiza una habitación existente
+        /// Validaciones:
+        /// - Habitación debe existir
+        /// - Número de habitación único (excluyendo la actual)
+        /// - Multi-tenancy
+        /// </summary>
+        Task UpdateAsync(UpdateRoomDto dto);
 
-        //// VALIDACIONES
-        //Task<bool> RoomNumberExistsAsync(int hotelId, string roomNumber, int? excludeRoomId = null);
-        //Task<bool> CanDeleteRoomAsync(int roomId);
+        /// <summary>
+        /// Elimina (soft delete) una habitación
+        /// Validaciones:
+        /// - No se puede eliminar si está ocupada (current_stay_id != null)
+        /// - No se puede eliminar si tiene reservas futuras
+        /// </summary>
+        Task DeleteAsync(Guid roomId);
+
+        // ====================================================================
+        // CONSULTAS POR FILTROS
+        // ====================================================================
+
+        /// <summary>
+        /// Obtiene habitaciones por tipo
+        /// </summary>
+        Task<IEnumerable<RoomResponseDto>> GetByTypeAsync(Guid roomTypeId);
+
+        /// <summary>
+        /// Obtiene habitaciones por estado
+        /// </summary>
+        Task<IEnumerable<RoomResponseDto>> GetByStatusAsync(RoomStatus status);
+
+        /// <summary>
+        /// Obtiene habitaciones disponibles
+        /// </summary>
+        Task<IEnumerable<RoomResponseDto>> GetAvailableAsync();
+
+        // ====================================================================
+        // GESTIÓN DE ESTADOS
+        // ====================================================================
+
+        /// <summary>
+        /// Cambia el estado de una habitación
+        /// Validaciones:
+        /// - Habitación debe existir
+        /// - Transiciones de estado válidas
+        /// </summary>
+        Task UpdateStatusAsync(Guid roomId, RoomStatus newStatus);
+
+        /// <summary>
+        /// Marca habitación como en mantenimiento
+        /// </summary>
+        Task SetMaintenanceAsync(Guid roomId, string? notes);
+
+        /// <summary>
+        /// Marca habitación como disponible
+        /// Limpia current_stay_id
+        /// </summary>
+        Task SetAvailableAsync(Guid roomId);
     }
 }

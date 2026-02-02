@@ -1,476 +1,358 @@
-﻿using System;
+﻿// GarthHMS.Application/Services/RoomService.cs
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Security.Claims;
 using System.Threading.Tasks;
-
-using GarthHMS.Core.DTOs;
+using GarthHMS.Core.DTOs.Room;
 using GarthHMS.Core.Entities;
 using GarthHMS.Core.Enums;
 using GarthHMS.Core.Interfaces.Repositories;
 using GarthHMS.Core.Interfaces.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 namespace GarthHMS.Application.Services
 {
     /// <summary>
-    /// Servicio para gestión de habitaciones
+    /// Servicio de habitaciones con lógica de negocio y validaciones
     /// </summary>
     public class RoomService : IRoomService
     {
         private readonly IRoomRepository _roomRepository;
         private readonly IRoomTypeRepository _roomTypeRepository;
         private readonly ILogger<RoomService> _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public RoomService(
             IRoomRepository roomRepository,
             IRoomTypeRepository roomTypeRepository,
-            ILogger<RoomService> logger)
+            ILogger<RoomService> logger,
+            IHttpContextAccessor httpContextAccessor)
         {
             _roomRepository = roomRepository;
             _roomTypeRepository = roomTypeRepository;
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
         }
 
+        private Guid CurrentHotelId => GetCurrentHotelId();
+        private Guid CurrentUserId => GetCurrentUserId();
+
+        // ====================================================================
         // CRUD
+        // ====================================================================
 
-    //    public async Task<(bool Success, int RoomId, string? ErrorMessage)> CreateRoomAsync(
-    //        int hotelId,
-    //        int roomTypeId,
-    //        string roomNumber,
-    //        string? floor,
-    //        string? location,
-    //        bool allowsPets,
-    //        bool isSmoking,
-    //        bool isAccessible,
-    //        int createdBy)
-    //    {
-    //        try
-    //        {
-    //            // Validar que el número de habitación no exista
-    //            var numberExists = await _roomRepository.RoomNumberExistsAsync(hotelId, roomNumber);
-    //            if (numberExists)
-    //            {
-    //                return (false, 0, "Ya existe una habitación con ese número");
-    //            }
+        public async Task<IEnumerable<RoomResponseDto>> GetAllAsync()
+        {
+            var rooms = await _roomRepository.GetByHotelAsync(CurrentHotelId);
 
-    //            // Verificar que el tipo de habitación exista
-    //            var roomType = await _roomTypeRepository.GetByIdAsync(roomTypeId);
-    //            if (roomType == null)
-    //            {
-    //                return (false, 0, "Tipo de habitación no válido");
-    //            }
+            // Obtener tipos de habitación para enriquecer los datos
+            var roomTypes = await _roomTypeRepository.GetByHotelAsync(CurrentHotelId);
+            var roomTypeDict = roomTypes.ToDictionary(rt => rt.RoomTypeId);
 
-    //            var room = new Room
-    //            {
-    //                HotelId = hotelId,
-    //                RoomTypeId = roomTypeId,
-    //                RoomNumber = roomNumber,
-    //                Floor = floor,
-    //                Location = location,
-    //                Status = RoomStatus.Available,
-    //                IsSmoking = isSmoking,
-    //                IsAccessible = isAccessible,
-    //                AllowsPets = allowsPets,
-    //                IsBlocked = false,
-    //                IsActive = true,
-    //                CreatedAt = DateTime.UtcNow,
-    //                CreatedBy = createdBy
-    //            };
+            return rooms.Select(room => MapToResponseDto(room, roomTypeDict));
+        }
 
-    //            var roomId = await _roomRepository.CreateAsync(room);
+        public async Task<IEnumerable<RoomResponseDto>> GetAllActiveAsync()
+        {
+            var rooms = await _roomRepository.GetAllActiveAsync(CurrentHotelId);
 
-    //            if (roomId > 0)
-    //            {
-    //                _logger.LogInformation("Room created: {RoomNumber} for hotel {HotelId} by user {CreatedBy}",
-    //                    roomNumber, hotelId, createdBy);
-    //                return (true, roomId, null);
-    //            }
+            var roomTypes = await _roomTypeRepository.GetByHotelAsync(CurrentHotelId);
+            var roomTypeDict = roomTypes.ToDictionary(rt => rt.RoomTypeId);
 
-    //            return (false, 0, "Error al crear la habitación");
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            _logger.LogError(ex, "Error creating room {RoomNumber} for hotel {HotelId}", roomNumber, hotelId);
-    //            return (false, 0, "Error al crear la habitación");
-    //        }
-    //    }
+            return rooms.Select(room => MapToResponseDto(room, roomTypeDict));
+        }
 
-    //    public async Task<(bool Success, string? ErrorMessage)> UpdateRoomAsync(
-    //        int roomId,
-    //        string roomNumber,
-    //        string? floor,
-    //        string? location,
-    //        bool allowsPets,
-    //        bool isSmoking,
-    //        bool isAccessible,
-    //        int updatedBy)
-    //    {
-    //        try
-    //        {
-    //            var room = await _roomRepository.GetByIdAsync(roomId);
-    //            if (room == null)
-    //            {
-    //                return (false, "Habitación no encontrada");
-    //            }
+        public async Task<RoomResponseDto?> GetByIdAsync(Guid roomId)
+        {
+            var room = await _roomRepository.GetByIdAsync(roomId);
 
-    //            // Validar número único (excluyendo la actual)
-    //            var numberExists = await _roomRepository.RoomNumberExistsAsync(
-    //                room.HotelId, roomNumber, roomId);
-    //            if (numberExists)
-    //            {
-    //                return (false, "Ya existe una habitación con ese número");
-    //            }
+            if (room == null)
+                return null;
 
-    //            room.RoomNumber = roomNumber;
-    //            room.Floor = floor;
-    //            room.Location = location;
-    //            room.AllowsPets = allowsPets;
-    //            room.IsSmoking = isSmoking;
-    //            room.IsAccessible = isAccessible;
-    //            room.UpdatedAt = DateTime.UtcNow;
-    //            room.UpdatedBy = updatedBy;
+            // Validar multi-tenancy
+            if (room.HotelId != CurrentHotelId)
+                throw new UnauthorizedAccessException("No tiene permiso para acceder a esta habitación");
 
-    //            var result = await _roomRepository.UpdateAsync(room);
+            var roomTypes = await _roomTypeRepository.GetByHotelAsync(CurrentHotelId);
+            var roomTypeDict = roomTypes.ToDictionary(rt => rt.RoomTypeId);
 
-    //            if (result)
-    //            {
-    //                _logger.LogInformation("Room {RoomId} updated by user {UpdatedBy}", roomId, updatedBy);
-    //                return (true, null);
-    //            }
+            return MapToResponseDto(room, roomTypeDict);
+        }
 
-    //            return (false, "Error al actualizar la habitación");
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            _logger.LogError(ex, "Error updating room {RoomId}", roomId);
-    //            return (false, "Error al actualizar la habitación");
-    //        }
-    //    }
+        public async Task<Guid> CreateAsync(CreateRoomDto dto)
+        {
+            // 1. Validar que el tipo de habitación exista y pertenezca al mismo hotel
+            var roomType = await _roomTypeRepository.GetByIdAsync(dto.RoomTypeId);
+            if (roomType == null)
+                throw new KeyNotFoundException("El tipo de habitación no existe");
 
-    //    public async Task<(bool Success, string? ErrorMessage)> DeleteRoomAsync(int roomId, int deletedBy)
-    //    {
-    //        try
-    //        {
-    //            // Verificar que no tenga reservas activas
-    //            var canDelete = await CanDeleteRoomAsync(roomId);
-    //            if (!canDelete)
-    //            {
-    //                return (false, "No se puede eliminar. La habitación tiene reservas activas");
-    //            }
+            if (roomType.HotelId != CurrentHotelId)
+                throw new UnauthorizedAccessException("El tipo de habitación no pertenece a este hotel");
 
-    //            // Desactivar en lugar de eliminar
-    //            var room = await _roomRepository.GetByIdAsync(roomId);
-    //            if (room == null)
-    //            {
-    //                return (false, "Habitación no encontrada");
-    //            }
+            if (!roomType.IsActive)
+                throw new InvalidOperationException("El tipo de habitación está inactivo");
 
-    //            room.IsActive = false;
-    //            room.UpdatedAt = DateTime.UtcNow;
-    //            room.UpdatedBy = deletedBy;
+            // 2. Validar que el número de habitación no exista
+            if (await _roomRepository.RoomNumberExistsAsync(CurrentHotelId, dto.RoomNumber))
+                throw new InvalidOperationException($"Ya existe una habitación con el número '{dto.RoomNumber}'");
 
-    //            var result = await _roomRepository.UpdateAsync(room);
+            // 3. Validar piso
+            if (dto.Floor < 0)
+                throw new InvalidOperationException("El piso no puede ser negativo");
 
-    //            if (result)
-    //            {
-    //                _logger.LogInformation("Room {RoomId} deleted by user {DeletedBy}", roomId, deletedBy);
-    //                return (true, null);
-    //            }
+            // 4. Crear la habitación
+            var room = new Room
+            {
+                HotelId = CurrentHotelId,
+                RoomTypeId = dto.RoomTypeId,
+                RoomNumber = dto.RoomNumber.Trim().ToUpper(),
+                Floor = dto.Floor,
+                Notes = dto.Notes?.Trim(),
+                Status = RoomStatus.Available,
+                StatusChangedAt = DateTime.UtcNow,
+                IsActive = true,
+                CreatedBy = CurrentUserId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
 
-    //            return (false, "Error al eliminar la habitación");
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            _logger.LogError(ex, "Error deleting room {RoomId}", roomId);
-    //            return (false, "Error al eliminar la habitación");
-    //        }
-    //    }
+            var roomId = await _roomRepository.CreateAsync(room);
 
-    //    // CONSULTAS
+            _logger.LogInformation(
+                "Habitación creada: {RoomNumber} (Tipo: {RoomTypeCode}) - ID: {RoomId}",
+                room.RoomNumber, roomType.Code, roomId);
 
-    //    public async Task<RoomDto?> GetRoomByIdAsync(int roomId)
-    //    {
-    //        try
-    //        {
-    //            var room = await _roomRepository.GetByIdAsync(roomId);
-    //            if (room == null)
-    //                return null;
+            return roomId;
+        }
 
-    //            var roomType = await _roomTypeRepository.GetByIdAsync(room.RoomTypeId);
-    //            return MapToDto(room, roomType?.TypeName ?? "");
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            _logger.LogError(ex, "Error getting room {RoomId}", roomId);
-    //            return null;
-    //        }
-    //    }
+        public async Task UpdateAsync(UpdateRoomDto dto)
+        {
+            // 1. Validar que la habitación exista
+            var existingRoom = await _roomRepository.GetByIdAsync(dto.RoomId);
+            if (existingRoom == null)
+                throw new KeyNotFoundException($"No se encontró la habitación con ID {dto.RoomId}");
 
-    //    public async Task<RoomDto?> GetRoomByNumberAsync(int hotelId, string roomNumber)
-    //    {
-    //        try
-    //        {
-    //            var room = await _roomRepository.GetByRoomNumberAsync(hotelId, roomNumber);
-    //            if (room == null)
-    //                return null;
+            // 2. Validar multi-tenancy
+            if (existingRoom.HotelId != CurrentHotelId)
+                throw new UnauthorizedAccessException("No tiene permiso para modificar esta habitación");
 
-    //            var roomType = await _roomTypeRepository.GetByIdAsync(room.RoomTypeId);
-    //            return MapToDto(room, roomType?.TypeName ?? "");
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            _logger.LogError(ex, "Error getting room by number {RoomNumber}", roomNumber);
-    //            return null;
-    //        }
-    //    }
+            // 3. Validar número de habitación único (excluyendo la actual)
+            if (await _roomRepository.RoomNumberExistsAsync(CurrentHotelId, dto.RoomNumber, dto.RoomId))
+                throw new InvalidOperationException($"Ya existe otra habitación con el número '{dto.RoomNumber}'");
 
-    //    public async Task<List<RoomDto>> GetRoomsByHotelAsync(int hotelId)
-    //    {
-    //        try
-    //        {
-    //            var rooms = await _roomRepository.GetByHotelIdAsync(hotelId);
-    //            var roomTypes = await _roomTypeRepository.GetByHotelIdAsync(hotelId);
+            // 4. Validar piso
+            if (dto.Floor < 0)
+                throw new InvalidOperationException("El piso no puede ser negativo");
 
-    //            return rooms.Select(r => MapToDto(r,
-    //                roomTypes.FirstOrDefault(rt => rt.RoomTypeId == r.RoomTypeId)?.TypeName ?? "")).ToList();
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            _logger.LogError(ex, "Error getting rooms for hotel {HotelId}", hotelId);
-    //            return new List<RoomDto>();
-    //        }
-    //    }
+            // 5. Actualizar
+            existingRoom.RoomNumber = dto.RoomNumber.Trim().ToUpper();
+            existingRoom.Floor = dto.Floor;
+            existingRoom.Notes = dto.Notes?.Trim();
+            existingRoom.UpdatedAt = DateTime.UtcNow;
 
-    //    public async Task<List<RoomDto>> GetRoomsByTypeAsync(int roomTypeId)
-    //    {
-    //        try
-    //        {
-    //            var rooms = await _roomRepository.GetByRoomTypeIdAsync(roomTypeId);
-    //            var roomType = await _roomTypeRepository.GetByIdAsync(roomTypeId);
+            await _roomRepository.UpdateAsync(existingRoom);
 
-    //            return rooms.Select(r => MapToDto(r, roomType?.TypeName ?? "")).ToList();
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            _logger.LogError(ex, "Error getting rooms for type {RoomTypeId}", roomTypeId);
-    //            return new List<RoomDto>();
-    //        }
-    //    }
+            _logger.LogInformation("Habitación actualizada: {RoomNumber} - ID: {RoomId}",
+                existingRoom.RoomNumber, dto.RoomId);
+        }
 
-    //    public async Task<List<RoomDto>> GetRoomsByStatusAsync(int hotelId, RoomStatus status)
-    //    {
-    //        try
-    //        {
-    //            var rooms = await _roomRepository.GetByStatusAsync(hotelId, status);
-    //            var roomTypes = await _roomTypeRepository.GetByHotelIdAsync(hotelId);
+        public async Task DeleteAsync(Guid roomId)
+        {
+            // 1. Validar que exista
+            var room = await _roomRepository.GetByIdAsync(roomId);
+            if (room == null)
+                throw new KeyNotFoundException($"No se encontró la habitación con ID {roomId}");
 
-    //            return rooms.Select(r => MapToDto(r,
-    //                roomTypes.FirstOrDefault(rt => rt.RoomTypeId == r.RoomTypeId)?.TypeName ?? "")).ToList();
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            _logger.LogError(ex, "Error getting rooms by status {Status}", status);
-    //            return new List<RoomDto>();
-    //        }
-    //    }
+            // 2. Validar multi-tenancy
+            if (room.HotelId != CurrentHotelId)
+                throw new UnauthorizedAccessException("No tiene permiso para eliminar esta habitación");
 
-    //    public async Task<List<RoomDto>> GetActiveRoomsAsync(int hotelId)
-    //    {
-    //        try
-    //        {
-    //            var rooms = await _roomRepository.GetAllActiveAsync(hotelId);
-    //            var roomTypes = await _roomTypeRepository.GetByHotelIdAsync(hotelId);
+            // 3. Validar que no esté ocupada
+            if (room.CurrentStayId.HasValue)
+                throw new InvalidOperationException("No se puede eliminar una habitación ocupada");
 
-    //            return rooms.Select(r => MapToDto(r,
-    //                roomTypes.FirstOrDefault(rt => rt.RoomTypeId == r.RoomTypeId)?.TypeName ?? "")).ToList();
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            _logger.LogError(ex, "Error getting active rooms for hotel {HotelId}", hotelId);
-    //            return new List<RoomDto>();
-    //        }
-    //    }
+            // 4. Validar estado
+            if (room.Status == RoomStatus.Occupied || room.Status == RoomStatus.Reserved)
+                throw new InvalidOperationException($"No se puede eliminar una habitación en estado {room.Status}");
 
-    //    // ESTADO
+            // 5. Soft delete
+            await _roomRepository.DeleteAsync(roomId);
 
-    //    public async Task<(bool Success, string? ErrorMessage)> UpdateRoomStatusAsync(
-    //        int roomId,
-    //        RoomStatus newStatus,
-    //        int updatedBy)
-    //    {
-    //        try
-    //        {
-    //            var result = await _roomRepository.UpdateStatusAsync(roomId, newStatus, updatedBy);
+            _logger.LogInformation("Habitación eliminada (soft delete): {RoomNumber} - ID: {RoomId}",
+                room.RoomNumber, roomId);
+        }
 
-    //            if (result)
-    //            {
-    //                _logger.LogInformation("Room {RoomId} status changed to {Status} by user {UpdatedBy}",
-    //                    roomId, newStatus, updatedBy);
-    //                return (true, null);
-    //            }
+        // ====================================================================
+        // CONSULTAS POR FILTROS
+        // ====================================================================
 
-    //            return (false, "Error al actualizar el estado de la habitación");
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            _logger.LogError(ex, "Error updating room status {RoomId}", roomId);
-    //            return (false, "Error al actualizar el estado de la habitación");
-    //        }
-    //    }
+        public async Task<IEnumerable<RoomResponseDto>> GetByTypeAsync(Guid roomTypeId)
+        {
+            // Validar que el tipo pertenezca al hotel actual
+            var roomType = await _roomTypeRepository.GetByIdAsync(roomTypeId);
+            if (roomType == null || roomType.HotelId != CurrentHotelId)
+                throw new UnauthorizedAccessException("El tipo de habitación no pertenece a este hotel");
 
-    //    public async Task<(bool Success, string? ErrorMessage)> BlockRoomAsync(
-    //        int roomId,
-    //        string reason,
-    //        DateTime? blockedUntil,
-    //        int updatedBy)
-    //    {
-    //        try
-    //        {
-    //            var result = await _roomRepository.BlockRoomAsync(roomId, reason, blockedUntil, updatedBy);
+            var rooms = await _roomRepository.GetByTypeAsync(roomTypeId);
 
-    //            if (result)
-    //            {
-    //                _logger.LogInformation("Room {RoomId} blocked by user {UpdatedBy}. Reason: {Reason}",
-    //                    roomId, updatedBy, reason);
-    //                return (true, null);
-    //            }
+            var roomTypes = await _roomTypeRepository.GetByHotelAsync(CurrentHotelId);
+            var roomTypeDict = roomTypes.ToDictionary(rt => rt.RoomTypeId);
 
-    //            return (false, "Error al bloquear la habitación");
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            _logger.LogError(ex, "Error blocking room {RoomId}", roomId);
-    //            return (false, "Error al bloquear la habitación");
-    //        }
-    //    }
+            return rooms.Select(room => MapToResponseDto(room, roomTypeDict));
+        }
 
-    //    public async Task<(bool Success, string? ErrorMessage)> UnblockRoomAsync(int roomId, int updatedBy)
-    //    {
-    //        try
-    //        {
-    //            var result = await _roomRepository.UnblockRoomAsync(roomId, updatedBy);
+        public async Task<IEnumerable<RoomResponseDto>> GetByStatusAsync(RoomStatus status)
+        {
+            var rooms = await _roomRepository.GetByStatusAsync(CurrentHotelId, status);
 
-    //            if (result)
-    //            {
-    //                _logger.LogInformation("Room {RoomId} unblocked by user {UpdatedBy}", roomId, updatedBy);
-    //                return (true, null);
-    //            }
+            var roomTypes = await _roomTypeRepository.GetByHotelAsync(CurrentHotelId);
+            var roomTypeDict = roomTypes.ToDictionary(rt => rt.RoomTypeId);
 
-    //            return (false, "Error al desbloquear la habitación");
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            _logger.LogError(ex, "Error unblocking room {RoomId}", roomId);
-    //            return (false, "Error al desbloquear la habitación");
-    //        }
-    //    }
+            return rooms.Select(room => MapToResponseDto(room, roomTypeDict));
+        }
 
-    //    // DISPONIBILIDAD
+        public async Task<IEnumerable<RoomResponseDto>> GetAvailableAsync()
+        {
+            var rooms = await _roomRepository.GetAvailableAsync(CurrentHotelId);
 
-    //    public async Task<List<RoomDto>> GetAvailableRoomsAsync(int hotelId, DateTime checkIn, DateTime checkOut)
-    //    {
-    //        try
-    //        {
-    //            var rooms = await _roomRepository.GetAvailableRoomsAsync(hotelId, checkIn, checkOut);
-    //            var roomTypes = await _roomTypeRepository.GetByHotelIdAsync(hotelId);
+            var roomTypes = await _roomTypeRepository.GetByHotelAsync(CurrentHotelId);
+            var roomTypeDict = roomTypes.ToDictionary(rt => rt.RoomTypeId);
 
-    //            return rooms.Select(r => MapToDto(r,
-    //                roomTypes.FirstOrDefault(rt => rt.RoomTypeId == r.RoomTypeId)?.TypeName ?? "")).ToList();
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            _logger.LogError(ex, "Error getting available rooms for hotel {HotelId}", hotelId);
-    //            return new List<RoomDto>();
-    //        }
-    //    }
+            return rooms.Select(room => MapToResponseDto(room, roomTypeDict));
+        }
 
-    //    public async Task<List<RoomDto>> GetAvailableRoomsByTypeAsync(
-    //        int roomTypeId,
-    //        DateTime checkIn,
-    //        DateTime checkOut)
-    //    {
-    //        try
-    //        {
-    //            var rooms = await _roomRepository.GetAvailableRoomsByTypeAsync(roomTypeId, checkIn, checkOut);
-    //            var roomType = await _roomTypeRepository.GetByIdAsync(roomTypeId);
+        // ====================================================================
+        // GESTIÓN DE ESTADOS
+        // ====================================================================
 
-    //            return rooms.Select(r => MapToDto(r, roomType?.TypeName ?? "")).ToList();
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            _logger.LogError(ex, "Error getting available rooms for type {RoomTypeId}", roomTypeId);
-    //            return new List<RoomDto>();
-    //        }
-    //    }
+        public async Task UpdateStatusAsync(Guid roomId, RoomStatus newStatus)
+        {
+            // 1. Validar que exista
+            var room = await _roomRepository.GetByIdAsync(roomId);
+            if (room == null)
+                throw new KeyNotFoundException($"No se encontró la habitación con ID {roomId}");
 
-    //    public async Task<bool> IsRoomAvailableAsync(int roomId, DateTime checkIn, DateTime checkOut)
-    //    {
-    //        try
-    //        {
-    //            var room = await _roomRepository.GetByIdAsync(roomId);
-    //            if (room == null || !room.IsActive || room.IsBlocked)
-    //                return false;
+            // 2. Validar multi-tenancy
+            if (room.HotelId != CurrentHotelId)
+                throw new UnauthorizedAccessException("No tiene permiso para modificar esta habitación");
 
-    //            // TODO: Verificar contra reservas existentes
-    //            return room.Status == RoomStatus.Available;
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            _logger.LogError(ex, "Error checking room availability {RoomId}", roomId);
-    //            return false;
-    //        }
-    //    }
+            // 3. COMENTAR O ELIMINAR ESTA VALIDACIÓN
+            /*
+            if (room.Status == newStatus)
+                throw new InvalidOperationException($"La habitación ya está en estado {newStatus}");
+            */
 
-    //    // VALIDACIONES
+            // 4. Actualizar estado
+            await _roomRepository.UpdateStatusAsync(roomId, newStatus, CurrentUserId);
 
-    //    public async Task<bool> RoomNumberExistsAsync(int hotelId, string roomNumber, int? excludeRoomId = null)
-    //    {
-    //        try
-    //        {
-    //            return await _roomRepository.RoomNumberExistsAsync(hotelId, roomNumber, excludeRoomId);
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            _logger.LogError(ex, "Error checking if room number exists {RoomNumber}", roomNumber);
-    //            return false;
-    //        }
-    //    }
+            _logger.LogInformation("Estado de habitación actualizado: {RoomNumber} - {OldStatus} → {NewStatus}",
+                room.RoomNumber, room.Status, newStatus);
+        }
 
-    //    public async Task<bool> CanDeleteRoomAsync(int roomId)
-    //    {
-    //        try
-    //        {
-    //            // TODO: Verificar contra reservas activas
-    //            var room = await _roomRepository.GetByIdAsync(roomId);
-    //            return room != null && room.Status == RoomStatus.Available;
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            _logger.LogError(ex, "Error checking if room can be deleted {RoomId}", roomId);
-    //            return false;
-    //        }
-    //    }
+        public async Task SetMaintenanceAsync(Guid roomId, string? notes)
+        {
+            // 1. Validar que exista
+            var room = await _roomRepository.GetByIdAsync(roomId);
+            if (room == null)
+                throw new KeyNotFoundException($"No se encontró la habitación con ID {roomId}");
 
-    //    // HELPERS
+            // 2. Validar multi-tenancy
+            if (room.HotelId != CurrentHotelId)
+                throw new UnauthorizedAccessException("No tiene permiso para modificar esta habitación");
 
-    //    private static RoomDto MapToDto(Room room, string roomTypeName)
-    //    {
-    //        return new RoomDto
-    //        {
-    //            RoomId = room.RoomId,
-    //            RoomTypeId = room.RoomTypeId,
-    //            RoomTypeName = roomTypeName,
-    //            RoomNumber = room.RoomNumber,
-    //            Floor = room.Floor,
-    //            Status = room.Status,
-    //            StatusText = room.Status.ToString(),
-    //            IsBlocked = room.IsBlocked,
-    //            BlockReason = room.BlockReason,
-    //            AllowsPets = room.AllowsPets,
-    //            IsSmoking = room.IsSmoking,
-    //            IsActive = room.IsActive
-    //        };
-    //    }
+            // 3. No se puede poner en mantenimiento si está ocupada
+            if (room.CurrentStayId.HasValue)
+                throw new InvalidOperationException("No se puede poner en mantenimiento una habitación ocupada");
+
+            // 4. Actualizar a mantenimiento
+            await _roomRepository.SetMaintenanceAsync(roomId, notes, CurrentUserId);
+
+            _logger.LogInformation("Habitación puesta en mantenimiento: {RoomNumber} - Razón: {Notes}",
+                room.RoomNumber, notes ?? "Sin especificar");
+        }
+
+        public async Task SetAvailableAsync(Guid roomId)
+        {
+            // 1. Validar que exista
+            var room = await _roomRepository.GetByIdAsync(roomId);
+            if (room == null)
+                throw new KeyNotFoundException($"No se encontró la habitación con ID {roomId}");
+
+            // 2. Validar multi-tenancy
+            if (room.HotelId != CurrentHotelId)
+                throw new UnauthorizedAccessException("No tiene permiso para modificar esta habitación");
+
+            // 3. Marcar como disponible (limpia current_stay_id)
+            await _roomRepository.SetAvailableAsync(roomId, CurrentUserId);
+
+            _logger.LogInformation("Habitación marcada como disponible: {RoomNumber}", room.RoomNumber);
+        }
+
+        // ====================================================================
+        // HELPERS PRIVADOS
+        // ====================================================================
+
+        private RoomResponseDto MapToResponseDto(Room room, Dictionary<Guid, RoomType> roomTypeDict)
+        {
+            var roomType = roomTypeDict.GetValueOrDefault(room.RoomTypeId);
+
+            return new RoomResponseDto
+            {
+                RoomId = room.RoomId,
+                HotelId = room.HotelId,
+                RoomTypeId = room.RoomTypeId,
+                RoomNumber = room.RoomNumber,
+                Floor = room.Floor,
+                Status = room.Status,
+                StatusText = GetStatusText(room.Status),
+                StatusChangedAt = room.StatusChangedAt,
+                StatusChangedBy = room.StatusChangedBy,
+                CurrentStayId = room.CurrentStayId,
+                Notes = room.Notes,
+                IsActive = room.IsActive,
+                RoomTypeName = roomType?.Name ?? "Sin tipo",
+                RoomTypeCode = roomType?.Code ?? "N/A",
+                CreatedAt = room.CreatedAt,
+                UpdatedAt = room.UpdatedAt
+            };
+        }
+
+        private string GetStatusText(RoomStatus status)
+        {
+            return status switch
+            {
+                RoomStatus.Available => "Disponible",
+                RoomStatus.Occupied => "Ocupada",
+                RoomStatus.Dirty => "Sucia",
+                RoomStatus.Cleaning => "En Limpieza",
+                RoomStatus.Maintenance => "Mantenimiento",
+                RoomStatus.Reserved => "Reservada",
+                _ => "Desconocido"
+            };
+        }
+
+        private Guid GetCurrentHotelId()
+        {
+            var hotelIdClaim = _httpContextAccessor.HttpContext?.User
+                ?.FindFirst("HotelId")?.Value;
+
+            if (string.IsNullOrEmpty(hotelIdClaim) || !Guid.TryParse(hotelIdClaim, out var hotelId))
+                throw new UnauthorizedAccessException("No se pudo obtener el HotelId del usuario actual");
+
+            return hotelId;
+        }
+
+        private Guid GetCurrentUserId()
+        {
+            var userIdClaim = _httpContextAccessor.HttpContext?.User
+                ?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+                throw new UnauthorizedAccessException("No se pudo obtener el UserId del usuario actual");
+
+            return userId;
+        }
     }
 }

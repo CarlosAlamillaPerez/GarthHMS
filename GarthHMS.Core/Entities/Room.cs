@@ -1,47 +1,72 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿// GarthHMS.Core/Entities/Room.cs
+using System;
 using GarthHMS.Core.Enums;
 
 namespace GarthHMS.Core.Entities
 {
     /// <summary>
     /// Habitación física específica (Ej: Habitación 101)
+    /// Tabla: room
     /// </summary>
     public class Room
     {
-        public int RoomId { get; set; }
-        public int HotelId { get; set; }
-        public int RoomTypeId { get; set; }
+        #region Identificación
 
-        public string RoomNumber { get; set; } = string.Empty;  // "101", "102A", etc.
-        public string? Floor { get; set; }  // "1", "2", "PB"
-        public string? Location { get; set; }  // "Ala Norte", "Torre B"
+        public Guid RoomId { get; set; }
+        public Guid HotelId { get; set; }
+        public Guid RoomTypeId { get; set; }
+
+        #endregion
+
+        #region Datos de la Habitación
+
+        public string RoomNumber { get; set; } = string.Empty;  // "101", "102", "201"
+        public int Floor { get; set; } = 1;  // Piso (1, 2, 3, etc.)
+
+        #endregion
+
+        #region Estados
 
         public RoomStatus Status { get; set; } = RoomStatus.Available;
+        public DateTime StatusChangedAt { get; set; }
+        public Guid? StatusChangedBy { get; set; }
 
-        // CARACTERÍSTICAS ESPECÍFICAS
-        public bool IsSmoking { get; set; } = false;
-        public bool IsAccessible { get; set; } = false;
-        public bool AllowsPets { get; set; } = false;
+        #endregion
 
-        // BLOQUEO
-        public bool IsBlocked { get; set; } = false;
-        public string? BlockReason { get; set; }
-        public DateTime? BlockedUntil { get; set; }
+        #region Conexión con Estancia
 
-        // NOTAS
+        public Guid? CurrentStayId { get; set; }  // FK a stay cuando está ocupada
+
+        #endregion
+
+        #region Control
+
         public string? Notes { get; set; }
-
         public bool IsActive { get; set; } = true;
 
-        // AUDITORÍA
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime? UpdatedAt { get; set; }
-        public int CreatedBy { get; set; }
-        public int? UpdatedBy { get; set; }
+        #endregion
+
+        #region Auditoría
+
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+        public Guid? CreatedBy { get; set; }
+
+        #endregion
+
+        #region Constructor
+
+        public Room()
+        {
+            RoomId = Guid.NewGuid();
+            Status = RoomStatus.Available;
+            StatusChangedAt = DateTime.UtcNow;
+            IsActive = true;
+            Floor = 1;
+            CreatedAt = DateTime.UtcNow;
+            UpdatedAt = DateTime.UtcNow;
+        }
+
+        #endregion
     }
 }

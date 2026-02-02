@@ -1,9 +1,8 @@
-﻿using System;
+﻿// GarthHMS.Infrastructure/Repositories/RoomRepository.cs
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-
 using GarthHMS.Core.Entities;
 using GarthHMS.Core.Enums;
 using GarthHMS.Core.Interfaces.Repositories;
@@ -12,7 +11,7 @@ using GarthHMS.Infrastructure.Data;
 namespace GarthHMS.Infrastructure.Repositories
 {
     /// <summary>
-    /// Repositorio para operaciones de habitaciones
+    /// Repositorio para operaciones de habitaciones usando Stored Procedures
     /// </summary>
     public class RoomRepository : IRoomRepository
     {
@@ -23,19 +22,23 @@ namespace GarthHMS.Infrastructure.Repositories
             _procedimientos = procedimientos;
         }
 
-        // CRUD
+        // ====================================================================
+        // CRUD BÁSICO
+        // ====================================================================
 
-        public async Task<Room?> GetByIdAsync(int roomId)
+        public async Task<Room?> GetByIdAsync(Guid roomId)
         {
-            return await _procedimientos.EjecutarUnicoAsync<Room>(
+            var result = await _procedimientos.EjecutarUnicoAsync<dynamic>(
                 "sp_room_get_by_id",
                 new { p_room_id = roomId }
             );
+
+            return result != null ? MapToRoom(result) : null;
         }
 
-        public async Task<int> CreateAsync(Room room)
+        public async Task<Guid> CreateAsync(Room room)
         {
-            var roomId = await _procedimientos.EjecutarEscalarAsync<int>(
+            var roomId = await _procedimientos.EjecutarEscalarAsync<Guid>(
                 "sp_room_create",
                 new
                 {
@@ -43,16 +46,7 @@ namespace GarthHMS.Infrastructure.Repositories
                     p_room_type_id = room.RoomTypeId,
                     p_room_number = room.RoomNumber,
                     p_floor = room.Floor,
-                    p_location = room.Location,
-                    p_status = room.Status,
-                    p_is_smoking = room.IsSmoking,
-                    p_is_accessible = room.IsAccessible,
-                    p_allows_pets = room.AllowsPets,
-                    p_is_blocked = room.IsBlocked,
-                    p_block_reason = room.BlockReason,
-                    p_blocked_until = room.BlockedUntil,
                     p_notes = room.Notes,
-                    p_is_active = room.IsActive,
                     p_created_by = room.CreatedBy
                 }
             );
@@ -60,79 +54,118 @@ namespace GarthHMS.Infrastructure.Repositories
             return roomId;
         }
 
-        public async Task<bool> UpdateAsync(Room room)
+        public async Task UpdateAsync(Room room)
         {
-            var rowsAffected = await _procedimientos.EjecutarAsync(
+            await _procedimientos.EjecutarAsync(
                 "sp_room_update",
                 new
                 {
                     p_room_id = room.RoomId,
                     p_room_number = room.RoomNumber,
                     p_floor = room.Floor,
-                    p_location = room.Location,
-                    p_is_smoking = room.IsSmoking,
-                    p_is_accessible = room.IsAccessible,
-                    p_allows_pets = room.AllowsPets,
-                    p_notes = room.Notes,
-                    p_is_active = room.IsActive,
-                    p_updated_by = room.UpdatedBy
+                    p_notes = room.Notes
                 }
             );
-
-            return rowsAffected > 0;
         }
 
-        public async Task<bool> DeleteAsync(int roomId)
+        public async Task DeleteAsync(Guid roomId)
         {
-            var rowsAffected = await _procedimientos.EjecutarAsync(
+            await _procedimientos.EjecutarAsync(
                 "sp_room_delete",
                 new { p_room_id = roomId }
             );
-
-            return rowsAffected > 0;
         }
 
-        // CONSULTAS
+        // ====================================================================
+        // CONSULTAS POR FILTROS
+        // ====================================================================
 
-        public async Task<List<Room>> GetByHotelIdAsync(int hotelId)
+        public async Task<IEnumerable<Room>> GetByHotelAsync(Guid hotelId)
         {
-            return await _procedimientos.EjecutarListaAsync<Room>(
+            var results = await _procedimientos.EjecutarListaAsync<dynamic>(
                 "sp_room_get_by_hotel",
                 new { p_hotel_id = hotelId }
             );
+
+            if (results == null || !results.Any())
+                return Enumerable.Empty<Room>();
+
+            var rooms = new List<Room>();
+            foreach (var item in results)
+            {
+                rooms.Add(MapToRoom(item));
+            }
+
+            return rooms;
         }
 
-        public async Task<List<Room>> GetAllActiveAsync(int hotelId)
+        public async Task<IEnumerable<Room>> GetAllActiveAsync(Guid hotelId)
         {
-            return await _procedimientos.EjecutarListaAsync<Room>(
+            var results = await _procedimientos.EjecutarListaAsync<dynamic>(
                 "sp_room_get_all_active",
                 new { p_hotel_id = hotelId }
             );
+
+            if (results == null || !results.Any())
+                return Enumerable.Empty<Room>();
+
+            var rooms = new List<Room>();
+            foreach (var item in results)
+            {
+                rooms.Add(MapToRoom(item));
+            }
+
+            return rooms;
         }
 
-        public async Task<List<Room>> GetByRoomTypeIdAsync(int roomTypeId)
+        public async Task<IEnumerable<Room>> GetByTypeAsync(Guid roomTypeId)
         {
-            return await _procedimientos.EjecutarListaAsync<Room>(
+            var results = await _procedimientos.EjecutarListaAsync<dynamic>(
                 "sp_room_get_by_type",
                 new { p_room_type_id = roomTypeId }
             );
+
+            if (results == null || !results.Any())
+                return Enumerable.Empty<Room>();
+
+            var rooms = new List<Room>();
+            foreach (var item in results)
+            {
+                rooms.Add(MapToRoom(item));
+            }
+
+            return rooms;
         }
 
-        public async Task<List<Room>> GetByStatusAsync(int hotelId, RoomStatus status)
+        public async Task<IEnumerable<Room>> GetByStatusAsync(Guid hotelId, RoomStatus status)
         {
-            return await _procedimientos.EjecutarListaAsync<Room>(
+            // Convertir el enum a string para PostgreSQL
+            var statusString = status.ToString().ToLower();
+
+            var results = await _procedimientos.EjecutarListaAsync<dynamic>(
                 "sp_room_get_by_status",
                 new
                 {
                     p_hotel_id = hotelId,
-                    p_status = status
+                    p_status = statusString
                 }
             );
+
+            if (results == null || !results.Any())
+                return Enumerable.Empty<Room>();
+
+            var rooms = new List<Room>();
+            foreach (var item in results)
+            {
+                rooms.Add(MapToRoom(item));
+            }
+
+            return rooms;
         }
 
-        public async Task<Room?> GetByRoomNumberAsync(int hotelId, string roomNumber)
+        public async Task<Room?> GetByNumberAsync(Guid hotelId, string roomNumber)
         {
-            return await _procedimientos.EjecutarUnicoAsync<Room>(
+            var result = await _procedimientos.EjecutarUnicoAsync<dynamic>(
                 "sp_room_get_by_number",
                 new
                 {
@@ -140,11 +173,17 @@ namespace GarthHMS.Infrastructure.Repositories
                     p_room_number = roomNumber
                 }
             );
+
+            return result != null ? MapToRoom(result) : null;
         }
 
-        public async Task<bool> RoomNumberExistsAsync(int hotelId, string roomNumber, int? excludeRoomId = null)
+        // ====================================================================
+        // VALIDACIONES
+        // ====================================================================
+
+        public async Task<bool> RoomNumberExistsAsync(Guid hotelId, string roomNumber, Guid? excludeRoomId = null)
         {
-            var result = await _procedimientos.EjecutarEscalarAsync<bool>(
+            var exists = await _procedimientos.EjecutarEscalarAsync<bool>(
                 "sp_room_number_exists",
                 new
                 {
@@ -154,82 +193,132 @@ namespace GarthHMS.Infrastructure.Repositories
                 }
             );
 
-            return result;
+            return exists;
         }
 
-        // ESTADO
+        // ====================================================================
+        // GESTIÓN DE ESTADOS
+        // ====================================================================
 
-        public async Task<bool> UpdateStatusAsync(int roomId, RoomStatus newStatus, int updatedBy)
+        public async Task UpdateStatusAsync(Guid roomId, RoomStatus newStatus, Guid changedBy)
         {
-            var rowsAffected = await _procedimientos.EjecutarAsync(
+            // Convertir el enum a string para PostgreSQL
+            var statusString = newStatus.ToString().ToLower();
+
+            await _procedimientos.EjecutarAsync(
                 "sp_room_update_status",
                 new
                 {
                     p_room_id = roomId,
-                    p_new_status = newStatus,
-                    p_updated_by = updatedBy
+                    p_new_status = statusString,
+                    p_changed_by = changedBy
                 }
             );
-
-            return rowsAffected > 0;
         }
 
-        public async Task<bool> BlockRoomAsync(int roomId, string reason, DateTime? blockedUntil, int updatedBy)
+        public async Task SetMaintenanceAsync(Guid roomId, string? notes, Guid changedBy)
         {
-            var rowsAffected = await _procedimientos.EjecutarAsync(
-                "sp_room_block",
+            await _procedimientos.EjecutarAsync(
+                "sp_room_set_maintenance",
                 new
                 {
                     p_room_id = roomId,
-                    p_block_reason = reason,
-                    p_blocked_until = blockedUntil,
-                    p_updated_by = updatedBy
+                    p_notes = notes,
+                    p_changed_by = changedBy
                 }
             );
-
-            return rowsAffected > 0;
         }
-
-        public async Task<bool> UnblockRoomAsync(int roomId, int updatedBy)
+        public async Task SetAvailableAsync(Guid roomId, Guid changedBy)
         {
-            var rowsAffected = await _procedimientos.EjecutarAsync(
-                "sp_room_unblock",
+            await _procedimientos.EjecutarAsync(
+                "sp_room_set_available",
                 new
                 {
                     p_room_id = roomId,
-                    p_updated_by = updatedBy
+                    p_changed_by = changedBy
                 }
             );
-
-            return rowsAffected > 0;
         }
 
-        // DISPONIBILIDAD
+        // ====================================================================
+        // CONSULTAS DE DISPONIBILIDAD
+        // ====================================================================
 
-        public async Task<List<Room>> GetAvailableRoomsAsync(int hotelId, DateTime checkIn, DateTime checkOut)
+        public async Task<IEnumerable<Room>> GetAvailableAsync(Guid hotelId)
         {
-            return await _procedimientos.EjecutarListaAsync<Room>(
+            var results = await _procedimientos.EjecutarListaAsync<dynamic>(
                 "sp_room_get_available",
-                new
-                {
-                    p_hotel_id = hotelId,
-                    p_check_in = checkIn,
-                    p_check_out = checkOut
-                }
+                new { p_hotel_id = hotelId }
             );
+
+            if (results == null || !results.Any())
+                return Enumerable.Empty<Room>();
+
+            var rooms = new List<Room>();
+            foreach (var item in results)
+            {
+                rooms.Add(MapToRoom(item));
+            }
+
+            return rooms;
         }
 
-        public async Task<List<Room>> GetAvailableRoomsByTypeAsync(int roomTypeId, DateTime checkIn, DateTime checkOut)
+        public async Task<IEnumerable<Room>> GetAvailableByTypeAsync(Guid roomTypeId)
         {
-            return await _procedimientos.EjecutarListaAsync<Room>(
+            var results = await _procedimientos.EjecutarListaAsync<dynamic>(
                 "sp_room_get_available_by_type",
-                new
-                {
-                    p_room_type_id = roomTypeId,
-                    p_check_in = checkIn,
-                    p_check_out = checkOut
-                }
+                new { p_room_type_id = roomTypeId }
             );
+
+            if (results == null || !results.Any())
+                return Enumerable.Empty<Room>();
+
+            var rooms = new List<Room>();
+            foreach (var item in results)
+            {
+                rooms.Add(MapToRoom(item));
+            }
+
+            return rooms;
+        }
+
+        // ====================================================================
+        // MAPEO DE DYNAMIC A ROOM
+        // ====================================================================
+
+        private Room MapToRoom(dynamic item)
+        {
+            return new Room
+            {
+                RoomId = item.room_id,
+                HotelId = item.hotel_id,
+                RoomTypeId = item.room_type_id,
+                RoomNumber = item.room_number,
+                Floor = item.floor,
+                Status = ParseRoomStatus(item.status),
+                StatusChangedAt = item.status_changed_at,
+                StatusChangedBy = item.status_changed_by,
+                CurrentStayId = item.current_stay_id,
+                Notes = item.notes,
+                IsActive = item.is_active,
+                CreatedAt = item.created_at,
+                UpdatedAt = item.updated_at,
+                CreatedBy = item.created_by
+            };
+        }
+
+        private RoomStatus ParseRoomStatus(string status)
+        {
+            return status?.ToLower() switch
+            {
+                "available" => RoomStatus.Available,
+                "occupied" => RoomStatus.Occupied,
+                "dirty" => RoomStatus.Dirty,
+                "cleaning" => RoomStatus.Cleaning,
+                "maintenance" => RoomStatus.Maintenance,
+                "reserved" => RoomStatus.Reserved,
+                _ => RoomStatus.Available
+            };
         }
     }
 }

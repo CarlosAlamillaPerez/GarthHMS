@@ -263,7 +263,7 @@
 .badge.bg-warning,
 .bg-warning {
     background-color: var(--warning) !important;
-    color: #212529 !important;
+    color: white !important;
 }
 
 .badge.bg-info,
@@ -535,3 +535,301 @@
     background-color: var(--btn-delete-hover) !important;
     border-color: var(--btn-delete-hover) !important;
 }
+
+
+
+
+
+
+/* ============================================================================
+   ROOM DETAILS MODAL
+   ============================================================================ */
+
+/* Header con gradiente según estado */
+.details-header {
+    padding: 20px;
+    border-radius: 10px;
+    color: white !important;
+    box-shadow: var(--shadow-md);
+}
+
+    /* Forzar todos los textos del header a blanco */
+    .details-header h3,
+    .details-header p,
+    .details-header strong,
+    .details-header .opacity-75 {
+        color: white !important;
+    }
+
+    .details-header.header-success {
+        background: linear-gradient(135deg, #38A169 0%, #2F855A 100%);
+    }
+
+    .details-header.header-danger {
+        background: linear-gradient(135deg, #E53E3E 0%, #C53030 100%);
+    }
+
+    .details-header.header-warning {
+        background: linear-gradient(135deg, #D69E2E 0%, #B7791F 100%);
+    }
+
+    .details-header.header-info {
+        background: linear-gradient(135deg, #4299E1 0%, #3182CE 100%);
+    }
+
+    .details-header.header-secondary {
+        background: linear-gradient(135deg, #718096 0%, #4A5568 100%);
+    }
+
+    .details-header.header-primary {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    }
+
+/* Status badge grande */
+.status-badge-large {
+    font-size: 1.1rem;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+/* Info cards */
+.info-card {
+    padding: 20px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+    .info-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .info-card .card-icon {
+        font-size: 2rem;
+        opacity: 0.8;
+    }
+
+    .info-card .card-content h5 {
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+/* Backgrounds suaves */
+.bg-primary-light {
+    background-color: rgba(43, 164, 154, 0.1);
+}
+
+.bg-success-light {
+    background-color: rgba(56, 161, 105, 0.1);
+}
+
+.bg-danger-light {
+    background-color: rgba(229, 62, 62, 0.1);
+}
+
+.bg-warning-light {
+    background-color: rgba(214, 158, 46, 0.1);
+}
+
+.bg-info-light {
+    background-color: rgba(66, 153, 225, 0.1);
+}
+
+.bg-secondary-light {
+    background-color: rgba(113, 128, 150, 0.1);
+}
+
+/* Section cards */
+.section-card {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.section-header {
+    color: white;
+    padding: 12px 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+    .section-header.bg-primary {
+        background-color: var(--primary);
+    }
+
+    .section-header.bg-warning {
+        background-color: var(--warning);
+    }
+
+    .section-header.bg-secondary {
+        background-color: #718096;
+    }
+
+.section-body {
+    padding: 20px;
+    background-color: var(--bg-primary);
+}
+
+/* Timeline */
+.timeline-item {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.timeline-marker {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.timeline-content {
+    flex: 1;
+}
+
+/* Audit items */
+.audit-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+    .audit-item i {
+        font-size: 1.3rem;
+        margin-top: 2px;
+    }
+
+/* Dark theme support */
+[data-theme="dark"] .info-card,
+[data-theme="dark"] .section-body {
+    background-color: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .bg-primary-light {
+    background-color: rgba(43, 164, 154, 0.15);
+}
+
+[data-theme="dark"] .bg-success-light {
+    background-color: rgba(56, 161, 105, 0.15);
+}
+
+[data-theme="dark"] .bg-danger-light {
+    background-color: rgba(229, 62, 62, 0.15);
+}
+
+[data-theme="dark"] .bg-warning-light {
+    background-color: rgba(214, 158, 46, 0.15);
+}
+
+[data-theme="dark"] .bg-info-light {
+    background-color: rgba(66, 153, 225, 0.15);
+}
+
+[data-theme="dark"] .bg-secondary-light {
+    background-color: rgba(113, 128, 150, 0.15);
+}
+
+
+/* ============================================================================
+   ROOM TYPE DETAILS MODAL
+   ============================================================================ */
+
+.roomtype-details-enhanced {
+    /* Contenedor principal */
+}
+
+/* Price items - Items de precios */
+.price-item {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    padding: 15px;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    transition: var(--transition);
+}
+
+    .price-item:hover {
+        background-color: var(--bg-tertiary);
+        transform: translateX(3px);
+    }
+
+.price-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.price-content {
+    flex: 1;
+}
+
+    .price-content h4 {
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+
+    .price-content h5 {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+/* Feature items - Items de características */
+.feature-item {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 15px;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    transition: var(--transition);
+}
+
+    .feature-item:hover {
+        background-color: var(--bg-tertiary);
+    }
+
+.feature-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.feature-item .fw-bold {
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .price-item,
+[data-theme="dark"] .feature-item {
+    background-color: var(--bg-tertiary);
+}
+
+    [data-theme="dark"] .price-item:hover,
+    [data-theme="dark"] .feature-item:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }

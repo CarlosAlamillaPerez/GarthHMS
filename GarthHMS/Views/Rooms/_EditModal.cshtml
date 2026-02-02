@@ -1,0 +1,62 @@
+﻿@model GarthHMS.Core.DTOs.Room.UpdateRoomDto
+
+<form id="editForm">
+    <input type="hidden" asp-for="RoomId" />
+
+    <div class="row">
+        <!-- Número de Habitación -->
+        <div class="col-md-6">
+            <div class="form-group mb-3">
+                <label asp-for="RoomNumber" class="form-label d-flex align-items-center justify-content-center">
+                    Número de Habitación
+                    <span class="text-danger"> *</span>
+                </label>
+                <input asp-for="RoomNumber" class="form-control" placeholder="Ej: 101, 201A" maxlength="10" />
+                <span asp-validation-for="RoomNumber" class="text-danger"></span>
+                <small class="text-muted">Máximo 10 caracteres</small>
+            </div>
+        </div>
+
+        <!-- Piso -->
+        <div class="col-md-6">
+            <div class="form-group mb-3">
+                <label asp-for="Floor" class="form-label d-flex align-items-center justify-content-center">
+                    Piso <span class="text-danger"> *</span>
+                </label>
+                <input asp-for="Floor" type="number" class="form-control" min="0" max="100" />
+                <span asp-validation-for="Floor" class="text-danger"></span>
+                <small class="text-muted">0 = Planta Baja</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Notas -->
+        <div class="col-md-12">
+            <div class="form-group mb-3">
+                <label asp-for="Notes" class="form-label">Notas</label>
+                <textarea asp-for="Notes" class="form-control" rows="3" maxlength="500" placeholder="Información adicional..."></textarea>
+                <span asp-validation-for="Notes" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información adicional -->
+    <div class="alert alert-warning d-flex align-items-center" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <div>
+            <strong>Importante:</strong> No puedes cambiar el tipo de habitación una vez creada.
+            Para cambiar el estado, usa los botones de acción en la tabla.
+        </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="mt-4 text-end">
+        <button type="button" class="btn btn-secondary" onclick="Swal.close()">
+            <i class="fas fa-times"></i> Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Actualizar Habitación
+        </button>
+    </div>
+</form>

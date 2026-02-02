@@ -1,134 +1,225 @@
 ﻿@model GarthHMS.Core.DTOs.RoomType.RoomTypeResponseDto
 
-<div class="text-start">
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <strong>Código:</strong>
-            <p class="text-muted">@Model.Code</p>
-        </div>
-        <div class="col-md-6">
-            <strong>Estado:</strong>
-            <p>
+<div class="roomtype-details-enhanced">
+    <!-- Header principal -->
+    <div class="details-header header-primary mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h3 class="mb-0">
+                    <i class="fas fa-bed"></i> @Model.Name
+                </h3>
+                <p class="mb-0 mt-1 opacity-75">
+                    <strong>Código:</strong> @Model.Code
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
                 @if (Model.IsActive)
                 {
-                    <span class="badge bg-success">Activo</span>
-                }
-                else
-                {
-                    <span class="badge bg-secondary">Inactivo</span>
-                }
-            </p>
-        </div>
-    </div>
-
-    <div class="mb-3">
-        <strong>Nombre:</strong>
-        <p class="text-muted">@Model.Name</p>
-    </div>
-
-    @if (!string.IsNullOrEmpty(Model.Description))
-    {
-        <div class="mb-3">
-            <strong>Descripción:</strong>
-            <p class="text-muted">@Model.Description</p>
-        </div>
-    }
-
-    <hr>
-
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <strong>Capacidad Base:</strong>
-            <p class="text-muted">@Model.BaseCapacity persona(s)</p>
-        </div>
-        <div class="col-md-6">
-            <strong>Capacidad Máxima:</strong>
-            <p class="text-muted">@Model.MaxCapacity persona(s)</p>
-        </div>
-    </div>
-
-    <hr>
-
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <strong>Precio Base (Noche):</strong>
-            <p class="text-muted">$@Model.BasePriceNightly.ToString("N2")</p>
-        </div>
-        <div class="col-md-6">
-            <strong>Precio Base (Hora):</strong>
-            <p class="text-muted">$@Model.BasePriceHourly.ToString("N2")</p>
-        </div>
-    </div>
-
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <strong>Cargo Persona Extra:</strong>
-            <p class="text-muted">$@Model.ExtraPersonCharge.ToString("N2")</p>
-        </div>
-        <div class="col-md-6">
-            <strong>Permite Mascotas:</strong>
-            <p class="text-muted">
-                @if (Model.AllowsPets)
-                {
-                    <i class="fas fa-check text-success"></i>
-                    <span>
-                        Sí (Cargo: $@Model.PetCharge.ToString("N2"))
+                    <span class="badge bg-success status-badge-large">
+                        <i class="fas fa-check-circle"></i> Activo
                     </span>
                 }
                 else
                 {
-                    <i class="fas fa-times text-danger"></i>
-                    <span>No</span>
+                    <span class="badge bg-secondary status-badge-large">
+                        <i class="fas fa-ban"></i> Inactivo
+                    </span>
                 }
-            </p>
+            </div>
         </div>
     </div>
 
-    <hr>
+    <!-- Descripción (si existe) -->
+    @if (!string.IsNullOrEmpty(Model.Description))
+    {
+        <div class="alert alert-info mb-4">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Descripción:</strong> @Model.Description
+        </div>
+    }
 
-    <div class="row mb-3">
-        @if (Model.SizeSqm.HasValue)
-        {
-            <div class="col-md-4">
-                <strong>Tamaño:</strong>
-                <p class="text-muted">@Model.SizeSqm.Value.ToString("N2") m²</p>
-            </div>
-        }
-        @if (!string.IsNullOrEmpty(Model.BedType))
-        {
-            <div class="col-md-4">
-                <strong>Tipo de Cama:</strong>
-                <p class="text-muted">@Model.BedType</p>
-            </div>
-        }
-        @if (!string.IsNullOrEmpty(Model.ViewType))
-        {
-            <div class="col-md-4">
-                <strong>Tipo de Vista:</strong>
-                <p class="text-muted">@Model.ViewType</p>
-            </div>
-        }
-    </div>
-
-    <hr>
-
-    <div class="row">
+    <!-- Cards de Capacidad -->
+    <div class="row g-3 mb-4">
         <div class="col-md-6">
-            <strong>Creado:</strong>
-            <p class="text-muted"><small>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small></p>
+            <div class="info-card bg-primary-light">
+                <i class="fas fa-users card-icon text-primary"></i>
+                <div class="card-content">
+                    <small class="text-muted">Capacidad Base</small>
+                    <h5 class="mb-0">@Model.BaseCapacity persona(s)</h5>
+                </div>
+            </div>
         </div>
         <div class="col-md-6">
-            <strong>Última Actualización:</strong>
-            <p class="text-muted"><small>@Model.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</small></p>
+            <div class="info-card bg-info-light">
+                <i class="fas fa-user-friends card-icon text-info"></i>
+                <div class="card-content">
+                    <small class="text-muted">Capacidad Máxima</small>
+                    <h5 class="mb-0">@Model.MaxCapacity persona(s)</h5>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="text-end mt-4">
-        <button type="button" class="btn btn-secondary" onclick="Swal.close()">
-            <i class="fas fa-times"></i> Cerrar
-        </button>
-        <button type="button" class="btn btn-warning" onclick="Swal.close(); openEditModal('@Model.RoomTypeId')">
-            <i class="fas fa-edit"></i> Editar
-        </button>
+    <!-- Precios -->
+    <div class="section-card mb-4">
+        <div class="section-header bg-success">
+            <i class="fas fa-dollar-sign"></i> Precios
+        </div>
+        <div class="section-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="price-item">
+                        <div class="price-icon bg-success-light">
+                            <i class="fas fa-moon text-success"></i>
+                        </div>
+                        <div class="price-content">
+                            <small class="text-muted">Precio por Noche</small>
+                            <h4 class="mb-0 text-success">$@Model.BasePriceNightly.ToString("N2")</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="price-item">
+                        <div class="price-icon bg-info-light">
+                            <i class="fas fa-clock text-info"></i>
+                        </div>
+                        <div class="price-content">
+                            <small class="text-muted">Precio por Hora</small>
+                            <h4 class="mb-0 text-info">$@Model.BasePriceHourly.ToString("N2")</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="price-item">
+                        <div class="price-icon bg-warning-light">
+                            <i class="fas fa-user-plus text-warning"></i>
+                        </div>
+                        <div class="price-content">
+                            <small class="text-muted">Persona Extra</small>
+                            <h5 class="mb-0">$@Model.ExtraPersonCharge.ToString("N2")</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="price-item">
+                        <div class="price-icon @(Model.AllowsPets ? "bg-success-light" : "bg-danger-light")">
+                            <i class="fas fa-paw @(Model.AllowsPets ? "text-success" : "text-danger")"></i>
+                        </div>
+                        <div class="price-content">
+                            <small class="text-muted">Mascotas</small>
+                            @if (Model.AllowsPets)
+                            {
+                                <h5 class="mb-0 text-success">
+                                    Permitidas <small>($@Model.PetCharge.ToString("N2"))</small>
+                                </h5>
+                            }
+                            else
+                            {
+                                <h5 class="mb-0 text-danger">No Permitidas</h5>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Características -->
+    <div class="section-card mb-4">
+        <div class="section-header bg-primary">
+            <i class="fas fa-list-ul"></i> Características
+        </div>
+        <div class="section-body">
+            <div class="row g-3">
+                @if (Model.SizeSqm.HasValue)
+                {
+                    <div class="col-md-4">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-expand-arrows-alt text-primary"></i>
+                            </div>
+                            <div>
+                                <small class="text-muted">Tamaño</small>
+                                <div class="fw-bold">@Model.SizeSqm.Value.ToString("N2") m²</div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.BedType))
+                {
+                    <div class="col-md-4">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-bed text-info"></i>
+                            </div>
+                            <div>
+                                <small class="text-muted">Tipo de Cama</small>
+                                <div class="fw-bold">@Model.BedType</div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.ViewType))
+                {
+                    <div class="col-md-4">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-eye text-success"></i>
+                            </div>
+                            <div>
+                                <small class="text-muted">Tipo de Vista</small>
+                                <div class="fw-bold">@Model.ViewType</div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @if (!Model.SizeSqm.HasValue && string.IsNullOrEmpty(Model.BedType) && string.IsNullOrEmpty(Model.ViewType))
+            {
+                <p class="text-muted text-center mb-0 mt-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    No se han especificado características adicionales
+                </p>
+            }
+        </div>
+    </div>
+
+    <!-- Información de Auditoría -->
+    <div class="section-card">
+        <div class="section-header bg-secondary">
+            <i class="fas fa-clock"></i> Información de Auditoría
+        </div>
+        <div class="section-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="audit-item">
+                        <i class="fas fa-plus-circle text-success me-2"></i>
+                        <div>
+                            <small class="text-muted">Fecha de Creación</small>
+                            <div><strong>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="audit-item">
+                        <i class="fas fa-edit text-primary me-2"></i>
+                        <div>
+                            <small class="text-muted">Última Actualización</small>
+                            <div><strong>@Model.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4 text-end">
+    <button type="button" class="btn btn-secondary" onclick="Swal.close()">
+        <i class="fas fa-times"></i> Cerrar
+    </button>
+    <button type="button" class="btn btn-warning" onclick="Swal.close(); openEditModal('@Model.RoomTypeId')">
+        <i class="fas fa-edit"></i> Editar
+    </button>
 </div>

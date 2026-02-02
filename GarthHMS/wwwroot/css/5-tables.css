@@ -58,6 +58,12 @@
     border: none;
 }
 
+/* Permitir que los dropdowns salgan de la tabla */
+.fixed-table-container,
+.fixed-table-body {
+    overflow: visible !important;
+}
+
 .bootstrap-table .table {
     margin-bottom: 0;
     background-color: var(--bg-surface);
@@ -257,6 +263,11 @@
 
 .swal-bootstrap-table .swal2-container {
     z-index: calc(var(--z-modal) + 1) !important;
+}
+
+/* Asegura que el menú no quede detrás */
+.dropdown-menu {
+    z-index: 1055;
 }
 
 /* ========================================
