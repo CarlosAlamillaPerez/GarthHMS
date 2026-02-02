@@ -1,0 +1,71 @@
+﻿@model IEnumerable<GarthHMS.Core.DTOs.Role.PermissionDto>
+
+<form id="permissionsForm" class="text-start">
+    <input type="hidden" name="RoleId" value="@ViewBag.RoleId" />
+
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        <strong>Selecciona los permisos</strong> que tendrá este rol. Los permisos organizados por categoría facilitan la gestión.
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        var groupedPermissions = Model.GroupBy(p => p.Category);
+
+        foreach (var group in groupedPermissions.OrderBy(g => g.Key))
+        {
+            <div class="permission-category mb-4">
+                <h6 class="category-header">
+                    <i class="fas fa-folder-open text-primary"></i> @group.Key
+                </h6>
+                <div class="permission-list">
+                    @foreach (var permission in group.OrderBy(p => p.DisplayOrder))
+                    {
+                        <div class="form-check permission-item">
+                            <input class="form-check-input permission-checkbox"
+                                   type="checkbox"
+                                   name="PermissionIds"
+                                   value="@permission.PermissionId"
+                                   id="perm_@permission.PermissionId"
+                            @(permission.IsAssigned ? "checked" : "")>
+                            <label class="form-check-label" for="perm_@permission.PermissionId">
+                                <strong>@permission.Name</strong>
+                                @if (!string.IsNullOrEmpty(permission.Description))
+                                {
+                                    <br />
+                                    <small class="text-muted">@permission.Description</small>
+                                }
+                            </label>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="d-flex justify-content-between mb-3">
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAllPermissions()">
+                <i class="fas fa-check-double"></i> Seleccionar Todos
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAllPermissions()">
+                <i class="fas fa-times-circle"></i> Deseleccionar Todos
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            No hay permisos disponibles para asignar.
+        </div>
+    }
+
+    <!-- Botones -->
+    <div class="mt-4 text-end">
+        <button type="button" class="btn btn-secondary" onclick="Swal.close()">
+            <i class="fas fa-times"></i> Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Guardar Permisos
+        </button>
+    </div>
+</form>

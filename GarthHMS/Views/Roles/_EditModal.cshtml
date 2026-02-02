@@ -1,0 +1,71 @@
+﻿@model GarthHMS.Core.DTOs.Role.UpdateRoleDto
+
+<form id="editForm" class="text-start">
+    <input type="hidden" id="editRoleId" name="RoleId" value="@Model.RoleId" />
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="mb-3">
+                <label for="editName" class="form-label">
+                    Nombre del Rol <span class="text-danger">*</span>
+                </label>
+                <input type="text"
+                       class="form-control"
+                       id="editName"
+                       name="Name"
+                       value="@Model.Name"
+                       required
+                       maxlength="50">
+                <small class="text-muted">Mínimo 2 caracteres, máximo 50</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="mb-3">
+                <label for="editDescription" class="form-label">Descripción</label>
+                <textarea class="form-control"
+                          id="editDescription"
+                          name="Description"
+                          rows="3"
+                          maxlength="500">@Model.Description</textarea>
+                <small class="text-muted">Máximo 500 caracteres</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="mb-3">
+                <label for="editMaxDiscountPercent" class="form-label">
+                    Descuento Máximo (%) <span class="text-danger">*</span>
+                </label>
+                <input type="number"
+                       class="form-control"
+                       id="editMaxDiscountPercent"
+                       name="MaxDiscountPercent"
+                       value="@Model.MaxDiscountPercent"
+                       min="0"
+                       max="100"
+                       required>
+                <small class="text-muted">Porcentaje máximo de descuento permitido (0-100)</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong>Importante:</strong> Los cambios afectarán a todos los usuarios con este rol asignado.
+    </div>
+
+    <!-- Botones -->
+    <div class="mt-4 text-end">
+        <button type="button" class="btn btn-secondary" onclick="Swal.close()">
+            <i class="fas fa-times"></i> Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Actualizar Rol
+        </button>
+    </div>
+</form>

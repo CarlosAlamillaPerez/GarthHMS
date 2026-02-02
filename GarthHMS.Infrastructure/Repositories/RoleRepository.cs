@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
+using GarthHMS.Core.DTOs.Role;
 using GarthHMS.Core.Entities;
 using GarthHMS.Core.Interfaces.Repositories;
 using GarthHMS.Infrastructure.Data;
@@ -12,74 +12,59 @@ namespace GarthHMS.Infrastructure.Repositories
 {
     public class RoleRepository : IRoleRepository
     {
-        private readonly DapperContext _context;
+        private readonly Procedimientos _procedimientos;
+        private readonly BaseDeDatos _baseDeDatos;
 
-        public RoleRepository(DapperContext context)
+        public RoleRepository(Procedimientos procedimientos, BaseDeDatos baseDeDatos)
         {
-            _context = context;
+            _procedimientos = procedimientos;
+            _baseDeDatos = baseDeDatos;
         }
 
         public async Task<Role?> GetByIdAsync(Guid roleId)
         {
-            using var connection = _context.CreateConnection();
-            var parameters = new DynamicParameters();
-            parameters.Add("p_role_id", roleId);
-
-            var result = await connection.QueryFirstOrDefaultAsync<Role>(
+            var result = await _procedimientos.EjecutarUnicoAsync<dynamic>(
                 "sp_role_get_by_id",
-                parameters,
-                commandType: CommandType.StoredProcedure
+                new { p_role_id = roleId }
             );
 
-            return result;
+            return result != null ? MapToRole(result) : null;
         }
 
         public async Task<IEnumerable<Role>> GetByHotelAsync(Guid hotelId)
         {
-            using var connection = _context.CreateConnection();
-            var parameters = new DynamicParameters();
-            parameters.Add("p_hotel_id", hotelId);
-
-            var result = await connection.QueryAsync<Role>(
+            var results = await _procedimientos.EjecutarListaAsync<dynamic>(
                 "sp_role_get_by_hotel",
-                parameters,
-                commandType: CommandType.StoredProcedure
+                new { p_hotel_id = hotelId }
             );
 
-            return result;
+            return results.Select(MapToRole);
         }
 
         public async Task<IEnumerable<Role>> GetAllActiveAsync(Guid hotelId)
         {
-            using var connection = _context.CreateConnection();
-            var parameters = new DynamicParameters();
-            parameters.Add("p_hotel_id", hotelId);
-
-            var result = await connection.QueryAsync<Role>(
+            var results = await _procedimientos.EjecutarListaAsync<dynamic>(
                 "sp_role_get_all_active",
-                parameters,
-                commandType: CommandType.StoredProcedure
+                new { p_hotel_id = hotelId }
             );
 
-            return result;
+            return results.Select(MapToRole);
         }
 
         public async Task<Guid> CreateAsync(Role role)
         {
-            using var connection = _context.CreateConnection();
-            var parameters = new DynamicParameters();
-            parameters.Add("p_hotel_id", role.HotelId);
-            parameters.Add("p_name", role.Name);
-            parameters.Add("p_description", role.Description);
-            parameters.Add("p_max_discount_percent", role.MaxDiscountPercent);
-            parameters.Add("p_is_system_role", role.IsSystemRole);
-            parameters.Add("p_is_manager_role", role.IsManagerRole);
-            parameters.Add("p_created_by", role.CreatedBy);
-
-            var roleId = await connection.ExecuteScalarAsync<Guid>(
+            var roleId = await _procedimientos.EjecutarEscalarAsync<Guid>(
                 "sp_role_create",
-                parameters,
-                commandType: CommandType.StoredProcedure
+                new
+                {
+                    p_hotel_id = role.HotelId,
+                    p_name = role.Name,
+                    p_description = role.Description,
+                    p_max_discount_percent = role.MaxDiscountPercent,
+                    p_is_system_role = role.IsSystemRole,
+                    p_is_manager_role = role.IsManagerRole,
+                    p_created_by = role.CreatedBy
+                }
             );
 
             return roleId;
@@ -87,45 +72,36 @@ namespace GarthHMS.Infrastructure.Repositories
 
         public async Task UpdateAsync(Role role)
         {
-            using var connection = _context.CreateConnection();
-            var parameters = new DynamicParameters();
-            parameters.Add("p_role_id", role.RoleId);
-            parameters.Add("p_name", role.Name);
-            parameters.Add("p_description", role.Description);
-            parameters.Add("p_max_discount_percent", role.MaxDiscountPercent);
-
-            await connection.ExecuteAsync(
+            await _procedimientos.EjecutarAsync(
                 "sp_role_update",
-                parameters,
-                commandType: CommandType.StoredProcedure
+                new
+                {
+                    p_role_id = role.RoleId,
+                    p_name = role.Name,
+                    p_description = role.Description,
+                    p_max_discount_percent = role.MaxDiscountPercent
+                }
             );
         }
 
         public async Task DeleteAsync(Guid roleId)
         {
-            using var connection = _context.CreateConnection();
-            var parameters = new DynamicParameters();
-            parameters.Add("p_role_id", roleId);
-
-            await connection.ExecuteAsync(
+            await _procedimientos.EjecutarAsync(
                 "sp_role_delete",
-                parameters,
-                commandType: CommandType.StoredProcedure
+                new { p_role_id = roleId }
             );
         }
 
         public async Task<bool> NameExistsAsync(Guid hotelId, string name, Guid? excludeRoleId = null)
         {
-            using var connection = _context.CreateConnection();
-            var parameters = new DynamicParameters();
-            parameters.Add("p_hotel_id", hotelId);
-            parameters.Add("p_name", name);
-            parameters.Add("p_exclude_role_id", excludeRoleId);
-
-            var exists = await connection.ExecuteScalarAsync<bool>(
+            var exists = await _procedimientos.EjecutarEscalarAsync<bool>(
                 "sp_role_name_exists",
-                parameters,
-                commandType: CommandType.StoredProcedure
+                new
+                {
+                    p_hotel_id = hotelId,
+                    p_name = name,
+                    p_exclude_role_id = excludeRoleId
+                }
             );
 
             return exists;
@@ -137,15 +113,13 @@ namespace GarthHMS.Infrastructure.Repositories
 
         public async Task<IEnumerable<Guid>> GetRolePermissionsAsync(Guid roleId)
         {
-            using var connection = _context.CreateConnection();
-            var parameters = new DynamicParameters();
-            parameters.Add("p_role_id", roleId);
+            using var connection = await _baseDeDatos.GetConnectionAsync();
 
             var result = await connection.QueryAsync<Guid>(
                 @"SELECT permission_id 
                   FROM role_permission 
                   WHERE role_id = @p_role_id",
-                parameters
+                new { p_role_id = roleId }
             );
 
             return result;
@@ -153,8 +127,8 @@ namespace GarthHMS.Infrastructure.Repositories
 
         public async Task AssignPermissionsAsync(Guid roleId, List<Guid> permissionIds)
         {
-            using var connection = _context.CreateConnection();
-            using var transaction = connection.BeginTransaction();
+            using var connection = await _baseDeDatos.GetConnectionAsync();
+            using var transaction = await connection.BeginTransactionAsync();
 
             try
             {
@@ -184,13 +158,55 @@ namespace GarthHMS.Infrastructure.Repositories
                     );
                 }
 
-                transaction.Commit();
+                await transaction.CommitAsync();
             }
             catch
             {
-                transaction.Rollback();
+                await transaction.RollbackAsync();
                 throw;
             }
+        }
+
+        public async Task<IEnumerable<PermissionDto>> GetAllPermissionsAsync()
+        {
+            using var connection = await _baseDeDatos.GetConnectionAsync();
+
+            var permissions = await connection.QueryAsync<PermissionDto>(
+                @"SELECT 
+                    permission_id AS PermissionId,
+                    code AS Code,
+                    module AS Module,
+                    name AS Name,
+                    description AS Description,
+                    category AS Category,
+                    display_order AS DisplayOrder
+                  FROM permission
+                  ORDER BY category, display_order"
+            );
+
+            return permissions;
+        }
+
+        // ============================================================================
+        // MAPPERS
+        // ============================================================================
+
+        private Role MapToRole(dynamic result)
+        {
+            return new Role
+            {
+                RoleId = Guid.Parse(result.role_id.ToString()),
+                HotelId = Guid.Parse(result.hotel_id.ToString()),
+                Name = result.name,
+                Description = result.description,
+                MaxDiscountPercent = result.max_discount_percent,
+                IsSystemRole = result.is_system_role,
+                IsManagerRole = result.is_manager_role,
+                IsActive = result.is_active,
+                CreatedAt = result.created_at,
+                UpdatedAt = result.updated_at,
+                CreatedBy = result.created_by != null ? Guid.Parse(result.created_by.ToString()) : null
+            };
         }
     }
 }

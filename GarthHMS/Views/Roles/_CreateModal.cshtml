@@ -1,0 +1,118 @@
+﻿@* Formulario para crear un nuevo rol *@
+
+<form id="createForm" class="text-start">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="mb-3">
+                <label for="createName" class="form-label d-flex align-items-center justify-content-left">
+                    Nombre del Rol <span class="text-danger">*</span>
+                </label>
+                <input type="text"
+                       class="form-control"
+                       id="createName"
+                       name="Name"
+                       required
+                       maxlength="50"
+                       placeholder="Ej: Recepcionista, Supervisor, Gerente">
+                <small class="text-muted">Mínimo 2 caracteres, máximo 50</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="mb-3">
+                <label for="createDescription" class="form-label">Descripción</label>
+                <textarea class="form-control"
+                          id="createDescription"
+                          name="Description"
+                          rows="3"
+                          maxlength="500"
+                          placeholder="Describe las responsabilidades y alcance de este rol..."></textarea>
+                <small class="text-muted">Máximo 500 caracteres</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Descuento máximo -->
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="createMaxDiscountPercent" class="form-label">
+                    Descuento Máximo (%) <span class="text-danger">*</span>
+                </label>
+
+                <div class="input-group">
+                    <input type="number"
+                           class="form-control"
+                           id="createMaxDiscountPercent"
+                           name="MaxDiscountPercent"
+                           min="0"
+                           max="100"
+                           value="0"
+                           required>
+                    <span class="input-group-text">%</span>
+                </div>
+
+                <small class="text-muted">
+                    Porcentaje máximo de descuento permitido (0–100)
+                </small>
+            </div>
+        </div>
+
+        <!-- Configuración especial -->
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label">Configuración Especial</label>
+
+                <label for="createIsManagerRole"
+                       class="border rounded p-3 bg-light d-flex align-items-start gap-3 w-100 manager-option">
+
+                    <input class="form-check-input mt-1"
+                           type="checkbox"
+                           id="createIsManagerRole"
+                           name="IsManagerRole"
+                           value="true">
+
+                    <div>
+                        <div class="fw-semibold">
+                            <i class="fas fa-star text-warning me-1"></i>
+                            Rol Gerencial
+                        </div>
+                        <div class="text-muted small">
+                            Acceso a reportes, métricas y funciones administrativas
+                        </div>
+                    </div>
+                </label>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        <strong>Nota:</strong> Después de crear el rol, podrás asignar permisos específicos.
+    </div>
+
+    <!-- Botones -->
+    <div class="mt-4 text-end">
+        <button type="button" class="btn btn-secondary" onclick="Swal.close()">
+            <i class="fas fa-times"></i> Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Guardar Rol
+        </button>
+    </div>
+</form>
+
+<style>
+    .manager-option {
+        cursor: pointer;
+    }
+
+        .manager-option .form-check-input {
+            margin-left: 0; /* 🔥 clave */
+            margin-top: 0.25rem;
+            position: relative;
+        }
+</style>

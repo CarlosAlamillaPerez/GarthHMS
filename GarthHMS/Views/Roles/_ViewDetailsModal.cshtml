@@ -1,0 +1,159 @@
+﻿@model GarthHMS.Core.DTOs.Role.RoleResponseDto
+
+<div class="details-container">
+    <!-- Información General -->
+    <div class="section-card">
+        <div class="section-header @(Model.IsActive ? "bg-success" : "bg-secondary")">
+            <i class="fas fa-info-circle"></i> Información General
+        </div>
+        <div class="section-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="detail-item">
+                        <i class="fas fa-tag text-primary me-2"></i>
+                        <div>
+                            <small class="text-muted">Nombre del Rol</small>
+                            <div><strong>@Model.Name</strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="detail-item">
+                        <i class="fas fa-list-check text-info me-2"></i>
+                        <div>
+                            <small class="text-muted">Estado</small>
+                            <div>
+                                <span class="badge bg-@Model.StatusColor">
+                                    @Model.StatusBadge
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <div class="detail-item">
+                        <i class="fas fa-align-left text-secondary me-2"></i>
+                        <div>
+                            <small class="text-muted">Descripción</small>
+                            <div>
+                                @if (!string.IsNullOrEmpty(Model.Description))
+                                {
+                                    <p class="mb-0">@Model.Description</p>
+                                }
+                                else
+                                {
+                                    <p class="text-muted mb-0">Sin descripción</p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuración y Permisos -->
+    <div class="section-card">
+        <div class="section-header bg-warning">
+            <i class="fas fa-cog"></i> Configuración y Permisos
+        </div>
+        <div class="section-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="detail-item">
+                        <i class="fas fa-percent text-success me-2"></i>
+                        <div>
+                            <small class="text-muted">Descuento Máximo</small>
+                            <div><strong class="text-success">@Model.DiscountDisplay</strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="detail-item">
+                        <i class="fas fa-shield-alt text-primary me-2"></i>
+                        <div>
+                            <small class="text-muted">Tipo de Rol</small>
+                            <div>
+                                <span class="badge bg-@Model.RoleTypeColor">
+                                    @Model.RoleTypeBadge
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="detail-item">
+                        <i class="fas fa-@(Model.IsManagerRole ? "star" : "user") text-warning me-2"></i>
+                        <div>
+                            <small class="text-muted">Nivel</small>
+                            <div>
+                                @if (Model.IsManagerRole)
+                                {
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-star"></i> Gerencial
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-info">Operativo</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información de Auditoría -->
+    <div class="section-card">
+        <div class="section-header bg-secondary">
+            <i class="fas fa-clock"></i> Información de Auditoría
+        </div>
+        <div class="section-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="audit-item">
+                        <i class="fas fa-plus-circle text-success me-2"></i>
+                        <div>
+                            <small class="text-muted">Fecha de Creación</small>
+                            <div><strong>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="audit-item">
+                        <i class="fas fa-edit text-primary me-2"></i>
+                        <div>
+                            <small class="text-muted">Última Actualización</small>
+                            <div><strong>@(Model.UpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "N/A")</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.IsSystemRole)
+    {
+        <div class="alert alert-info">
+            <i class="fas fa-lock"></i>
+            <strong>Rol del Sistema:</strong> Este rol es parte del sistema y tiene restricciones de edición y eliminación.
+        </div>
+    }
+</div>
+
+<div class="mt-4 text-end">
+    <button type="button" class="btn btn-info" onclick="Swal.close(); openPermissionsModal('@Model.RoleId')">
+        <i class="fas fa-shield-alt"></i> Gestionar Permisos
+    </button>
+    @if (!Model.IsSystemRole)
+    {
+        <button type="button" class="btn btn-warning" onclick="Swal.close(); openEditModal('@Model.RoleId')">
+            <i class="fas fa-edit"></i> Editar
+        </button>
+    }
+    <button type="button" class="btn btn-secondary" onclick="Swal.close()">
+        <i class="fas fa-times"></i> Cerrar
+    </button>
+</div>

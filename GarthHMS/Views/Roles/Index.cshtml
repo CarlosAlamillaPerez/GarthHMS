@@ -1,0 +1,56 @@
+﻿@{
+    ViewData["Title"] = "Roles y Permisos";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-user-shield text-primary"></i> Roles y Permisos
+            </h2>
+            <p class="text-muted mb-0">Gestión de roles y asignación de permisos del sistema</p>
+        </div>
+        <button class="btn btn-primary" onclick="openCreateModal()">
+            <i class="fas fa-plus-circle"></i> Nuevo Rol
+        </button>
+    </div>
+
+    <!-- Tabla de roles -->
+    <div class="card">
+        <div class="card-body">
+            <div id="toolbar" class="mb-3">
+                <button class="btn btn-sm btn-outline-secondary" onclick="loadRoles()">
+                    <i class="fas fa-sync-alt"></i> Recargar
+                </button>
+            </div>
+
+            <table id="rolesTable"
+                   class="table table-hover text-center"
+                   data-toggle="table"
+                   data-toolbar="#toolbar"
+                   data-search="true"
+                   data-show-refresh="true"
+                   data-show-columns="true"
+                   data-show-export="true"
+                   data-pagination="true"
+                   data-page-size="10"
+                   data-page-list="[10, 25, 50, 100]">
+                <thead>
+                    <tr>
+                        <th data-field="name" data-sortable="true">Nombre</th>
+                        <th data-field="description" data-sortable="true">Descripción</th>
+                        <th data-field="maxDiscountPercent" data-sortable="true" data-formatter="discountFormatter">Descuento Máx.</th>
+                        <th data-field="roleTypeBadge" data-sortable="true" data-formatter="roleTypeFormatter">Tipo</th>
+                        <th data-field="statusBadge" data-sortable="true" data-formatter="statusFormatter">Estado</th>
+                        <th data-field="actions" data-formatter="actionsFormatter">Acciones</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/settings/roles.js"></script>
+}

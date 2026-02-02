@@ -71,12 +71,18 @@ builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IHotelService, HotelService>();
+
+// Room Service
 builder.Services.AddScoped<IRoomTypeService, RoomTypeService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 
 // Room Types Service
 builder.Services.AddScoped<IRoomTypeService, RoomTypeService>();
 builder.Services.AddScoped<IRoomTypeRepository, RoomTypeRepository>();
+
+// Roles Service
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<IRoleService, RoleService>();
 
 
 // ============================================
