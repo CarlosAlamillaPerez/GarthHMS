@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security;
 using System.Threading.Tasks;
 using Dapper;
 using GarthHMS.Core.DTOs.Role;
@@ -183,6 +184,36 @@ namespace GarthHMS.Infrastructure.Repositories
                   FROM permission
                   ORDER BY category, display_order"
             );
+
+            return permissions;
+        }
+
+        /// Obtiene los permisos completos asignados a un rol
+        public async Task<List<Permission>> GetPermissionsByRoleIdAsync(Guid roleId)
+        {
+            var results = await _procedimientos.EjecutarListaAsync<dynamic>(
+                "sp_role_get_permissions",
+                new { p_role_id = roleId }
+            );
+
+            if (results == null || !results.Any())
+                return new List<Permission>();
+
+            var permissions = new List<Permission>();
+            foreach (var item in results)
+            {
+                permissions.Add(new Permission
+                {
+                    PermissionId = Guid.Parse(item.permission_id.ToString()),
+                    Code = item.code?.ToString() ?? "",
+                    Module = item.module?.ToString() ?? "",
+                    Name = item.name?.ToString() ?? "",
+                    Description = item.description?.ToString(),
+                    Category = item.category?.ToString() ?? "",
+                    DisplayOrder = item.display_order != null ? Convert.ToInt32(item.display_order) : 0,
+                    CreatedAt = item.created_at != null ? Convert.ToDateTime(item.created_at) : DateTime.UtcNow
+                });
+            }
 
             return permissions;
         }

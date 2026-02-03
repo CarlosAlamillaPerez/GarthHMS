@@ -1,0 +1,57 @@
+﻿@{
+    ViewData["Title"] = "Usuarios";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-users text-primary"></i> Usuarios
+            </h2>
+            <p class="text-muted mb-0">Gestión de usuarios del sistema y asignación de roles</p>
+        </div>
+        <button class="btn btn-primary" onclick="openCreateModal()">
+            <i class="fas fa-user-plus"></i> Nuevo Usuario
+        </button>
+    </div>
+
+    <!-- Tabla de usuarios -->
+    <div class="card">
+        <div class="card-body">
+            <div id="toolbar" class="mb-3">
+                <button class="btn btn-sm btn-outline-secondary" onclick="loadUsers()">
+                    <i class="fas fa-sync-alt"></i> Recargar
+                </button>
+            </div>
+
+            <table id="usersTable"
+                   class="table table-hover text-center"
+                   data-toggle="table"
+                   data-toolbar="#toolbar"
+                   data-search="true"
+                   data-show-refresh="true"
+                   data-show-columns="true"
+                   data-show-export="true"
+                   data-pagination="true"
+                   data-page-size="10"
+                   data-page-list="[10, 25, 50, 100]">
+                <thead>
+                    <tr>
+                        <th data-field="fullName" data-sortable="true">Nombre Completo</th>
+                        <th data-field="email" data-sortable="true">Email</th>
+                        <th data-field="roleName" data-sortable="true">Rol</th>
+                        <th data-field="phone" data-sortable="true">Teléfono</th>
+                        <th data-field="lastLoginText" data-sortable="true">Último Acceso</th>
+                        <th data-field="isActiveText" data-sortable="true" data-formatter="statusFormatter">Estado</th>
+                        <th data-field="actions" data-formatter="actionsFormatter">Acciones</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/settings/users.js"></script>
+}

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security;
 using System.Threading.Tasks;
 using GarthHMS.Core.DTOs.Role;
 using GarthHMS.Core.Entities;
@@ -19,6 +20,9 @@ namespace GarthHMS.Core.Interfaces.Repositories
         // Gestión de permisos
         Task<IEnumerable<Guid>> GetRolePermissionsAsync(Guid roleId);
         Task AssignPermissionsAsync(Guid roleId, List<Guid> permissionIds);
-        Task<IEnumerable<PermissionDto>> GetAllPermissionsAsync(); // ← NUEVO
+        Task<IEnumerable<PermissionDto>> GetAllPermissionsAsync();
+
+        /// Obtiene los permisos asignados a un rol
+        Task<List<Permission>> GetPermissionsByRoleIdAsync(Guid roleId);
     }
 }

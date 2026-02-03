@@ -1,0 +1,579 @@
+﻿@{
+    ViewData["Title"] = "Configuración del Hotel";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-cog text-primary"></i> Configuración del Hotel
+            </h2>
+            <p class="text-muted mb-0">Administra la configuración general de tu establecimiento</p>
+        </div>
+    </div>
+
+    <!-- Card con Formulario en Tabs -->
+    <div class="card shadow-sm">
+        <!-- Tabs Navigation -->
+        <div class="card-header" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white;">
+            <ul class="nav nav-tabs card-header-tabs" id="settingsTabs" role="tablist" style="border-bottom: none;">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active text-white" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab" style="border: none; background: transparent;">
+                        <i class="fas fa-building"></i> General
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-white" id="schedule-tab" data-bs-toggle="tab" data-bs-target="#schedule" type="button" role="tab" style="border: none; background: transparent;">
+                        <i class="fas fa-clock"></i> Horarios
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-white" id="policies-tab" data-bs-toggle="tab" data-bs-target="#policies" type="button" role="tab" style="border: none; background: transparent;">
+                        <i class="fas fa-file-contract"></i> Políticas
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-white" id="taxes-tab" data-bs-toggle="tab" data-bs-target="#taxes" type="button" role="tab" style="border: none; background: transparent;">
+                        <i class="fas fa-percentage"></i> Impuestos
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-white" id="invoicing-tab" data-bs-toggle="tab" data-bs-target="#invoicing" type="button" role="tab" style="border: none; background: transparent;">
+                        <i class="fas fa-file-invoice"></i> Facturación
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-white" id="branding-tab" data-bs-toggle="tab" data-bs-target="#branding" type="button" role="tab" style="border: none; background: transparent;">
+                        <i class="fas fa-palette"></i> Branding
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body" style="background-color: var(--bg-secondary);">
+            <form id="settingsForm">
+                <div class="tab-content" id="settingsTabContent">
+
+                    <!-- ================================================== -->
+                    <!-- TAB 1: GENERAL -->
+                    <!-- ================================================== -->
+                    <div class="tab-pane fade show active" id="general" role="tabpanel">
+                        <div class="section-card mb-4">
+                            <div class="section-header bg-primary">
+                                <i class="fas fa-hotel"></i> Información Básica
+                            </div>
+                            <div class="section-body">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="mb-3">
+                                            <label for="hotelName" class="form-label d-flex align-items-center justify-content-left">
+                                                <i class="fas fa-hotel text-primary"></i> Nombre del Hotel <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="text" class="form-control" id="hotelName" name="HotelName" required maxlength="200">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="operationMode" class="form-label d-flex align-items-center justify-content-left">
+                                                <i class="fas fa-cogs text-primary"></i> Modo de Operación <span class="text-danger">*</span>
+                                            </label>
+                                            <select class="form-select" id="operationMode" name="OperationMode" required>
+                                                <option value="hotel">🏨 Hotel (Solo noches)</option>
+                                                <option value="motel">🚗 Motel (Solo horas)</option>
+                                                <option value="hybrid">🔄 Híbrido (Noches y horas)</option>
+                                            </select>
+                                            <small class="text-muted">
+                                                <i class="fas fa-info-circle"></i> Afecta la configuración de tipos de habitación
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="section-card mb-4">
+                            <div class="section-header" style="background-color: var(--secondary);">
+                                <i class="fas fa-map-marker-alt"></i> Dirección
+                            </div>
+                            <div class="section-body">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="mb-3">
+                                            <label for="address" class="form-label">
+                                                <i class="fas fa-road text-secondary"></i> Calle y Número
+                                            </label>
+                                            <input type="text" class="form-control" id="address" name="Address" maxlength="300" placeholder="Av. Principal #123">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="city" class="form-label">
+                                                <i class="fas fa-city text-secondary"></i> Ciudad
+                                            </label>
+                                            <input type="text" class="form-control" id="city" name="City" maxlength="100">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="state" class="form-label">
+                                                <i class="fas fa-map text-secondary"></i> Estado
+                                            </label>
+                                            <input type="text" class="form-control" id="state" name="State" maxlength="100">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <div class="mb-3">
+                                            <label for="postalCode" class="form-label">
+                                                <i class="fas fa-mail-bulk text-secondary"></i> C.P.
+                                            </label>
+                                            <input type="text" class="form-control" id="postalCode" name="PostalCode" maxlength="10">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <div class="mb-3">
+                                            <label for="country" class="form-label">
+                                                <i class="fas fa-flag text-secondary"></i> País
+                                            </label>
+                                            <input type="text" class="form-control" id="country" name="Country" maxlength="100" value="México">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="section-card">
+                            <div class="section-header" style="background-color: var(--tertiary);">
+                                <i class="fas fa-phone"></i> Contacto
+                            </div>
+                            <div class="section-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="phone" class="form-label">
+                                                <i class="fas fa-phone text-info"></i> Teléfono
+                                            </label>
+                                            <input type="tel" class="form-control" id="phone" name="Phone" maxlength="20">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="email" class="form-label">
+                                                <i class="fas fa-envelope text-info"></i> Email
+                                            </label>
+                                            <input type="email" class="form-control" id="email" name="Email" maxlength="100">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="website" class="form-label">
+                                                <i class="fas fa-globe text-info"></i> Sitio Web
+                                            </label>
+                                            <input type="url" class="form-control" id="website" name="Website" maxlength="200" placeholder="https://mihotel.com">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ================================================== -->
+                    <!-- TAB 2: HORARIOS -->
+                    <!-- ================================================== -->
+                    <div class="tab-pane fade" id="schedule" role="tabpanel">
+                        <div class="section-card mb-4">
+                            <div class="section-header bg-success">
+                                <i class="fas fa-clock"></i> Horarios de Check-In / Check-Out
+                            </div>
+                            <div class="section-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="info-card bg-success-light mb-3">
+                                            <i class="fas fa-sign-in-alt card-icon text-success"></i>
+                                            <div class="card-content flex-grow-1">
+                                                <label for="checkInTime" class="form-label">
+                                                    <small class="text-muted">Hora de Check-In</small>
+                                                </label>
+                                                <input type="time" class="form-control" id="checkInTime" name="CheckInTime" value="15:00" required>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="info-card bg-danger-light mb-3">
+                                            <i class="fas fa-sign-out-alt card-icon text-danger"></i>
+                                            <div class="card-content flex-grow-1">
+                                                <label for="checkOutTime" class="form-label">
+                                                    <small class="text-muted">Hora de Check-Out</small>
+                                                </label>
+                                                <input type="time" class="form-control" id="checkOutTime" name="CheckOutTime" value="12:00" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="section-card">
+                            <div class="section-header bg-warning">
+                                <i class="fas fa-hourglass-half"></i> Check-Out Tardío
+                            </div>
+                            <div class="section-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="lateCheckoutTime" class="form-label">
+                                                <i class="fas fa-clock text-warning"></i> Hora Límite para Salida Tardía
+                                            </label>
+                                            <input type="time" class="form-control" id="lateCheckoutTime" name="LateCheckoutTime" value="14:00" required>
+                                            <small class="text-muted">Después de esta hora ya no se permite check-out tardío</small>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="lateCheckoutCharge" class="form-label">
+                                                <i class="fas fa-dollar-sign text-warning"></i> Cargo por Check-Out Tardío
+                                            </label>
+                                            <input type="number" class="form-control" id="lateCheckoutCharge" name="LateCheckoutCharge" min="0" max="9999.99" step="0.01" value="0">
+                                            <small class="text-muted">Cargo adicional si el huésped sale después del check-out normal</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ================================================== -->
+                    <!-- TAB 3: POLÍTICAS -->
+                    <!-- ================================================== -->
+                    <div class="tab-pane fade" id="policies" role="tabpanel">
+                        <div class="section-card mb-4">
+                            <div class="section-header" style="background-color: var(--tertiary);">
+                                <i class="fas fa-ban"></i> Política de Cancelación
+                            </div>
+                            <div class="section-body">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle"></i>
+                                            <strong>Nota:</strong> Las horas de anticipación se cuentan desde el momento de la reserva hasta el check-in programado.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="cancellationHours" class="form-label d-flex align-items-center justify-content-left">
+                                                <i class="fas fa-hourglass-start" style="color: var(--tertiary);"></i> Horas de Anticipación <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="number" class="form-control" id="cancellationHours" name="CancellationHours" min="0" max="168" value="24" required>
+                                            <small class="text-muted">Horas mínimas para cancelar sin penalización (máx. 168 hrs = 7 días)</small>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="minDepositPercent" class="form-label d-flex align-items-center justify-content-left">
+                                                <i class="fas fa-percent text-success"></i> Anticipo Mínimo <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="number" class="form-control" id="minDepositPercent" name="MinDepositPercent" min="0" max="100" value="50" required>
+                                            <small class="text-muted">Porcentaje mínimo de anticipo para confirmar reserva</small>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="requireCompanionDetails" class="form-label d-block">
+                                                <i class="fas fa-users text-info"></i> Acompañantes
+                                            </label>
+                                            <div class="form-check form-switch" style="padding-top: 8px;">
+                                                <input class="form-check-input" type="checkbox" id="requireCompanionDetails" name="RequireCompanionDetails">
+                                                <label class="form-check-label" for="requireCompanionDetails">
+                                                    Requerir datos de acompañantes
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="mb-0">
+                                            <label for="cancellationPolicyText" class="form-label">
+                                                <i class="fas fa-file-alt" style="color: var(--tertiary);"></i> Texto de Política de Cancelación
+                                            </label>
+                                            <textarea class="form-control" id="cancellationPolicyText" name="CancellationPolicyText" rows="4" placeholder="Describe aquí la política de cancelación completa que verán los huéspedes..."></textarea>
+                                            <small class="text-muted">Este texto se mostrará a los huéspedes al momento de hacer una reserva</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ================================================== -->
+                    <!-- TAB 4: IMPUESTOS -->
+                    <!-- ================================================== -->
+                    <div class="tab-pane fade" id="taxes" role="tabpanel">
+                        <div class="section-card">
+                            <div class="section-header bg-success">
+                                <i class="fas fa-percentage"></i> Configuración de Impuestos
+                            </div>
+                            <div class="section-body">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <strong>Importante:</strong> Si el hotel NO cobra impuestos, solo podrá aceptar pagos en efectivo y NO podrá facturar.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="mb-4">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="chargesTaxes" name="ChargesTaxes" checked>
+                                                <label class="form-check-label" for="chargesTaxes">
+                                                    <strong>¿El hotel cobra impuestos?</strong>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="taxFieldsContainer">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="info-card bg-success-light mb-3">
+                                                <i class="fas fa-percentage card-icon text-success"></i>
+                                                <div class="card-content flex-grow-1">
+                                                    <label for="taxIvaPercent" class="form-label">
+                                                        <small class="text-muted">IVA (%)</small>
+                                                    </label>
+                                                    <input type="number" class="form-control" id="taxIvaPercent" name="TaxIvaPercent" min="0" max="100" step="0.01" value="16.00">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="info-card bg-info-light mb-3">
+                                                <i class="fas fa-percentage card-icon text-info"></i>
+                                                <div class="card-content flex-grow-1">
+                                                    <label for="taxIshPercent" class="form-label">
+                                                        <small class="text-muted">ISH (%)</small>
+                                                    </label>
+                                                    <input type="number" class="form-control" id="taxIshPercent" name="TaxIshPercent" min="0" max="100" step="0.01" value="3.00">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ================================================== -->
+                    <!-- TAB 5: FACTURACIÓN -->
+                    <!-- ================================================== -->
+                    <div class="tab-pane fade" id="invoicing" role="tabpanel">
+                        <div class="section-card">
+                            <div class="section-header" style="background-color: var(--tertiary);">
+                                <i class="fas fa-file-invoice"></i> Configuración SAT
+                            </div>
+                            <div class="section-body">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle"></i>
+                                            <strong>Requisito:</strong> Para poder facturar, el hotel DEBE cobrar impuestos.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="mb-4">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="canInvoice" name="CanInvoice">
+                                                <label class="form-check-label" for="canInvoice">
+                                                    <strong>¿El hotel puede emitir facturas electrónicas?</strong>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="invoiceFieldsContainer" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="satRfc" class="form-label">
+                                                    <i class="fas fa-id-card" style="color: var(--tertiary);"></i> RFC <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" class="form-control text-uppercase" id="satRfc" name="SatRfc" maxlength="13" placeholder="XAXX010101000">
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-8">
+                                            <div class="mb-3">
+                                                <label for="satBusinessName" class="form-label">
+                                                    <i class="fas fa-building" style="color: var(--tertiary);"></i> Razón Social <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" class="form-control" id="satBusinessName" name="SatBusinessName" maxlength="200">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="mb-0">
+                                                <label for="satTaxRegime" class="form-label">
+                                                    <i class="fas fa-gavel" style="color: var(--tertiary);"></i> Régimen Fiscal <span class="text-danger">*</span>
+                                                </label>
+                                                <select class="form-select" id="satTaxRegime" name="SatTaxRegime">
+                                                    <option value="">-- Seleccione --</option>
+                                                    <option value="601">601 - General de Ley Personas Morales</option>
+                                                    <option value="603">603 - Personas Morales con Fines no Lucrativos</option>
+                                                    <option value="605">605 - Sueldos y Salarios e Ingresos Asimilados a Salarios</option>
+                                                    <option value="606">606 - Arrendamiento</option>
+                                                    <option value="612">612 - Personas Físicas con Actividades Empresariales y Profesionales</option>
+                                                    <option value="621">621 - Incorporación Fiscal</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ================================================== -->
+                    <!-- TAB 6: BRANDING -->
+                    <!-- ================================================== -->
+                    <div class="tab-pane fade" id="branding" role="tabpanel">
+                        <div class="section-card mb-4">
+                            <div class="section-header" style="background: linear-gradient(135deg, #5162B5 0%, #3f4a8c 100%);">
+                                <i class="fas fa-image"></i> Logo
+                            </div>
+                            <div class="section-body">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="mb-3">
+                                            <label for="logoUrl" class="form-label">
+                                                <i class="fas fa-link" style="color: var(--tertiary);"></i> URL del Logo
+                                            </label>
+                                            <input type="url" class="form-control" id="logoUrl" name="LogoUrl" maxlength="500" placeholder="https://mihotel.com/logo.png">
+                                            <small class="text-muted">URL pública de la imagen del logo del hotel</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div id="logoPreview" class="text-center p-4" style="background-color: var(--bg-tertiary); border-radius: 10px; display: none;">
+                                            <img id="logoPreviewImg" src="" alt="Vista previa del logo" style="max-height: 150px; max-width: 100%;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="section-card">
+                            <div class="section-header" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);">
+                                <i class="fas fa-palette"></i> Colores Corporativos
+                            </div>
+                            <div class="section-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="primaryColor" class="form-label d-flex align-items-center justify-content-left">
+                                                <i class="fas fa-circle text-primary"></i> Color Primario <span class="text-danger">*</span>
+                                            </label>
+                                            <div class="input-group">
+                                                <input type="color" class="form-control form-control-color" id="primaryColor" name="PrimaryColor" value="#2BA49A">
+                                                <input type="text" class="form-control" id="primaryColorText" value="#2BA49A" maxlength="7" pattern="^#[0-9A-Fa-f]{6}$">
+                                            </div>
+                                            <small class="text-muted">Color principal del hotel (formato hexadecimal)</small>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="secondaryColor" class="form-label d-flex align-items-center justify-content-left">
+                                                <i class="fas fa-circle" style="color: var(--secondary);"></i> Color Secundario <span class="text-danger">*</span>
+                                            </label>
+                                            <div class="input-group">
+                                                <input type="color" class="form-control form-control-color" id="secondaryColor" name="SecondaryColor" value="#D9C9B6">
+                                                <input type="text" class="form-control" id="secondaryColorText" value="#D9C9B6" maxlength="7" pattern="^#[0-9A-Fa-f]{6}$">
+                                            </div>
+                                            <small class="text-muted">Color secundario del hotel (formato hexadecimal)</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="alert alert-info mb-0">
+                                            <i class="fas fa-lightbulb"></i>
+                                            <strong>Tip:</strong> Los colores se aplicarán en reportes, recibos y materiales del hotel.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Botones de Acción (Siempre visibles) -->
+                <div class="mt-4 text-end" style="background-color: var(--bg-primary); padding: 20px; border-radius: 10px; box-shadow: var(--shadow-md);">
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='/Dashboard'">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save"></i> Guardar Configuración
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/settings/hotel-settings.js"></script>
+}
+
+    <style>
+        /* Tabs con fondo gradient */
+        #settingsTabs .nav-link {
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        #settingsTabs .nav-link:hover {
+            opacity: 0.9;
+        }
+
+        #settingsTabs .nav-link.active {
+            opacity: 1;
+            font-weight: 600;
+            border-bottom: 3px solid white !important;
+        }
+
+        /* Sincronizar color picker con input text */
+        .form-control-color {
+            max-width: 60px;
+        }
+    </style>

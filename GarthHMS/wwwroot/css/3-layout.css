@@ -207,7 +207,7 @@
 }
 
 .nav-item:hover {
-    background-color: var(--bg-body);
+    background-color: rgb(0 0 0 / 20%);
     color: var(--primary);
     border-left-color: var(--primary);
 }

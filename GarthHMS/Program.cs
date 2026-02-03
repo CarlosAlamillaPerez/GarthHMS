@@ -84,6 +84,10 @@ builder.Services.AddScoped<IRoomTypeRepository, RoomTypeRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 
+// Hotel Settings Service
+builder.Services.AddScoped<IHotelSettingsRepository, HotelSettingsRepository>();
+builder.Services.AddScoped<IHotelSettingsService, HotelSettingsService>();
+
 
 // ============================================
 // CONFIGURACIÓN DE DAPPER

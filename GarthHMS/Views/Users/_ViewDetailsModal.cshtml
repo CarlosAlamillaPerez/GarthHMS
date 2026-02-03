@@ -1,0 +1,318 @@
+﻿@model GarthHMS.Core.DTOs.User.UserResponseDto
+
+<div class="details-container">
+    <!-- Información del Usuario -->
+    <div class="section-card">
+        <div class="section-header bg-primary">
+            <i class="fas fa-user"></i> Información del Usuario
+        </div>
+        <div class="section-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="detail-item">
+                        <i class="fas fa-id-card text-primary me-2"></i>
+                        <div>
+                            <small class="text-muted">Nombre Completo</small>
+                            <div><strong>@Model.FullName</strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="detail-item">
+                        <i class="fas fa-user-circle text-primary me-2"></i>
+                        <div>
+                            <small class="text-muted">Nombre de Usuario</small>
+                            <div><strong>@Model.Username</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información de Contacto -->
+    <div class="section-card">
+        <div class="section-header bg-info">
+            <i class="fas fa-address-card"></i> Información de Contacto
+        </div>
+        <div class="section-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="detail-item">
+                        <i class="fas fa-envelope text-info me-2"></i>
+                        <div>
+                            <small class="text-muted">Email</small>
+                            <div><strong>@Model.Email</strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="detail-item">
+                        <i class="fas fa-phone text-info me-2"></i>
+                        <div>
+                            <small class="text-muted">Teléfono</small>
+                            <div><strong>@(string.IsNullOrEmpty(Model.Phone) ? "N/A" : Model.Phone)</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rol y Permisos -->
+    <div class="section-card">
+        <div class="section-header bg-warning">
+            <i class="fas fa-shield-alt"></i> Rol y Permisos
+        </div>
+        <div class="section-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="detail-item">
+                        <i class="fas fa-user-tag text-warning me-2"></i>
+                        <div>
+                            <small class="text-muted">Rol Asignado</small>
+                            <div>
+                                <strong>@Model.RoleName</strong>
+                                @if (Model.IsManagerRole)
+                                {
+                                    <span class="badge bg-warning ms-1">
+                                        <i class="fas fa-star"></i> Gerencial
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="detail-item">
+                        <i class="fas fa-percent text-success me-2"></i>
+                        <div>
+                            <small class="text-muted">Descuento Máximo</small>
+                            <div><strong class="text-success">@Model.MaxDiscountPercent%</strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="detail-item">
+                        <i class="fas fa-list-check text-warning me-2"></i>
+                        <div>
+                            <small class="text-muted">Permisos Efectivos</small>
+                            <div>
+                                @if (ViewBag.Permissions != null)
+                                {
+                                    <strong>@ViewBag.Permissions.Count permisos</strong>
+                                }
+                                else
+                                {
+                                    <strong>0 permisos</strong>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (ViewBag.Permissions != null && ViewBag.Permissions.Count > 0)
+            {
+                <div class="mt-3">
+                    <button class="btn btn-sm btn-outline-warning" type="button" data-bs-toggle="collapse" data-bs-target="#permissionsList">
+                        <i class="fas fa-eye"></i> Ver Permisos Detallados
+                    </button>
+                    <div class="collapse mt-2" id="permissionsList">
+                        <div class="p-3 bg-light rounded">
+                            <div class="row">
+                                @foreach (var permission in ViewBag.Permissions)
+                                {
+                                    <div class="col-md-6">
+                                        <small class="text-muted">
+                                            <i class="fas fa-check-circle text-success me-1"></i>
+                                            @permission
+                                        </small>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Estado y Seguridad -->
+    <div class="section-card">
+        <div class="section-header bg-success">
+            <i class="fas fa-check-circle"></i> Estado y Seguridad
+        </div>
+        <div class="section-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="detail-item">
+                        <i class="fas fa-@(Model.IsActive ? "check-circle text-success" : "times-circle text-danger") me-2"></i>
+                        <div>
+                            <small class="text-muted">Estado</small>
+                            <div>
+                                <span class="badge bg-@(Model.IsActive ? "success" : "danger")">
+                                    @Model.IsActiveText
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="detail-item">
+                        <i class="fas fa-clock text-info me-2"></i>
+                        <div>
+                            <small class="text-muted">Último Acceso</small>
+                            <div><strong>@Model.LastLoginText</strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="detail-item">
+                        <i class="fas fa-key text-warning me-2"></i>
+                        <div>
+                            <small class="text-muted">Cambio de Contraseña</small>
+                            <div>
+                                @if (Model.MustChangePassword)
+                                {
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-exclamation-triangle"></i> Requerido
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check"></i> No requerido
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.IsLocked)
+            {
+                <div class="alert alert-danger mt-3">
+                    <i class="fas fa-lock"></i>
+                    <strong>Cuenta Bloqueada</strong> - Bloqueada hasta: @Model.LockedUntil?.ToString("dd/MM/yyyy HH:mm")
+                </div>
+            }
+
+            @if (Model.FailedLoginAttempts > 0)
+            {
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Intentos fallidos de login:</strong> @Model.FailedLoginAttempts
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Información de Auditoría -->
+    <div class="section-card">
+        <div class="section-header bg-secondary">
+            <i class="fas fa-clock"></i> Información de Auditoría
+        </div>
+        <div class="section-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="audit-item">
+                        <i class="fas fa-plus-circle text-success me-2"></i>
+                        <div>
+                            <small class="text-muted">Fecha de Creación</small>
+                            <div><strong>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="audit-item">
+                        <i class="fas fa-edit text-primary me-2"></i>
+                        <div>
+                            <small class="text-muted">Última Actualización</small>
+                            <div><strong>@Model.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Botones de Acción -->
+<div class="mt-4 text-end">
+    <button type="button" class="btn btn-warning" onclick="Swal.close(); openChangePasswordModal('@Model.UserId')">
+        <i class="fas fa-key"></i> Cambiar Contraseña
+    </button>
+    <button type="button" class="btn btn-info" onclick="Swal.close(); openEditModal('@Model.UserId')">
+        <i class="fas fa-edit"></i> Editar
+    </button>
+    <button type="button" class="btn btn-secondary" onclick="Swal.close()">
+        <i class="fas fa-times"></i> Cerrar
+    </button>
+</div>
+
+<style>
+    .section-card {
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .section-header {
+        padding: 0.75rem 1rem;
+        color: white;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-header.bg-primary {
+        background-color: var(--primary) !important;
+    }
+
+    .section-header.bg-info {
+        background-color: var(--info) !important;
+    }
+
+    .section-header.bg-warning {
+        background-color: var(--warning) !important;
+    }
+
+    .section-header.bg-success {
+        background-color: var(--success) !important;
+    }
+
+    .section-header.bg-secondary {
+        background-color: var(--text-secondary) !important;
+    }
+
+    .section-body {
+        padding: 1.25rem;
+        background-color: var(--bg-primary);
+    }
+
+    .detail-item {
+        display: flex;
+        align-items: start;
+        gap: 0.5rem;
+    }
+
+    .detail-item i {
+        margin-top: 0.25rem;
+        font-size: 1.1rem;
+    }
+
+    .audit-item {
+        display: flex;
+        align-items: start;
+        gap: 0.5rem;
+    }
+
+    .audit-item i {
+        margin-top: 0.25rem;
+    }
+</style>

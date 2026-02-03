@@ -1,0 +1,164 @@
+﻿@model GarthHMS.Core.DTOs.User.CreateUserDto
+
+<form id="createForm" class="text-start">
+    <!-- Información Personal -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="createFirstName" class="form-label d-flex align-items-center justify-content-left">
+                    Nombre <span class="text-danger">*</span>
+                </label>
+                <input type="text"
+                       class="form-control"
+                       id="createFirstName"
+                       name="FirstName"
+                       placeholder="Juan"
+                       required
+                       maxlength="50">
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="createLastName" class="form-label d-flex align-items-center justify-content-left">
+                    Apellido <span class="text-danger">*</span>
+                </label>
+                <input type="text"
+                       class="form-control"
+                       id="createLastName"
+                       name="LastName"
+                       placeholder="Pérez"
+                       required
+                       maxlength="50">
+            </div>
+        </div>
+    </div>
+
+    <!-- Email y Teléfono -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="createEmail" class="form-label d-flex align-items-center justify-content-left">
+                    Email <span class="text-danger">*</span>
+                </label>
+                <input type="email"
+                       class="form-control"
+                       id="createEmail"
+                       name="Email"
+                       placeholder="usuario@ejemplo.com"
+                       required
+                       maxlength="100">
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="createPhone" class="form-label d-flex align-items-center justify-content-left">
+                    Teléfono
+                </label>
+                <input type="tel"
+                       class="form-control"
+                       id="createPhone"
+                       name="Phone"
+                       placeholder="55 1234 5678"
+                       maxlength="20">
+            </div>
+        </div>
+    </div>
+
+    <!-- Usuario y Contraseña -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="createUsername" class="form-label d-flex align-items-center justify-content-left">
+                    Nombre de Usuario <span class="text-danger">*</span>
+                </label>
+                <input type="text"
+                       class="form-control"
+                       id="createUsername"
+                       name="Username"
+                       placeholder="jperez"
+                       required
+                       maxlength="50">
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="createPassword" class="form-label d-flex align-items-center justify-content-left">
+                    Contraseña <span class="text-danger">*</span>
+                </label>
+                <input type="password"
+                       class="form-control"
+                       id="createPassword"
+                       name="Password"
+                       placeholder="Mínimo 6 caracteres"
+                       required
+                       minlength="6"
+                       maxlength="100">
+            </div>
+        </div>
+    </div>
+
+    <!-- Rol -->
+    <div class="mb-3">
+        <label for="createRoleId" class="form-label d-flex align-items-center justify-content-left">
+            Rol <span class="text-danger">*</span>
+        </label>
+        <select class="form-select"
+                id="createRoleId"
+                name="RoleId"
+                required>
+            <option value="">-- Seleccionar Rol --</option>
+            @if (ViewBag.Roles != null)
+            {
+                @foreach (var role in ViewBag.Roles)
+                {
+                    <option value="@role.RoleId">@role.Name</option>
+                }
+            }
+        </select>
+    </div>
+
+    <!-- Opciones -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-check mb-3">
+                <input class="form-check-input"
+                       type="checkbox"
+                       id="createMustChangePassword"
+                       name="MustChangePassword"
+                       checked>
+                <label class="form-check-label" for="createMustChangePassword">
+                    <i class="fas fa-key text-warning me-1"></i>
+                    Debe cambiar contraseña en primer login
+                </label>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-check mb-3">
+                <input class="form-check-input"
+                       type="checkbox"
+                       id="createIsActive"
+                       name="IsActive"
+                       checked>
+                <label class="form-check-label" for="createIsActive">
+                    <i class="fas fa-check-circle text-success me-1"></i>
+                    Usuario Activo
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        <strong>Nota:</strong> Se enviará un email al usuario con sus credenciales de acceso.
+    </div>
+
+    <!-- Botones -->
+    <div class="mt-4 text-end">
+        <button type="button" class="btn btn-secondary" onclick="Swal.close()">
+            <i class="fas fa-times"></i> Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Crear Usuario
+        </button>
+    </div>
+</form>

@@ -9,6 +9,7 @@ using GarthHMS.Core.Interfaces.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
+using GarthHMS.Infrastructure.Repositories;
 
 namespace GarthHMS.Application.Services
 {
@@ -18,15 +19,18 @@ namespace GarthHMS.Application.Services
     public class RoomTypeService : IRoomTypeService
     {
         private readonly IRoomTypeRepository _roomTypeRepository;
+        private readonly IRoomRepository _roomRepository;
         private readonly ILogger<RoomTypeService> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         public RoomTypeService(
             IRoomTypeRepository roomTypeRepository,
+            IRoomRepository roomRepository,  
             ILogger<RoomTypeService> logger,
             IHttpContextAccessor httpContextAccessor)
         {
             _roomTypeRepository = roomTypeRepository;
+            _roomRepository = roomRepository;  
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
         }
@@ -180,8 +184,11 @@ namespace GarthHMS.Application.Services
             if (roomType.HotelId != CurrentHotelId)
                 throw new UnauthorizedAccessException("No tiene permiso para eliminar este tipo de habitación");
 
-            // 3. TODO: Validar que no tenga habitaciones ocupadas
-            // Esta validación la implementaremos cuando tengamos el módulo de habitaciones
+            // 3. Validar que no tenga habitaciones asignadas
+            var roomsUsingType = await _roomRepository.GetByTypeAsync(roomTypeId);
+            if (roomsUsingType.Any())
+                throw new InvalidOperationException(
+                    $"No se puede eliminar el tipo de habitación '{roomType.Name}' porque tiene {roomsUsingType.Count()} habitación(es) asignada(s)");
 
             // 4. Eliminar (soft delete)
             await _roomTypeRepository.DeleteAsync(roomTypeId);
