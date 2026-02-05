@@ -1,0 +1,59 @@
+﻿@* Views/HourPackages/Index.cshtml *@
+@{
+    ViewData["Title"] = "Paquetes de Horas";
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-clock text-primary"></i> Paquetes de Horas
+            </h2>
+            <p class="text-muted mb-0">Configura bloques de tiempo con precios fijos para modo motel</p>
+        </div>
+        <button class="btn btn-primary" onclick="openCreateModal()">
+            <i class="fas fa-plus-circle"></i> Nuevo Paquete
+        </button>
+    </div>
+
+    <!-- Tabla de paquetes -->
+    <div class="card">
+        <div class="card-body">
+            <div id="toolbar" class="mb-3">
+                <button class="btn btn-sm btn-outline-secondary" onclick="loadHourPackages()">
+                    <i class="fas fa-sync-alt"></i> Recargar
+                </button>
+            </div>
+
+            <table id="hourPackagesTable"
+                   class="table table-hover text-center"
+                   data-toggle="table"
+                   data-toolbar="#toolbar"
+                   data-search="true"
+                   data-show-refresh="true"
+                   data-show-columns="true"
+                   data-show-export="true"
+                   data-pagination="true"
+                   data-page-size="10"
+                   data-page-list="[10, 25, 50, 100]">
+                <thead>
+                    <tr>
+                        <th data-field="roomTypeName" data-sortable="true">Tipo de Habitación</th>
+                        <th data-field="name" data-sortable="true">Nombre del Paquete</th>
+                        <th data-field="hours" data-sortable="true" data-formatter="hoursFormatter">Duración</th>
+                        <th data-field="price" data-sortable="true" data-formatter="priceFormatter">Precio</th>
+                        <th data-field="extraHourPrice" data-sortable="true" data-formatter="priceFormatter">Hora Extra</th>
+                        <th data-field="allowsExtensions" data-sortable="true" data-formatter="extensionsFormatter">Extensiones</th>
+                        <th data-field="isActive" data-sortable="true" data-formatter="statusFormatter">Estado</th>
+                        <th data-field="actions" data-formatter="actionsFormatter">Acciones</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/settings/hour-packages.js"></script>
+}

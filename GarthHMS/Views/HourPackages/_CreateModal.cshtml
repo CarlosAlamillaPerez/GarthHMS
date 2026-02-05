@@ -1,0 +1,164 @@
+﻿@* Views/HourPackages/_CreateModal.cshtml *@
+@using GarthHMS.Core.DTOs.RoomType
+
+@{
+    var roomTypes = ViewBag.RoomTypes as IEnumerable<RoomTypeResponseDto>;
+}
+
+<form id="createForm" class="text-start">
+
+    <!-- Tipo de Habitación -->
+    <div class="mb-3">
+        <label for="createRoomTypeId" class="form-label d-flex align-items-center justify-content-left">
+            Tipo de Habitación <span class="text-danger">*</span>
+        </label>
+        <select class="form-select" id="createRoomTypeId" name="RoomTypeId" required>
+            <option value="">Seleccione un tipo de habitación</option>
+            @if (roomTypes != null)
+            {
+                foreach (var roomType in roomTypes)
+                {
+                    <option value="@roomType.RoomTypeId">
+                        @roomType.Code - @roomType.Name
+                    </option>
+                }
+            }
+        </select>
+        <small class="text-muted">El paquete se asociará a este tipo de habitación</small>
+    </div>
+
+    <div class="row">
+        <!-- Nombre del Paquete -->
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="createName" class="form-label d-flex align-items-center justify-content-left">
+                    Nombre del Paquete <span class="text-danger">*</span>
+                </label>
+                <input type="text"
+                       class="form-control"
+                       id="createName"
+                       name="Name"
+                       placeholder="Ej: Paquete 3 horas"
+                       required
+                       maxlength="50">
+                <small class="text-muted">Nombre descriptivo del paquete</small>
+            </div>
+        </div>
+
+        <!-- Horas -->
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="createHours" class="form-label d-flex align-items-center justify-content-left">
+                    Duración (Horas) <span class="text-danger">*</span>
+                </label>
+                <input type="number"
+                       class="form-control"
+                       id="createHours"
+                       name="Hours"
+                       placeholder="Ej: 3"
+                       min="1"
+                       max="48"
+                       required>
+                <small class="text-muted">Entre 1 y 48 horas</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Precio del Paquete -->
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="createPrice" class="form-label d-flex align-items-center justify-content-left">
+                    Precio del Paquete <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number"
+                           class="form-control"
+                           id="createPrice"
+                           name="Price"
+                           placeholder="450.00"
+                           step="0.01"
+                           min="0.01"
+                           required>
+                </div>
+                <small class="text-muted">Precio fijo del paquete completo</small>
+            </div>
+        </div>
+
+        <!-- Precio Hora Extra -->
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="createExtraHourPrice" class="form-label">
+                    Precio Hora Extra
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number"
+                           class="form-control"
+                           id="createExtraHourPrice"
+                           name="ExtraHourPrice"
+                           placeholder="100.00"
+                           step="0.01"
+                           min="0"
+                           value="0">
+                </div>
+                <small class="text-muted">Costo por cada hora adicional</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Permite Extensiones -->
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label">Configuración de Extensiones</label>
+                <div class="form-check form-switch">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           id="createAllowsExtensions"
+                           name="AllowsExtensions"
+                           checked>
+                    <label class="form-check-label" for="createAllowsExtensions">
+                        <i class="fas fa-clock"></i> Permitir extensiones de tiempo
+                    </label>
+                </div>
+                <small class="text-muted">Los huéspedes pueden extender su estancia</small>
+            </div>
+        </div>
+
+        <!-- Orden de Visualización -->
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="createDisplayOrder" class="form-label">
+                    Orden de Visualización
+                </label>
+                <input type="number"
+                       class="form-control"
+                       id="createDisplayOrder"
+                       name="DisplayOrder"
+                       placeholder="0"
+                       min="0"
+                       max="999"
+                       value="0">
+                <small class="text-muted">Orden en listas (menor = primero)</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información Adicional -->
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        <strong>Nota:</strong> No puede haber dos paquetes con las mismas horas para el mismo tipo de habitación.
+    </div>
+
+    <!-- Botones -->
+    <div class="mt-4 text-end">
+        <button type="button" class="btn btn-secondary" onclick="Swal.close()">
+            <i class="fas fa-times"></i> Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Guardar Paquete
+        </button>
+    </div>
+</form>

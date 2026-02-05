@@ -1,0 +1,157 @@
+﻿@* Views/HourPackages/_EditModal.cshtml *@
+@model GarthHMS.Core.DTOs.HourPackage.UpdateHourPackageDto
+@using GarthHMS.Core.DTOs.RoomType
+
+@{
+    var roomTypes = ViewBag.RoomTypes as IEnumerable<RoomTypeResponseDto>;
+    var currentRoomTypeId = ViewBag.CurrentRoomTypeId as Guid?;
+}
+
+<form id="editForm" class="text-start">
+    <input type="hidden" id="editHourPackageId" name="HourPackageId" value="@Model.HourPackageId">
+
+    <!-- Tipo de Habitación (Solo lectura) -->
+    <div class="mb-3">
+        <label class="form-label">
+            Tipo de Habitación
+        </label>
+        <select class="form-select" disabled>
+            @if (roomTypes != null && currentRoomTypeId.HasValue)
+            {
+                var selectedRoomType = roomTypes.FirstOrDefault(rt => rt.RoomTypeId == currentRoomTypeId.Value);
+                if (selectedRoomType != null)
+                {
+                    <option selected>@selectedRoomType.Code - @selectedRoomType.Name</option>
+                }
+            }
+        </select>
+        <small class="text-muted">
+            <i class="fas fa-lock"></i> El tipo de habitación no puede cambiarse después de crear el paquete
+        </small>
+    </div>
+
+    <div class="row">
+        <!-- Nombre del Paquete -->
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="editName" class="form-label d-flex align-items-center justify-content-left">
+                    Nombre del Paquete <span class="text-danger">*</span>
+                </label>
+                <input type="text"
+                       class="form-control"
+                       id="editName"
+                       name="Name"
+                       value="@Model.Name"
+                       required
+                       maxlength="50">
+            </div>
+        </div>
+
+        <!-- Horas -->
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="editHours" class="form-label d-flex align-items-center justify-content-left">
+                    Duración (Horas) <span class="text-danger">*</span>
+                </label>
+                <input type="number"
+                       class="form-control"
+                       id="editHours"
+                       name="Hours"
+                       value="@Model.Hours"
+                       min="1"
+                       max="48"
+                       required>
+                <small class="text-muted">
+                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                    Cuidado: cambiar las horas puede duplicar el paquete
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Precio del Paquete -->
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="editPrice" class="form-label d-flex align-items-center justify-content-left">
+                    Precio del Paquete <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number"
+                           class="form-control"
+                           id="editPrice"
+                           name="Price"
+                           value="@Model.Price"
+                           step="0.01"
+                           min="0.01"
+                           required>
+                </div>
+            </div>
+        </div>
+
+        <!-- Precio Hora Extra -->
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="editExtraHourPrice" class="form-label">
+                    Precio Hora Extra
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number"
+                           class="form-control"
+                           id="editExtraHourPrice"
+                           name="ExtraHourPrice"
+                           value="@Model.ExtraHourPrice"
+                           step="0.01"
+                           min="0">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Permite Extensiones -->
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label">Configuración de Extensiones</label>
+                <div class="form-check form-switch">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           id="editAllowsExtensions"
+                           name="AllowsExtensions"
+                    @(Model.AllowsExtensions ? "checked" : "")>
+                    <label class="form-check-label" for="editAllowsExtensions">
+                        <i class="fas fa-clock"></i> Permitir extensiones de tiempo
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orden de Visualización -->
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="editDisplayOrder" class="form-label">
+                    Orden de Visualización
+                </label>
+                <input type="number"
+                       class="form-control"
+                       id="editDisplayOrder"
+                       name="DisplayOrder"
+                       value="@Model.DisplayOrder"
+                       min="0"
+                       max="999">
+            </div>
+        </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="mt-4 text-end">
+        <button type="button" class="btn btn-secondary" onclick="Swal.close()">
+            <i class="fas fa-times"></i> Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Actualizar Paquete
+        </button>
+    </div>
+</form>

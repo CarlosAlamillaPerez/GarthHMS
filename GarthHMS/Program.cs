@@ -75,18 +75,21 @@ builder.Services.AddScoped<IHotelService, HotelService>();
 // Room Service
 builder.Services.AddScoped<IRoomTypeService, RoomTypeService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
-
-// Room Types Service
+// Dashboard Service
+builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+// Room Types Service 
 builder.Services.AddScoped<IRoomTypeService, RoomTypeService>();
 builder.Services.AddScoped<IRoomTypeRepository, RoomTypeRepository>();
-
 // Roles Service
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IRoleService, RoleService>();
-
 // Hotel Settings Service
 builder.Services.AddScoped<IHotelSettingsRepository, HotelSettingsRepository>();
 builder.Services.AddScoped<IHotelSettingsService, HotelSettingsService>();
+// HourPackeges Service
+builder.Services.AddScoped<IHourPackageRepository, HourPackageRepository>();
+builder.Services.AddScoped<IHourPackageService, HourPackageService>();
 
 
 // ============================================

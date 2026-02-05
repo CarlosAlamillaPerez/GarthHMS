@@ -1,0 +1,192 @@
+﻿@* Views/HourPackages/_ViewDetailsModal.cshtml *@
+@model GarthHMS.Core.DTOs.HourPackage.HourPackageResponseDto
+
+<div class="hourpackage-details-enhanced">
+
+    <!-- Header principal -->
+    <div class="details-header header-primary mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h3 class="mb-0">
+                    <i class="fas fa-clock"></i> @Model.Name
+                </h3>
+                <p class="mb-0 mt-1 opacity-75">
+                    <strong>@Model.RoomTypeName</strong> (@Model.RoomTypeCode)
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                @if (Model.IsActive)
+                {
+                    <span class="badge bg-success status-badge-large">
+                        <i class="fas fa-check-circle"></i> Activo
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary status-badge-large">
+                        <i class="fas fa-ban"></i> Inactivo
+                    </span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Cards de Información Rápida -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="info-card bg-info-light">
+                <i class="fas fa-hourglass-half card-icon text-info"></i>
+                <div class="card-content">
+                    <small class="text-muted">Duración</small>
+                    <h5 class="mb-0">@Model.Hours horas</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="info-card bg-success-light">
+                <i class="fas fa-dollar-sign card-icon text-success"></i>
+                <div class="card-content">
+                    <small class="text-muted">Precio del Paquete</small>
+                    <h5 class="mb-0">$@Model.Price.ToString("N2")</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="info-card bg-warning-light">
+                <i class="fas fa-calculator card-icon text-warning"></i>
+                <div class="card-content">
+                    <small class="text-muted">Precio por Hora</small>
+                    <h5 class="mb-0">$@Model.PricePerHour.ToString("N2")</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Extensiones y Extras -->
+    <div class="section-card mb-4">
+        <div class="section-header bg-success">
+            <i class="fas fa-plus-circle"></i> Extensiones y Extras
+        </div>
+        <div class="section-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="price-item">
+                        <div class="price-icon @(Model.ExtraHourPrice > 0 ? "bg-success-light" : "bg-secondary-light")">
+                            <i class="fas fa-clock @(Model.ExtraHourPrice > 0 ? "text-success" : "text-secondary")"></i>
+                        </div>
+                        <div class="price-content">
+                            <small class="text-muted">Precio Hora Extra</small>
+                            @if (Model.ExtraHourPrice > 0)
+                            {
+                                <h5 class="mb-0 text-success">
+                                    $@Model.ExtraHourPrice.ToString("N2") <small>por hora</small>
+                                </h5>
+                            }
+                            else
+                            {
+                                <h5 class="mb-0 text-muted">Sin cargo</h5>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="price-item">
+                        <div class="price-icon @(Model.AllowsExtensions ? "bg-success-light" : "bg-danger-light")">
+                            <i class="fas fa-@(Model.AllowsExtensions ? "check-circle" : "times-circle") @(Model.AllowsExtensions ? "text-success" : "text-danger")"></i>
+                        </div>
+                        <div class="price-content">
+                            <small class="text-muted">Permite Extensiones</small>
+                            @if (Model.AllowsExtensions)
+                            {
+                                <h5 class="mb-0 text-success">Sí</h5>
+                            }
+                            else
+                            {
+                                <h5 class="mb-0 text-danger">No</h5>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuración -->
+    <div class="section-card mb-4">
+        <div class="section-header bg-primary">
+            <i class="fas fa-cog"></i> Configuración
+        </div>
+        <div class="section-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-sort text-primary"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">Orden de Visualización</small>
+                            <div class="fw-bold">@Model.DisplayOrder</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-bed text-info"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">Tipo de Habitación</small>
+                            <div class="fw-bold">@Model.RoomTypeName</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Etiqueta Completa -->
+    <div class="alert alert-info">
+        <i class="fas fa-tag me-2"></i>
+        <strong>Etiqueta Completa:</strong> @Model.FullLabel
+    </div>
+
+    <!-- Información de Auditoría -->
+    <div class="section-card">
+        <div class="section-header bg-secondary">
+            <i class="fas fa-clock"></i> Información de Auditoría
+        </div>
+        <div class="section-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="audit-item">
+                        <i class="fas fa-plus-circle text-success me-2"></i>
+                        <div>
+                            <small class="text-muted">Fecha de Creación</small>
+                            <div><strong>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="audit-item">
+                        <i class="fas fa-edit text-primary me-2"></i>
+                        <div>
+                            <small class="text-muted">Última Actualización</small>
+                            <div><strong>@Model.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Botones -->
+<div class="mt-4 text-end">
+    <button type="button" class="btn btn-secondary" onclick="Swal.close()">
+        <i class="fas fa-times"></i> Cerrar
+    </button>
+    <button type="button" class="btn btn-warning" onclick="Swal.close(); openEditModal('@Model.HourPackageId')">
+        <i class="fas fa-edit"></i> Editar
+    </button>
+</div>

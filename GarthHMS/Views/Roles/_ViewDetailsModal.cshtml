@@ -1,111 +1,134 @@
 ﻿@model GarthHMS.Core.DTOs.Role.RoleResponseDto
 
 <div class="details-container">
-    <!-- Información General -->
+
+    <!-- ======================
+         INFORMACIÓN GENERAL
+         ====================== -->
     <div class="section-card">
-        <div class="section-header @(Model.IsActive ? "bg-success" : "bg-secondary")">
+        <div class="section-header bg-success">
             <i class="fas fa-info-circle"></i> Información General
         </div>
+
         <div class="section-body">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="detail-item">
-                        <i class="fas fa-tag text-primary me-2"></i>
-                        <div>
-                            <small class="text-muted">Nombre del Rol</small>
-                            <div><strong>@Model.Name</strong></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="detail-item">
-                        <i class="fas fa-list-check text-info me-2"></i>
-                        <div>
-                            <small class="text-muted">Estado</small>
-                            <div>
-                                <span class="badge bg-@Model.StatusColor">
-                                    @Model.StatusBadge
-                                </span>
+            <div class="card shadow-sm rounded border-0">
+                <div class="card-body py-4">
+
+                    <div class="row align-items-center text-center text-md-start">
+
+                        <!-- ROL -->
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="d-flex align-items-center justify-content-center justify-content-md-start">
+                                <div class="me-3">
+                                    <i class="fas fa-tag fa-2x text-primary"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small">
+                                        Nombre del Rol
+                                    </div>
+                                    <div class="h5 fw-semibold mb-0">
+                                        @Model.Name
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-                <div class="col-md-12">
-                    <div class="detail-item">
-                        <i class="fas fa-align-left text-secondary me-2"></i>
-                        <div>
-                            <small class="text-muted">Descripción</small>
-                            <div>
-                                @if (!string.IsNullOrEmpty(Model.Description))
-                                {
-                                    <p class="mb-0">@Model.Description</p>
-                                }
-                                else
-                                {
-                                    <p class="text-muted mb-0">Sin descripción</p>
-                                }
+
+                        <!-- ESTADO -->
+                        <div class="col-md-4 mb-3 mb-md-0 text-center">
+                            <div class="text-muted small">
+                                Estado
+                            </div>
+                            <span class="badge px-3 py-2 bg-@Model.StatusColor">
+                                @Model.StatusBadge
+                            </span>
+                        </div>
+
+                        <!-- DESCRIPCIÓN -->
+                        <div class="col-md-4 text-center">
+                            <div class="text-muted small">
+                                Descripción
+                            </div>
+                            <div class="text-secondary">
+                                @(string.IsNullOrWhiteSpace(Model.Description)
+                                    ? "Sin descripción"
+                                    : Model.Description)
                             </div>
                         </div>
+
                     </div>
+
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Configuración y Permisos -->
+
+
+
+    <!-- ======================
+         CONFIGURACIÓN Y PERMISOS (cards centradas, igual que ejemplo)
+         ====================== -->
     <div class="section-card">
         <div class="section-header bg-warning">
             <i class="fas fa-cog"></i> Configuración y Permisos
         </div>
+
         <div class="section-body">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <div class="detail-item">
-                        <i class="fas fa-percent text-success me-2"></i>
-                        <div>
-                            <small class="text-muted">Descuento Máximo</small>
-                            <div><strong class="text-success">@Model.DiscountDisplay</strong></div>
+            <div class="row g-3 justify-content-center text-center">
+
+                <!-- Descuento -->
+                <div class="col-12 col-md-4">
+                    <div class="info-card p-3 shadow-sm rounded h-100 d-flex flex-column align-items-center justify-content-center">
+                        <div class="mb-2">
+                            <i class="fas fa-percent fa-2x text-success"></i>
+                        </div>
+                        <div class="small text-muted">Descuento Máximo</div>
+                        <div class="h6 mb-0 text-success">@Model.DiscountDisplay</div>
+                    </div>
+                </div>
+
+                <!-- Tipo de Rol -->
+                <div class="col-12 col-md-4">
+                    <div class="info-card p-3 shadow-sm rounded h-100 d-flex flex-column align-items-center justify-content-center">
+                        <div class="mb-2">
+                            <i class="fas fa-shield-alt fa-2x text-primary"></i>
+                        </div>
+                        <div class="small text-muted">Tipo de Rol</div>
+                        <div class="mt-1">
+                            <span class="badge bg-@Model.RoleTypeColor">
+                                @Model.RoleTypeBadge
+                            </span>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="detail-item">
-                        <i class="fas fa-shield-alt text-primary me-2"></i>
-                        <div>
-                            <small class="text-muted">Tipo de Rol</small>
-                            <div>
-                                <span class="badge bg-@Model.RoleTypeColor">
-                                    @Model.RoleTypeBadge
-                                </span>
-                            </div>
+
+                <!-- Nivel -->
+                <div class="col-12 col-md-4">
+                    <div class="info-card p-3 shadow-sm rounded h-100 d-flex flex-column align-items-center justify-content-center">
+                        <div class="mb-2">
+                            <i class="fas fa-@(Model.IsManagerRole ? "star" : "user") fa-2x text-warning"></i>
+                        </div>
+                        <div class="small text-muted">Nivel</div>
+                        <div class="mt-1">
+                            @if (Model.IsManagerRole)
+                            {
+                                <span class="badge bg-warning"><i class="fas fa-star"></i> Gerencial</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-info">Operativo</span>
+                            }
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="detail-item">
-                        <i class="fas fa-@(Model.IsManagerRole ? "star" : "user") text-warning me-2"></i>
-                        <div>
-                            <small class="text-muted">Nivel</small>
-                            <div>
-                                @if (Model.IsManagerRole)
-                                {
-                                    <span class="badge bg-warning">
-                                        <i class="fas fa-star"></i> Gerencial
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-info">Operativo</span>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
             </div>
         </div>
     </div>
 
-    <!-- Información de Auditoría -->
+    <!-- ======================
+         INFORMACIÓN DE AUDITORÍA  (sin cambios en estructura original)
+         ====================== -->
     <div class="section-card">
         <div class="section-header bg-secondary">
             <i class="fas fa-clock"></i> Información de Auditoría
@@ -136,24 +159,29 @@
 
     @if (Model.IsSystemRole)
     {
-        <div class="alert alert-info">
+        <div class="alert alert-info mt-3">
             <i class="fas fa-lock"></i>
             <strong>Rol del Sistema:</strong> Este rol es parte del sistema y tiene restricciones de edición y eliminación.
         </div>
     }
+
 </div>
 
+<!-- BOTONES (sin cambios) -->
 <div class="mt-4 text-end">
     <button type="button" class="btn btn-info" onclick="Swal.close(); openPermissionsModal('@Model.RoleId')">
         <i class="fas fa-shield-alt"></i> Gestionar Permisos
     </button>
+
     @if (!Model.IsSystemRole)
     {
         <button type="button" class="btn btn-warning" onclick="Swal.close(); openEditModal('@Model.RoleId')">
             <i class="fas fa-edit"></i> Editar
         </button>
     }
+
     <button type="button" class="btn btn-secondary" onclick="Swal.close()">
         <i class="fas fa-times"></i> Cerrar
     </button>
 </div>
+
