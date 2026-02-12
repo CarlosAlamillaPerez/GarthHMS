@@ -1,0 +1,358 @@
+﻿@model GarthHMS.Core.DTOs.Guest.CreateGuestDto
+
+<form id="createForm" class="text-start">
+    <!-- Tabs Navigation con Gradiente -->
+    <div class="modal-tabs-header" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); margin: -1rem -1rem 0 -1rem; padding: 1rem 1rem 0 1rem; border-radius: 8px 8px 0 0;">
+        <ul class="nav nav-tabs" id="createGuestTabs" role="tablist" style="border-bottom: none;">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active tab-gradient" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic-pane"
+                        type="button" role="tab">
+                    <i class="fas fa-user"></i> Datos Básicos
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link tab-gradient" id="id-tab" data-bs-toggle="tab" data-bs-target="#id-pane"
+                        type="button" role="tab">
+                    <i class="fas fa-id-card"></i> Identificación
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link tab-gradient" id="address-tab" data-bs-toggle="tab" data-bs-target="#address-pane"
+                        type="button" role="tab">
+                    <i class="fas fa-map-marker-alt"></i> Dirección
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link tab-gradient" id="billing-tab" data-bs-toggle="tab" data-bs-target="#billing-pane"
+                        type="button" role="tab">
+                    <i class="fas fa-file-invoice"></i> Facturación
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link tab-gradient" id="notes-tab" data-bs-toggle="tab" data-bs-target="#notes-pane"
+                        type="button" role="tab">
+                    <i class="fas fa-sticky-note"></i> Notas
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content mt-3" id="createGuestTabContent">
+
+        <!-- TAB 1: Datos Básicos -->
+        <div class="tab-pane fade show active" id="basic-pane" role="tabpanel">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="createFirstName" class="form-label d-flex align-items-center justify-content-left">
+                            Nombre <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="createFirstName" name="FirstName"
+                               required maxlength="50" placeholder="Juan">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="createLastName" class="form-label d-flex align-items-center justify-content-left">
+                            Apellido <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="createLastName" name="LastName"
+                               required maxlength="50" placeholder="Pérez">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="createPhone" class="form-label d-flex align-items-center justify-content-left">
+                            Teléfono <span class="text-danger">*</span>
+                        </label>
+                        <input type="tel" class="form-control" id="createPhone" name="Phone"
+                               required maxlength="20" placeholder="555-1234-5678">
+                        <small class="text-muted">Formato: 10 dígitos</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="createPhoneSecondary" class="form-label">
+                            Teléfono Secundario
+                        </label>
+                        <input type="tel" class="form-control" id="createPhoneSecondary" name="PhoneSecondary"
+                               maxlength="20" placeholder="555-9876-5432">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="createEmail" class="form-label">
+                    Email
+                </label>
+                <input type="email" class="form-control" id="createEmail" name="Email"
+                       maxlength="100" placeholder="juan.perez@email.com">
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="createIsVip" name="IsVip">
+                        <label class="form-check-label" for="createIsVip">
+                            <i class="fas fa-star text-warning"></i> Cliente VIP
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="createSource" class="form-label">Origen</label>
+                        <select class="form-select" id="createSource" name="Source">
+                            <option value="direct">Directo (teléfono/mostrador)</option>
+                            <option value="whatsapp">WhatsApp</option>
+                            <option value="booking">Booking.com</option>
+                            <option value="airbnb">Airbnb</option>
+                            <option value="expedia">Expedia</option>
+                            <option value="walkin">Walk-in</option>
+                            <option value="other">Otro</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: Identificación -->
+        <div class="tab-pane fade" id="id-pane" role="tabpanel">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> Esta información se puede capturar después durante el check-in
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="createIdType" class="form-label">Tipo de Identificación</label>
+                        <select class="form-select" id="createIdType" name="IdType">
+                            <option value="">-- Seleccionar --</option>
+                            <option value="ine">INE</option>
+                            <option value="passport">Pasaporte</option>
+                            <option value="license">Licencia de Conducir</option>
+                            <option value="other">Otro</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="createIdNumber" class="form-label">Número de Identificación</label>
+                        <input type="text" class="form-control" id="createIdNumber" name="IdNumber" maxlength="30">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="createCurp" class="form-label">CURP</label>
+                        <input type="text" class="form-control text-uppercase" id="createCurp" name="Curp"
+                               maxlength="18" placeholder="XXXX000000XXXXXXX00">
+                        <small class="text-muted">18 caracteres</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="createBirthDate" class="form-label">Fecha de Nacimiento</label>
+                        <input type="date" class="form-control" id="createBirthDate" name="BirthDate">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: Dirección -->
+        <div class="tab-pane fade" id="address-pane" role="tabpanel">
+            <div class="mb-3">
+                <label for="createAddressStreet" class="form-label">Calle y Número</label>
+                <input type="text" class="form-control" id="createAddressStreet" name="AddressStreet"
+                       maxlength="200" placeholder="Av. Reforma 123">
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="createAddressCity" class="form-label">Ciudad</label>
+                        <input type="text" class="form-control" id="createAddressCity" name="AddressCity"
+                               maxlength="100" placeholder="Ciudad de México">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="createAddressState" class="form-label">Estado</label>
+                        <input type="text" class="form-control" id="createAddressState" name="AddressState"
+                               maxlength="100" placeholder="CDMX">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="createAddressZip" class="form-label">Código Postal</label>
+                        <input type="text" class="form-control" id="createAddressZip" name="AddressZip"
+                               maxlength="10" placeholder="01234">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="createAddressCountry" class="form-label">País</label>
+                        <input type="text" class="form-control" id="createAddressCountry" name="AddressCountry"
+                               maxlength="50" value="México">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: Facturación -->
+        <div class="tab-pane fade" id="billing-pane" role="tabpanel">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> Información necesaria solo si el huésped requiere factura
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="createBillingRfc" class="form-label">RFC</label>
+                        <input type="text" class="form-control text-uppercase" id="createBillingRfc" name="BillingRfc"
+                               maxlength="13" placeholder="XAXX010101000">
+                        <small class="text-muted">12 o 13 caracteres</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="createBillingBusinessName" class="form-label">Razón Social</label>
+                        <input type="text" class="form-control" id="createBillingBusinessName" name="BillingBusinessName"
+                               maxlength="200">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="createBillingEmail" class="form-label">Email de Facturación</label>
+                        <input type="email" class="form-control" id="createBillingEmail" name="BillingEmail"
+                               maxlength="100">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="createBillingTaxRegime" class="form-label">Régimen Fiscal</label>
+                        <input type="text" class="form-control" id="createBillingTaxRegime" name="BillingTaxRegime"
+                               maxlength="100" placeholder="601 - General de Ley Personas Morales">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="createBillingAddress" class="form-label">Domicilio Fiscal</label>
+                <textarea class="form-control" id="createBillingAddress" name="BillingAddress"
+                          rows="2" maxlength="300"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label for="createBillingZip" class="form-label">Código Postal Fiscal</label>
+                <input type="text" class="form-control" id="createBillingZip" name="BillingZip"
+                       maxlength="10" placeholder="01234">
+            </div>
+        </div>
+
+        <!-- TAB 5: Notas y Preferencias -->
+        <div class="tab-pane fade" id="notes-pane" role="tabpanel">
+            <div class="mb-3">
+                <label for="createNotes" class="form-label">Notas Internas</label>
+                <textarea class="form-control" id="createNotes" name="Notes"
+                          rows="4" maxlength="1000"
+                          placeholder="Preferencias, alergias, solicitudes especiales..."></textarea>
+                <small class="text-muted">Máximo 1000 caracteres</small>
+            </div>
+
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" id="createIsBlacklisted" name="IsBlacklisted">
+                <label class="form-check-label" for="createIsBlacklisted">
+                    <i class="fas fa-ban text-danger"></i> Agregar a Lista Negra
+                </label>
+            </div>
+
+            <div id="blacklistReasonDiv" style="display: none;">
+                <div class="mb-3">
+                    <label for="createBlacklistReason" class="form-label">
+                        Razón <span class="text-danger">*</span>
+                    </label>
+                    <textarea class="form-control" id="createBlacklistReason" name="BlacklistReason"
+                              rows="3" maxlength="500"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="mt-4 text-end border-top pt-3">
+        <button type="button" class="btn btn-secondary" onclick="Swal.close()">
+            <i class="fas fa-times"></i> Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Guardar Huésped
+        </button>
+    </div>
+</form>
+
+<style>
+    /* Tabs con fondo gradient - Estilo mejorado */
+    .tab-gradient {
+        color: white !important;
+        border: none !important;
+        background: transparent !important;
+        opacity: 0.7;
+        transition: all 0.3s ease;
+        padding: 0.75rem 1.25rem;
+        font-weight: 500;
+    }
+
+    .tab-gradient:hover {
+        opacity: 0.9;
+        background: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .tab-gradient.active {
+        opacity: 1 !important;
+        font-weight: 600;
+        border-bottom: 3px solid white !important;
+        background: rgba(255, 255, 255, 0.15) !important;
+    }
+
+    .tab-gradient i {
+        margin-right: 0.5rem;
+    }
+
+    /* Ajustes para el contenedor del modal */
+    .modal-tabs-header {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Mostrar/ocultar campo de razón de blacklist */
+    #blacklistReasonDiv {
+        animation: fadeIn 0.3s ease;
+    }
+</style>
+
+<script>
+    // Mostrar/ocultar campo de razón de blacklist
+    document.getElementById('createIsBlacklisted').addEventListener('change', function() {
+        const reasonDiv = document.getElementById('blacklistReasonDiv');
+        const reasonInput = document.getElementById('createBlacklistReason');
+
+        if (this.checked) {
+            reasonDiv.style.display = 'block';
+            reasonInput.required = true;
+        } else {
+            reasonDiv.style.display = 'none';
+            reasonInput.required = false;
+            reasonInput.value = '';
+        }
+    });
+</script>

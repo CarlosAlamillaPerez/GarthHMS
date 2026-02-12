@@ -1,0 +1,312 @@
+﻿@model GarthHMS.Core.DTOs.Guest.UpdateGuestDto
+
+<form id="editForm" class="text-start">
+    <input type="hidden" id="editGuestId" name="GuestId" value="@Model.GuestId">
+
+    <!-- Nav Tabs -->
+    <ul class="nav nav-tabs mb-3" id="editGuestTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="edit-basic-tab" data-bs-toggle="tab" data-bs-target="#edit-basic-pane" 
+                    type="button" role="tab">
+                <i class="fas fa-user"></i> Datos Básicos
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="edit-id-tab" data-bs-toggle="tab" data-bs-target="#edit-id-pane" 
+                    type="button" role="tab">
+                <i class="fas fa-id-card"></i> Identificación
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="edit-address-tab" data-bs-toggle="tab" data-bs-target="#edit-address-pane" 
+                    type="button" role="tab">
+                <i class="fas fa-map-marker-alt"></i> Dirección
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="edit-billing-tab" data-bs-toggle="tab" data-bs-target="#edit-billing-pane" 
+                    type="button" role="tab">
+                <i class="fas fa-file-invoice"></i> Facturación
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="edit-notes-tab" data-bs-toggle="tab" data-bs-target="#edit-notes-pane" 
+                    type="button" role="tab">
+                <i class="fas fa-sticky-note"></i> Notas
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="editGuestTabContent">
+        
+        <!-- TAB 1: Datos Básicos -->
+        <div class="tab-pane fade show active" id="edit-basic-pane" role="tabpanel">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="editFirstName" class="form-label">
+                            Nombre <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="editFirstName" name="FirstName" 
+                               value="@Model.FirstName" required maxlength="50">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="editLastName" class="form-label">
+                            Apellido <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="editLastName" name="LastName" 
+                               value="@Model.LastName" required maxlength="50">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="editPhone" class="form-label">
+                            Teléfono <span class="text-danger">*</span>
+                        </label>
+                        <input type="tel" class="form-control" id="editPhone" name="Phone" 
+                               value="@Model.Phone" required maxlength="20">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="editPhoneSecondary" class="form-label">
+                            Teléfono Secundario
+                        </label>
+                        <input type="tel" class="form-control" id="editPhoneSecondary" name="PhoneSecondary" 
+                               value="@Model.PhoneSecondary" maxlength="20">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="editEmail" class="form-label">Email</label>
+                <input type="email" class="form-control" id="editEmail" name="Email" 
+                       value="@Model.Email" maxlength="100">
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="editIsVip" name="IsVip" 
+                               @(Model.IsVip ? "checked" : "")>
+                        <label class="form-check-label" for="editIsVip">
+                            <i class="fas fa-star text-warning"></i> Cliente VIP
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="editSource" class="form-label">Origen</label>
+                        <select class="form-select" id="editSource" asp-for="Source">
+                            <option value="direct">Directo</option>
+                            <option value="phone">Teléfono</option>
+                            <option value="whatsapp">WhatsApp</option>
+                            <option value="email">Email</option>
+                            <option value="walk_in">Walk-in</option>
+                            <option value="ota_booking">Booking.com</option>
+                            <option value="ota_airbnb">Airbnb</option>
+                            <option value="ota_expedia">Expedia</option>
+                            <option value="ota_other">Otra OTA</option>
+                            <option value="corporate">Corporativo</option>
+                            <option value="travel_agent">Agencia de Viajes</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: Identificación -->
+        <div class="tab-pane fade" id="edit-id-pane" role="tabpanel">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="editIdType" class="form-label">Tipo de Identificación</label>
+                        <select class="form-select" id="editIdType" asp-for="IdType">
+                            <option value="">-- Seleccionar --</option>
+                            <option value="ine">INE</option>
+                            <option value="passport">Pasaporte</option>
+                            <option value="drivers_license">Licencia de Conducir</option>
+                            <option value="other">Otro</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="editIdNumber" class="form-label">Número de Identificación</label>
+                        <input type="text" class="form-control" id="editIdNumber" name="IdNumber" 
+                               value="@Model.IdNumber" maxlength="30">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="editCurp" class="form-label">CURP</label>
+                        <input type="text" class="form-control text-uppercase" id="editCurp" name="Curp" 
+                               value="@Model.Curp" maxlength="18">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="editBirthDate" class="form-label">Fecha de Nacimiento</label>
+                        <input type="date" class="form-control" id="editBirthDate" name="BirthDate" 
+                               value="@(Model.BirthDate?.ToString("yyyy-MM-dd"))">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: Dirección -->
+        <div class="tab-pane fade" id="edit-address-pane" role="tabpanel">
+            <div class="mb-3">
+                <label for="editAddressStreet" class="form-label">Calle y Número</label>
+                <input type="text" class="form-control" id="editAddressStreet" name="AddressStreet" 
+                       value="@Model.AddressStreet" maxlength="200">
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="editAddressCity" class="form-label">Ciudad</label>
+                        <input type="text" class="form-control" id="editAddressCity" name="AddressCity" 
+                               value="@Model.AddressCity" maxlength="100">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="editAddressState" class="form-label">Estado</label>
+                        <input type="text" class="form-control" id="editAddressState" name="AddressState" 
+                               value="@Model.AddressState" maxlength="100">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="editAddressZip" class="form-label">Código Postal</label>
+                        <input type="text" class="form-control" id="editAddressZip" name="AddressZip" 
+                               value="@Model.AddressZip" maxlength="10">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="editAddressCountry" class="form-label">País</label>
+                        <input type="text" class="form-control" id="editAddressCountry" name="AddressCountry" 
+                               value="@(Model.AddressCountry ?? "México")" maxlength="50">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: Facturación -->
+        <div class="tab-pane fade" id="edit-billing-pane" role="tabpanel">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="editBillingRfc" class="form-label">RFC</label>
+                        <input type="text" class="form-control text-uppercase" id="editBillingRfc" name="BillingRfc" 
+                               value="@Model.BillingRfc" maxlength="13">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="editBillingBusinessName" class="form-label">Razón Social</label>
+                        <input type="text" class="form-control" id="editBillingBusinessName" name="BillingBusinessName" 
+                               value="@Model.BillingBusinessName" maxlength="200">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="editBillingEmail" class="form-label">Email de Facturación</label>
+                        <input type="email" class="form-control" id="editBillingEmail" name="BillingEmail" 
+                               value="@Model.BillingEmail" maxlength="100">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="editBillingTaxRegime" class="form-label">Régimen Fiscal</label>
+                        <input type="text" class="form-control" id="editBillingTaxRegime" name="BillingTaxRegime" 
+                               value="@Model.BillingTaxRegime" maxlength="100">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="editBillingAddress" class="form-label">Domicilio Fiscal</label>
+                <textarea class="form-control" id="editBillingAddress" name="BillingAddress" 
+                          rows="2" maxlength="300">@Model.BillingAddress</textarea>
+            </div>
+
+            <div class="mb-3">
+                <label for="editBillingZip" class="form-label">Código Postal Fiscal</label>
+                <input type="text" class="form-control" id="editBillingZip" name="BillingZip" 
+                       value="@Model.BillingZip" maxlength="10">
+            </div>
+        </div>
+
+        <!-- TAB 5: Notas y Preferencias -->
+        <div class="tab-pane fade" id="edit-notes-pane" role="tabpanel">
+            <div class="mb-3">
+                <label for="editNotes" class="form-label">Notas Internas</label>
+                <textarea class="form-control" id="editNotes" name="Notes" 
+                          rows="4" maxlength="1000">@Model.Notes</textarea>
+            </div>
+
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" id="editIsBlacklisted" name="IsBlacklisted" 
+                       @(Model.IsBlacklisted ? "checked" : "")>
+                <label class="form-check-label" for="editIsBlacklisted">
+                    <i class="fas fa-ban text-danger"></i> Está en Lista Negra
+                </label>
+            </div>
+
+            <div id="editBlacklistReasonDiv" style="display: @(Model.IsBlacklisted ? "block" : "none");">
+                <div class="mb-3">
+                    <label for="editBlacklistReason" class="form-label">
+                        Razón <span class="text-danger">*</span>
+                    </label>
+                    <textarea class="form-control" id="editBlacklistReason" name="BlacklistReason" 
+                              rows="3" maxlength="500">@Model.BlacklistReason</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="mt-4 text-end border-top pt-3">
+        <button type="button" class="btn btn-secondary" onclick="Swal.close()">
+            <i class="fas fa-times"></i> Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Actualizar Huésped
+        </button>
+    </div>
+</form>
+
+<script>
+    // Mostrar/ocultar campo de razón de blacklist
+    document.getElementById('editIsBlacklisted').addEventListener('change', function() {
+        const reasonDiv = document.getElementById('editBlacklistReasonDiv');
+        const reasonInput = document.getElementById('editBlacklistReason');
+        
+        if (this.checked) {
+            reasonDiv.style.display = 'block';
+            reasonInput.required = true;
+        } else {
+            reasonDiv.style.display = 'none';
+            reasonInput.required = false;
+            reasonInput.value = '';
+        }
+    });
+</script>

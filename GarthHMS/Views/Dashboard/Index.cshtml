@@ -1,437 +1,611 @@
 ﻿@model GarthHMS.Core.DTOs.Dashboard.DashboardCompleteDto
 @{
     ViewData["Title"] = "Dashboard";
-
+    
     // Valores por defecto si el modelo es null
     var metrics = Model?.Metrics ?? new GarthHMS.Core.DTOs.Dashboard.DashboardMetricsDto();
     var roomsMap = Model?.RoomsMap ?? new List<GarthHMS.Core.DTOs.Dashboard.DashboardRoomMapDto>();
     var alerts = Model?.Alerts ?? new List<GarthHMS.Core.DTOs.Dashboard.DashboardAlertDto>();
+    
+    // Detectar rol del usuario
+    var isGerente = User.IsInRole("Gerente") || User.IsInRole("SuperAdmin");
+    var isRecepcionista = User.IsInRole("Recepcionista");
+    var isHousekeeping = User.IsInRole("Housekeeping") || User.IsInRole("Limpieza");
 }
 
-    <style>
-        /* ===== DASHBOARD ESPECÍFICO ===== */
-        .dashboard-container {
-            padding: 24px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+<style>
+    /* ===== VARIABLES CSS (Paleta Oficial) ===== */
+    :root {
+        --bg-main: #F5F6F7;
+        --card-bg: #FFFFFF;
+        --text-main: #1F2933;
+        --text-muted: #6B7280;
+        
+        --primary: #2BA49A;
+        --secondary: #D9C9B6;
+        --tertiary: #5162B5;
+        
+        --success: #38A169;
+        --warning: #D69E2E;
+        --danger: #E53E3E;
+        --info: #17A2B8;
+        
+        --room-available: #38A169;
+        --room-occupied: #17A2B8;
+        --room-dirty: #D69E2E;
+        --room-cleaning: #ED8936;
+        --room-maintenance: #718096;
+        
+        --radius: 12px;
+        --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+        --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+    }
+    
+    /* ===== DARK THEME ===== */
+    [data-theme="dark"] {
+        --bg-main: #1A202C;
+        --card-bg: #2D3748;
+        --text-main: #E2E8F0;
+        --text-muted: #A0AEC0;
+    }
+    
+    /* ===== CONTENEDOR PRINCIPAL ===== */
+    .dashboard-page {
+        padding: 32px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    /* ===== FRANJA SUPERIOR: KPIs + ALERTAS ===== */
+    .top-section {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+    
+    /* ===== KPIs ===== */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+    
+    .kpi-card {
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        padding: 20px;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.25s ease;
+        cursor: pointer;
+        position: relative;
+        border: 2px solid transparent;
+    }
+    
+    .kpi-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-md);
+        border-color: var(--primary);
+    }
+    
+    .kpi-card::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 4px;
+        width: 100%;
+        background: var(--primary);
+        opacity: 0.2;
+        border-bottom-left-radius: var(--radius);
+        border-bottom-right-radius: var(--radius);
+    }
+    
+    .kpi-label {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+    
+    .kpi-value {
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--text-main);
+        line-height: 1.1;
+        margin-bottom: 6px;
+    }
+    
+    .kpi-sub {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+    
+    /* Colores por tipo */
+    .kpi-card.success .kpi-value { color: var(--success); }
+    .kpi-card.warning .kpi-value { color: var(--warning); }
+    .kpi-card.danger .kpi-value { color: var(--danger); }
+    .kpi-card.info .kpi-value { color: var(--info); }
+    .kpi-card.primary .kpi-value { color: var(--primary); }
+    
+    /* Ocultar KPIs según rol */
+    .kpi-gerente { display: none; }
+    .kpi-recepcionista { display: none; }
+    .kpi-housekeeping { display: none; }
+    
+    body.role-gerente .kpi-gerente,
+    body.role-superadmin .kpi-gerente { display: block; }
+    
+    body.role-recepcionista .kpi-recepcionista { display: block; }
+    
+    body.role-housekeeping .kpi-housekeeping { display: block; }
+    
+    /* ===== ALERTAS ===== */
+    .alerts-card {
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        padding: 20px;
+        box-shadow: var(--shadow-sm);
+        height: 100%;
+    }
+    
+    .alerts-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .alerts-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .alert-item {
+        padding: 12px;
+        border-radius: 8px;
+        background: rgba(0,0,0,0.02);
+        border-left: 4px solid;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .alert-item:hover {
+        background: rgba(0,0,0,0.04);
+        transform: translateX(4px);
+    }
+    
+    .alert-item.critical { border-left-color: var(--danger); }
+    .alert-item.high { border-left-color: var(--warning); }
+    .alert-item.medium { border-left-color: var(--info); }
+    .alert-item.low { border-left-color: var(--text-muted); }
+    
+    .alert-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+    }
+    
+    .alert-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-main);
+    }
+    
+    .alert-body {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+    }
+    
+    .alert-time {
+        font-size: 11px;
+        color: var(--text-muted);
+        opacity: 0.8;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-muted);
+    }
+    
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 12px;
+        opacity: 0.5;
+    }
+    
+    /* ===== FRANJA CENTRAL: MAPA DE HABITACIONES ===== */
+    .rooms-section {
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        padding: 24px;
+        margin-bottom: 32px;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .rooms-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .rooms-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    
+    .room-card {
+        aspect-ratio: 1;
+        border-radius: var(--radius);
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .room-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    /* Estados de habitaciones */
+    .room-card.available {
+        background: var(--room-available);
+        color: white;
+    }
+    
+    .room-card.occupied {
+        background: var(--room-occupied);
+        color: white;
+    }
+    
+    .room-card.dirty {
+        background: var(--room-dirty);
+        color: white;
+    }
+    
+    .room-card.cleaning {
+        background: var(--room-cleaning);
+        color: white;
+    }
+    
+    .room-card.maintenance {
+        background: var(--room-maintenance);
+        color: white;
+    }
+    
+    .room-number {
+        font-size: 20px;
+        font-weight: 700;
+    }
+    
+    .room-status {
+        font-size: 11px;
+        font-weight: 500;
+        margin-top: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Leyenda */
+    .rooms-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(0,0,0,0.08);
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+    
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+    }
+    
+    /* ===== FRANJA INFERIOR: TAREAS + ACCESOS ===== */
+    .bottom-section {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 24px;
+    }
+    
+    .card {
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        padding: 24px;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .card-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 20px;
+    }
+    
+    /* ===== TAREAS DEL DÍA ===== */
+    .tasks-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+    
+    .task-column-title {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+        margin-bottom: 12px;
+    }
+    
+    .task-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .task-item {
+        padding: 12px;
+        border-radius: 8px;
+        background: rgba(0,0,0,0.02);
+        font-size: 14px;
+        color: var(--text-main);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .task-item:hover {
+        background: rgba(43,164,154,0.08);
+        transform: translateX(4px);
+    }
+    
+    .task-icon {
+        font-size: 16px;
+    }
+    
+    .task-muted {
+        color: var(--text-muted);
+        font-size: 12px;
+        margin-left: auto;
+    }
+    
+    /* ===== ACCESOS RÁPIDOS ===== */
+    .quick-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .action-btn {
+        padding: 14px 20px;
+        border-radius: 8px;
+        border: none;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: inherit;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .action-primary {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .action-secondary {
+        background: rgba(43,164,154,0.1);
+        color: var(--primary);
+    }
+    
+    .action-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
 
-        /* ===== KPI CARDS ===== */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 32px;
-        }
+</style>
 
-        .kpi-card {
-            background: var(--bg-primary);
-            border-radius: var(--radius);
-            padding: 24px;
-            box-shadow: var(--shadow-sm);
-            transition: var(--transition);
-            border: 1px solid var(--border-color);
-        }
-
-        .kpi-card:hover {
-            box-shadow: var(--shadow-md);
-            transform: translateY(-2px);
-        }
-
-        .kpi-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .kpi-icon {
-            font-size: 32px;
-            width: 56px;
-            height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 12px;
-            background: rgba(43, 164, 154, 0.1);
-        }
-
-        .kpi-label {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .kpi-value {
-            font-size: 36px;
-            font-weight: 700;
-            color: var(--text-primary);
-            line-height: 1;
-        }
-
-        .kpi-subtitle {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-top: 8px;
-        }
-
-        /* ===== ROOM MAP ===== */
-        .rooms-map-section {
-            background: var(--bg-primary);
-            border-radius: var(--radius);
-            padding: 24px;
-            margin-bottom: 32px;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--border-color);
-        }
-
-        .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .section-title-icon {
-            font-size: 24px;
-        }
-
-        .rooms-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 12px;
-        }
-
-        .room-card {
-            aspect-ratio: 1;
-            border-radius: 12px;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: 2px solid transparent;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .room-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: inherit;
-            opacity: 0.15;
-        }
-
-        .room-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-md);
-            border-color: var(--primary);
-        }
-
-        /* Estados de habitaciones */
-        .room-card.available {
-            background: var(--room-available);
-            color: white;
-        }
-
-        .room-card.occupied {
-            background: var(--room-occupied);
-            color: white;
-        }
-
-        .room-card.dirty {
-            background: var(--room-dirty);
-            color: var(--text-primary);
-        }
-
-        .room-card.cleaning {
-            background: var(--room-cleaning);
-            color: white;
-        }
-
-        .room-card.maintenance {
-            background: var(--room-maintenance);
-            color: white;
-        }
-
-        .room-card.reserved {
-            background: var(--room-occupied);
-            color: white;
-        }
-
-        .room-number {
-            font-size: 20px;
-            font-weight: 700;
-            z-index: 1;
-        }
-
-        .room-type {
-            font-size: 11px;
-            font-weight: 500;
-            opacity: 0.9;
-            z-index: 1;
-            margin-top: 4px;
-        }
-
-        .room-status-text {
-            font-size: 10px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-top: 8px;
-            z-index: 1;
-        }
-
-        /* ===== LEGEND ===== */
-        .rooms-legend {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 4px;
-        }
-
-        /* ===== ALERTS ===== */
-        .alerts-section {
-            background: var(--bg-primary);
-            border-radius: var(--radius);
-            padding: 24px;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--border-color);
-        }
-
-        .alerts-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .alert-item {
-            display: flex;
-            align-items: start;
-            gap: 12px;
-            padding: 16px;
-            border-radius: 8px;
-            background: var(--bg-secondary);
-            border-left: 4px solid;
-            transition: all 0.2s ease;
-        }
-
-        .alert-item:hover {
-            background: var(--bg-tertiary);
-            transform: translateX(4px);
-        }
-
-        .alert-item.critical {
-            border-left-color: var(--danger);
-        }
-
-        .alert-item.high {
-            border-left-color: var(--warning);
-        }
-
-        .alert-item.medium {
-            border-left-color: var(--info);
-        }
-
-        .alert-item.low {
-            border-left-color: var(--text-muted);
-        }
-
-        .alert-icon {
-            font-size: 24px;
-            flex-shrink: 0;
-        }
-
-        .alert-content {
-            flex: 1;
-        }
-
-        .alert-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 4px;
-        }
-
-        .alert-message {
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        .alert-time {
-            font-size: 11px;
-            color: var(--text-muted);
-            margin-top: 4px;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-muted);
-        }
-
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 12px;
-            opacity: 0.5;
-        }
-
-        /* ===== RESPONSIVE ===== */
-        @@media (max-width: 768px) {
-            .kpi-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .rooms-grid {
-                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-                gap: 8px;
-            }
-
-            .room-card {
-                padding: 12px;
-            }
-
-            .room-number {
-                font-size: 16px;
-            }
-
-            .room-type {
-                font-size: 10px;
-            }
-        }
-
-        /* ===== LOADING STATE ===== */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        }
-
-        .loading-overlay.active {
-            display: flex;
-        }
-
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @@keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* ===== LAST UPDATE ===== */
-        .last-update {
-            text-align: center;
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 20px;
-            padding: 12px;
-            background: var(--bg-secondary);
-            border-radius: 8px;
-        }
-    </style>
-
-<div class="dashboard-container">
-
-    <!-- ===== KPI CARDS ===== -->
-    <div class="kpi-grid">
-
-        <!-- Ocupación -->
-        <div class="kpi-card">
-            <div class="kpi-header">
-                <div class="kpi-icon">📊</div>
-                <div>
-                    <div class="kpi-label">Ocupación</div>
+<div class="dashboard-page">
+    
+    <!-- ===== FRANJA SUPERIOR: KPIs + ALERTAS ===== -->
+    <div class="top-section">
+        
+        <!-- KPIs (Izquierda) -->
+        <div>
+            <div class="kpi-grid">
+                
+                <!-- GERENTE: Ingresos Hoy -->
+                <div class="kpi-card success kpi-gerente">
+                    <div class="kpi-label">💰 Ingresos Hoy</div>
+                    <div class="kpi-value" id="kpi-ingresos">$0</div>
+                    <div class="kpi-sub">Disponible en FASE 3</div>
+                </div>
+                
+                <!-- GERENTE: Ocupación % -->
+                <div class="kpi-card info kpi-gerente">
+                    <div class="kpi-label">📊 Ocupación %</div>
+                    <div class="kpi-value" id="kpi-ocupacion-gerente">@metrics.OccupancyPercent.ToString("F0")%</div>
+                    <div class="kpi-sub">@metrics.OccupiedRooms de @metrics.TotalRooms habitaciones</div>
+                </div>
+                
+                <!-- GERENTE: Habitaciones Ocupadas -->
+                <div class="kpi-card primary kpi-gerente">
+                    <div class="kpi-label">🏨 Habitaciones Ocupadas</div>
+                    <div class="kpi-value" id="kpi-ocupadas">@metrics.OccupiedRooms</div>
+                    <div class="kpi-sub">Actualmente hospedadas</div>
+                </div>
+                
+                <!-- GERENTE: Check-ins Hoy -->
+                <div class="kpi-card info kpi-gerente">
+                    <div class="kpi-label">🚶 Check-ins Hoy</div>
+                    <div class="kpi-value" id="kpi-checkins-gerente">@metrics.CheckinsToday</div>
+                    <div class="kpi-sub">Llegadas programadas</div>
+                </div>
+                
+                <!-- GERENTE: Check-outs Hoy -->
+                <div class="kpi-card warning kpi-gerente">
+                    <div class="kpi-label">👋 Check-outs Hoy</div>
+                    <div class="kpi-value" id="kpi-checkouts-gerente">@metrics.CheckoutsToday</div>
+                    <div class="kpi-sub">Salidas programadas</div>
+                </div>
+                
+                <!-- GERENTE: Saldo Pendiente -->
+                <div class="kpi-card danger kpi-gerente">
+                    <div class="kpi-label">💵 Saldo Pendiente</div>
+                    <div class="kpi-value" id="kpi-saldo">$0</div>
+                    <div class="kpi-sub">Disponible en FASE 3</div>
+                </div>
+                
+                <!-- RECEPCIONISTA: Check-ins Pendientes -->
+                <div class="kpi-card info kpi-recepcionista">
+                    <div class="kpi-label">🚶 Check-ins Pendientes</div>
+                    <div class="kpi-value" id="kpi-checkins-recep">@metrics.CheckinsToday</div>
+                    <div class="kpi-sub">Disponible en FASE 3</div>
+                </div>
+                
+                <!-- RECEPCIONISTA: Check-outs Pendientes -->
+                <div class="kpi-card warning kpi-recepcionista">
+                    <div class="kpi-label">👋 Check-outs Pendientes</div>
+                    <div class="kpi-value" id="kpi-checkouts-recep">@metrics.CheckoutsToday</div>
+                    <div class="kpi-sub">Disponible en FASE 3</div>
+                </div>
+                
+                <!-- RECEPCIONISTA: Habitaciones Disponibles -->
+                <div class="kpi-card success kpi-recepcionista">
+                    <div class="kpi-label">🟢 Habitaciones Disponibles</div>
+                    <div class="kpi-value" id="kpi-disponibles">@metrics.AvailableRooms</div>
+                    <div class="kpi-sub">Listas para asignar</div>
+                </div>
+                
+                <!-- RECEPCIONISTA: Habitaciones Sucias -->
+                <div class="kpi-card warning kpi-recepcionista">
+                    <div class="kpi-label">🧹 Habitaciones Sucias</div>
+                    <div class="kpi-value" id="kpi-sucias-recep">@metrics.DirtyRooms</div>
+                    <div class="kpi-sub">Pendientes de limpieza</div>
+                </div>
+                
+                <!-- RECEPCIONISTA: Cobros Pendientes -->
+                <div class="kpi-card danger kpi-recepcionista">
+                    <div class="kpi-label">💰 Cobros Pendientes</div>
+                    <div class="kpi-value" id="kpi-cobros">0</div>
+                    <div class="kpi-sub">Disponible en FASE 3</div>
+                </div>
+                
+                <!-- RECEPCIONISTA: Ocupación Actual -->
+                <div class="kpi-card primary kpi-recepcionista">
+                    <div class="kpi-label">📊 Ocupación Actual</div>
+                    <div class="kpi-value" id="kpi-ocupacion-recep">@metrics.OccupancyPercent.ToString("F0")%</div>
+                    <div class="kpi-sub">@metrics.OccupiedRooms de @metrics.TotalRooms habitaciones</div>
+                </div>
+                
+                <!-- HOUSEKEEPING: Habitaciones Sucias -->
+                <div class="kpi-card warning kpi-housekeeping">
+                    <div class="kpi-label">🧹 Habitaciones Sucias</div>
+                    <div class="kpi-value" id="kpi-sucias-house">@metrics.DirtyRooms</div>
+                    <div class="kpi-sub">Pendientes de limpieza</div>
+                </div>
+                
+                <!-- HOUSEKEEPING: En Limpieza -->
+                <div class="kpi-card info kpi-housekeeping">
+                    <div class="kpi-label">🟠 En Limpieza</div>
+                    <div class="kpi-value" id="kpi-limpieza">0</div>
+                    <div class="kpi-sub">Actualmente trabajando</div>
+                </div>
+                
+                <!-- HOUSEKEEPING: Limpias Hoy -->
+                <div class="kpi-card success kpi-housekeeping">
+                    <div class="kpi-label">✅ Limpias Hoy</div>
+                    <div class="kpi-value" id="kpi-limpias">0</div>
+                    <div class="kpi-sub">Completadas hoy</div>
+                </div>
+                
+            </div>
+        </div>
+        
+        <!-- ALERTAS (Derecha) -->
+        <div>
+            <div class="alerts-card">
+                <div class="alerts-title">
+                    <span>🔔</span>
+                    <span>Alertas y Notificaciones</span>
+                </div>
+                
+                <div class="alerts-list" id="alerts-list">
+                    @if (alerts.Any())
+                    {
+                        @foreach (var alert in alerts.Take(10))
+                        {
+                            <div class="alert-item @alert.AlertSeverity" onclick="handleAlertClick('@alert.RelatedEntityId', '@alert.RelatedEntityType')">
+                                <div class="alert-header">
+                                    <div class="alert-title">@alert.AlertIcon @alert.AlertTitle</div>
+                                </div>
+                                <div class="alert-body">@alert.AlertMessage</div>
+                                <div class="alert-time">@alert.CreatedAt.ToString("HH:mm") →</div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <div class="empty-state-icon">✅</div>
+                            <p>No hay alertas pendientes</p>
+                        </div>
+                    }
                 </div>
             </div>
-            <div class="kpi-value" id="kpi-occupancy">@metrics.OccupancyPercent.ToString("F0")%</div>
-            <div class="kpi-subtitle">@metrics.OccupiedRooms de @metrics.TotalRooms habitaciones</div>
         </div>
-
-        <!-- Reservas Hoy -->
-        <div class="kpi-card">
-            <div class="kpi-header">
-                <div class="kpi-icon">📅</div>
-                <div>
-                    <div class="kpi-label">Reservas Hoy</div>
-                </div>
-            </div>
-            <div class="kpi-value" id="kpi-reservations">@metrics.ReservationsToday</div>
-            <div class="kpi-subtitle">Check-ins programados</div>
-        </div>
-
-        <!-- Check-outs Pendientes -->
-        <div class="kpi-card">
-            <div class="kpi-header">
-                <div class="kpi-icon">👋</div>
-                <div>
-                    <div class="kpi-label">Check-outs Hoy</div>
-                </div>
-            </div>
-            <div class="kpi-value" id="kpi-checkouts">@metrics.CheckoutsToday</div>
-            <div class="kpi-subtitle">Salidas programadas</div>
-        </div>
-
-        <!-- Huéspedes Activos -->
-        <div class="kpi-card">
-            <div class="kpi-header">
-                <div class="kpi-icon">🏨</div>
-                <div>
-                    <div class="kpi-label">Huéspedes</div>
-                </div>
-            </div>
-            <div class="kpi-value" id="kpi-guests">@metrics.GuestsActive</div>
-            <div class="kpi-subtitle">Actualmente hospedados</div>
-        </div>
-
+        
     </div>
-
-    <!-- ===== MAPA DE HABITACIONES ===== -->
-    <div class="rooms-map-section">
-        <div class="section-title">
-            <span class="section-title-icon">🗺️</span>
-            Mapa de Habitaciones
+    
+    <!-- ===== FRANJA CENTRAL: MAPA DE HABITACIONES ===== -->
+    <div class="rooms-section">
+        <div class="rooms-title">
+            <span>🗺️</span>
+            <span>Mapa de Habitaciones</span>
         </div>
-
+        
         <div class="rooms-grid" id="rooms-map">
             @if (roomsMap.Any())
             {
@@ -439,8 +613,7 @@
                 {
                     <div class="room-card @room.StatusCssClass" data-room-id="@room.RoomId" onclick="showRoomDetails('@room.RoomId')">
                         <div class="room-number">@room.RoomNumber</div>
-                        <div class="room-type">@room.RoomTypeCode</div>
-                        <div class="room-status-text">@room.StatusText</div>
+                        <div class="room-status">@room.StatusText</div>
                     </div>
                 }
             }
@@ -452,7 +625,7 @@
                 </div>
             }
         </div>
-
+        
         <!-- Leyenda -->
         <div class="rooms-legend">
             <div class="legend-item">
@@ -475,59 +648,99 @@
                 <div class="legend-color" style="background: var(--room-maintenance);"></div>
                 <span>Mantenimiento</span>
             </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: var(--room-occupied);"></div>
-                <span>Reservada</span>
-            </div>
         </div>
     </div>
-
-    <!-- ===== ALERTAS ===== -->
-    <div class="alerts-section">
-        <div class="section-title">
-            <span class="section-title-icon">🔔</span>
-            Alertas y Notificaciones
-        </div>
-
-        <div class="alerts-list" id="alerts-list">
-            @if (alerts.Any())
-            {
-                @foreach (var alert in alerts.Take(10))
-                {
-                    <div class="alert-item @alert.AlertSeverity">
-                        <div class="alert-icon">@alert.AlertIcon</div>
-                        <div class="alert-content">
-                            <div class="alert-title">@alert.AlertTitle</div>
-                            <div class="alert-message">@alert.AlertMessage</div>
-                            <div class="alert-time">@alert.CreatedAt.ToString("HH:mm")</div>
+    
+    <!-- ===== FRANJA INFERIOR: TAREAS + ACCESOS RÁPIDOS ===== -->
+    <div class="bottom-section">
+        
+        <!-- TAREAS DEL DÍA (Izquierda) -->
+        <div class="card">
+            <div class="card-title">Tareas del Día</div>
+            
+            <div class="tasks-grid">
+                <!-- Check-ins -->
+                <div>
+                    <div class="task-column-title">CHECK-INS HOY</div>
+                    <div class="task-list" id="checkins-list">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📅</div>
+                            <p>Disponible en FASE 3</p>
                         </div>
                     </div>
-                }
-            }
-            else
-            {
-                <div class="empty-state">
-                    <div class="empty-state-icon">✅</div>
-                    <p>No hay alertas pendientes</p>
                 </div>
-            }
+                
+                <!-- Check-outs -->
+                <div>
+                    <div class="task-column-title">CHECK-OUTS HOY</div>
+                    <div class="task-list" id="checkouts-list">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">👋</div>
+                            <p>Disponible en FASE 3</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+        
+        <!-- ACCESOS RÁPIDOS (Derecha) -->
+        <div class="card">
+            <div class="card-title">Accesos Rápidos</div>
+            
+            <div class="quick-actions">
+                <button class="action-btn action-primary" id="btn-nueva-reserva" disabled>
+                    <span>➕</span>
+                    <span>Nueva Reserva</span>
+                </button>
+                <button class="action-btn action-secondary" id="btn-registrar-checkin" disabled>
+                    <span>🚶</span>
+                    <span>Registrar Check-in</span>
+                </button>
+                <button class="action-btn action-secondary" id="btn-registrar-checkout" disabled>
+                    <span>👋</span>
+                    <span>Registrar Check-out</span>
+                </button>
+                <button class="action-btn action-secondary" id="btn-ver-calendario" disabled>
+                    <span>📅</span>
+                    <span>Ver Calendario</span>
+                </button>
+            </div>
+        </div>
+        
     </div>
-
-    <!-- Última actualización -->
-    <div class="last-update">
-        Última actualización: <span id="last-update-time">@DateTime.Now.ToString("HH:mm:ss")</span>
-        <br>
-        <small>Auto-refresh cada 30 segundos</small>
-    </div>
-
-</div>
-
-<!-- Loading Overlay -->
-<div class="loading-overlay" id="loading-overlay">
-    <div class="loading-spinner"></div>
+    
 </div>
 
 @section Scripts {
     <script src="~/js/dashboard/dashboard.js"></script>
+    <script>
+        // Detectar rol y agregar clase al body
+        document.addEventListener('DOMContentLoaded', function() {
+            @if (isGerente)
+            {
+                <text>document.body.classList.add('role-gerente');</text>
+            }
+            else if (User.IsInRole("SuperAdmin"))
+            {
+                <text>document.body.classList.add('role-superadmin');</text>
+            }
+            else if (isRecepcionista)
+            {
+                <text>document.body.classList.add('role-recepcionista');</text>
+            }
+            else if (isHousekeeping)
+            {
+                <text>document.body.classList.add('role-housekeeping');</text>
+            }
+        });
+        
+        // Función global para manejar clicks en alertas
+        function handleAlertClick(entityId, entityType) {
+            if (entityType === 'room') {
+                showRoomDetails(entityId);
+            } else {
+                showInfoToast('Funcionalidad disponible en FASE 3');
+            }
+        }
+    </script>
 }

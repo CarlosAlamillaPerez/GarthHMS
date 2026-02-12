@@ -6,6 +6,7 @@ using GarthHMS.Application.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
+using GarthHMS.Core.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -91,6 +92,9 @@ builder.Services.AddScoped<IHotelSettingsService, HotelSettingsService>();
 builder.Services.AddScoped<IHourPackageRepository, HourPackageRepository>();
 builder.Services.AddScoped<IHourPackageService, HourPackageService>();
 
+// Guests Service (Huéspedes)
+builder.Services.AddScoped<IGuestRepository, GuestRepository>();
+builder.Services.AddScoped<IGuestService, GuestService>();
 
 // ============================================
 // CONFIGURACIÓN DE DAPPER
@@ -147,11 +151,32 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // ========================================
+// REDIRECCIÓN DE RAÍZ SEGÚN AUTENTICACIÓN
+// ========================================
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path == "/")
+    {
+        if (context.User.Identity?.IsAuthenticated == true)
+        {
+            context.Response.Redirect("/Dashboard/Index");
+            return;
+        }
+        else
+        {
+            context.Response.Redirect("/Account/Login");
+            return;
+        }
+    }
+    await next();
+});
+
+// ========================================
 // RUTAS
 // ========================================
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Dashboard}/{action=Index}/{id?}");
 
 // ========================================
 // RUN APP

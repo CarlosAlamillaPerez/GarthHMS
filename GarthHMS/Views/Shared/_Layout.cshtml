@@ -73,7 +73,7 @@
         <!-- SIDEBAR -->
         <aside class="sidebar" id="sidebar">
             <nav class="sidebar-nav">
-                <a asp-controller="Home" asp-action="Index" class="nav-item active">
+                <a asp-controller="Dashboard" asp-action="Index" class="nav-item active">
                     <i class="fas fa-home"></i>
                     <span>Dashboard</span>
                 </a>
@@ -92,26 +92,44 @@
                     <span>Habitaciones</span>
                 </a>
 
-                <a asp-controller="Roles" asp-action="Index" class="nav-item">
-                    <i class="fas fa-user-shield"></i>
-                    <span>Roles y Permisos</span>
-                </a>
-
                 <a href="#" class="nav-item">
                     <i class="fas fa-dollar-sign"></i>
                     <span>Finanzas</span>
                 </a>
 
-                <!-- Tipos de Habitación -->
-                <a asp-controller="RoomTypes" asp-action="Index" class="nav-item">
-                    <i class="fas fa-list-alt"></i>
-                    <span>Tipos de Habitación</span>
-                </a>
-
-                <a asp-controller="Configuration" asp-action="Index" class="nav-item">
+                <!-- En el sidebar -->
+                <a href="#" class="nav-item has-submenu" id="configMenu">
                     <i class="fas fa-cog"></i>
                     <span>Configuración</span>
+                    <i class="fas fa-chevron-down submenu-arrow"></i>
                 </a>
+
+                <div class="submenu" id="configSubmenu">
+                    <a asp-controller="HotelSettings" asp-action="Index" class="submenu-item">
+                        <i class="fas fa-hotel"></i>
+                        <span>Hotel Settings</span>
+                    </a>
+                    <a asp-controller="RoomTypes" asp-action="Index" class="submenu-item">
+                        <i class="fas fa-list-alt"></i>
+                        <span>Tipos de Habitación</span>
+                    </a>
+                    <a asp-controller="Rooms" asp-action="Index" class="submenu-item">
+                        <i class="fas fa-bed"></i>
+                        <span>Habitaciones</span>
+                    </a>
+                    <a asp-controller="Users" asp-action="Index" class="submenu-item">
+                        <i class="fas fa-users"></i>
+                        <span>Usuarios</span>
+                    </a>
+                    <a asp-controller="Roles" asp-action="Index" class="submenu-item">
+                        <i class="fas fa-user-shield"></i>
+                        <span>Roles y Permisos</span>
+                    </a>
+                    <a asp-controller="HourPackages" asp-action="Index" class="submenu-item">
+                        <i class="fas fa-clock"></i>
+                        <span>Paquetes por Hora</span>
+                    </a>
+                </div>
             </nav>
         </aside>
 

@@ -1,0 +1,111 @@
+﻿@{
+    ViewData["Title"] = "Huéspedes";
+}
+
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1 class="page-title">
+                <i class="fas fa-users"></i> Gestión de Huéspedes
+            </h1>
+            <p class="text-muted">Administra la base de datos de clientes del hotel</p>
+        </div>
+        <div class="col-auto">
+            <button type="button" class="btn btn-primary" onclick="openCreateModal()">
+                <i class="fas fa-user-plus"></i> Nuevo Huésped
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <!-- Toolbar con filtros -->
+        <div id="toolbar" class="mb-3">
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <select id="filterIsVip" class="form-select" onchange="applyFilters()">
+                        <option value="">Todos los huéspedes</option>
+                        <option value="true">Solo VIP ⭐</option>
+                        <option value="false">No VIP</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select id="filterBlacklist" class="form-select" onchange="applyFilters()">
+                        <option value="">Todos los estados</option>
+                        <option value="false">Permitidos</option>
+                        <option value="true">Blacklist ⚠️</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select id="filterSource" class="form-select" onchange="applyFilters()">
+                        <option value="">Todos los orígenes</option>
+                        <option value="direct">Directo</option>
+                        <option value="phone">Teléfono</option>
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="walk_in">Walk-in</option>
+                        <option value="ota_booking">Booking.com</option>
+                        <option value="ota_airbnb">Airbnb</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="btn btn-secondary w-100" onclick="clearFilters()">
+                        <i class="fas fa-times"></i> Limpiar Filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla Bootstrap Table -->
+        <table id="guestsTable"
+               class="table table-hover"
+               data-toggle="table"
+               data-toolbar="#toolbar"
+               data-search="true"
+               data-search-highlight="true"
+               data-show-refresh="true"
+               data-show-columns="true"
+               data-show-export="true"
+               data-pagination="true"
+               data-page-size="10"
+               data-page-list="[10,25,50,100]"
+               data-sort-name="createdAt"
+               data-sort-order="desc">
+            <thead>
+                <tr>
+                    <th data-field="fullName" data-sortable="true" data-width="200">
+                        <i class="fas fa-user"></i> Nombre Completo
+                    </th>
+                    <th data-field="phone" data-sortable="true" data-width="130">
+                        <i class="fas fa-phone"></i> Teléfono
+                    </th>
+                    <th data-field="email" data-sortable="true" data-width="180">
+                        <i class="fas fa-envelope"></i> Email
+                    </th>
+                    <th data-field="totalStays" data-sortable="true" data-align="center" data-width="100" data-formatter="staysFormatter">
+                        <i class="fas fa-bed"></i> Estancias
+                    </th>
+                    <th data-field="lastStayDate" data-sortable="true" data-align="center" data-width="130" data-formatter="dateFormatter">
+                        <i class="fas fa-calendar"></i> Última Visita
+                    </th>
+                    <th data-field="source" data-align="center" data-width="100" data-formatter="sourceFormatter">
+                        <i class="fas fa-route"></i> Origen
+                    </th>
+                    <th data-field="isVip" data-align="center" data-width="80" data-formatter="vipFormatter">
+                        VIP
+                    </th>
+                    <th data-field="isBlacklisted" data-align="center" data-width="80" data-formatter="blacklistFormatter">
+                        Estado
+                    </th>
+                    <th data-field="actions" data-align="center" data-width="200" data-formatter="actionsFormatter">
+                        <i class="fas fa-cog"></i> Acciones
+                    </th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/guests.js"></script>
+}

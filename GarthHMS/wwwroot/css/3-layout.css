@@ -323,6 +323,110 @@
     border-top: 1px solid var(--border-color);
 }
 
+
+
+/* ============================================ */
+/* SUBMENU EXPANDIBLE - CONFIGURACIÓN */
+/* ============================================ */
+
+/* Nav item con submenu */
+.nav-item.has-submenu {
+    position: relative;
+    cursor: pointer;
+}
+
+/* Flecha del submenu */
+.submenu-arrow {
+    position: absolute;
+    right: 1rem;
+    font-size: 0.75rem;
+    transition: transform 0.3s ease;
+}
+
+/* Rotar flecha cuando está expandido */
+.nav-item.has-submenu.expanded .submenu-arrow {
+    transform: rotate(180deg);
+}
+
+/* Contenedor del submenu */
+.submenu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+    /* Submenu expandido */
+    .submenu.expanded {
+        max-height: 500px; /* Ajustar según cantidad de items */
+    }
+
+/* Items del submenu */
+.submenu-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem 0.75rem 3rem; /* Indent a la izquierda */
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+    .submenu-item i {
+        margin-right: 0.75rem;
+        font-size: 0.9rem;
+        width: 1.2rem;
+        text-align: center;
+    }
+
+    /* Hover en submenu item */
+    .submenu-item:hover {
+        background: rgba(var(--primary-rgb), 0.1);
+        color: var(--primary);
+        border-left-color: var(--primary);
+        padding-left: 3.25rem; /* Efecto de slide */
+    }
+
+    /* Submenu item activo */
+    .submenu-item.active {
+        background: rgba(var(--primary-rgb), 0.15);
+        color: var(--primary);
+        border-left-color: var(--primary);
+        font-weight: 600;
+    }
+
+/* ============================================ */
+/* DARK MODE - SUBMENU */
+/* ============================================ */
+
+[data-theme="dark"] .submenu {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .submenu-item:hover {
+    background: rgba(var(--primary-rgb), 0.2);
+}
+
+[data-theme="dark"] .submenu-item.active {
+    background: rgba(var(--primary-rgb), 0.25);
+}
+
+/* ============================================ */
+/* RESPONSIVE - SUBMENU */
+/* ============================================ */
+
+@media (max-width: 768px) {
+    .submenu-item {
+        padding-left: 2.5rem;
+        font-size: 0.85rem;
+    }
+
+        .submenu-item:hover {
+            padding-left: 2.75rem;
+        }
+}
+
 /* ========================================
    RESPONSIVE
    ======================================== */
