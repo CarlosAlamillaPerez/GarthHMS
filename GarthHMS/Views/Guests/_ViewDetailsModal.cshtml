@@ -369,7 +369,7 @@
                         <i class="fas fa-plus-circle text-success me-2"></i>
                         <div>
                             <small class="text-muted">Fecha de Creación</small>
-                            <div><strong>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</strong></div>
+                            <div><strong>@Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</strong></div>
                             @if (!string.IsNullOrEmpty(Model.CreatedByName))
                             {
                                 <small class="text-muted">Por: @Model.CreatedByName</small>
@@ -382,7 +382,7 @@
                         <i class="fas fa-edit text-primary me-2"></i>
                         <div>
                             <small class="text-muted">Última Actualización</small>
-                            <div><strong>@Model.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</strong></div>
+                            <div><strong>@Model.UpdatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</strong></div>
                         </div>
                     </div>
                 </div>

@@ -84,7 +84,7 @@ namespace GarthHMS.Infrastructure.Repositories
         /// </summary>
         public async Task<bool> UpdateAsync(Guid hotelId, UpdateGuestDto dto)
         {
-            var filasAfectadas = await _procedimientos.EjecutarAsync(
+            var resultado = await _procedimientos.EjecutarEscalarAsync<bool>(  // ✅ Cambio aquí
                 "guest_update",
                 new
                 {
@@ -134,9 +134,8 @@ namespace GarthHMS.Infrastructure.Repositories
                 }
             );
 
-            return filasAfectadas > 0;
+            return resultado;
         }
-
         /// <summary>
         /// Obtener huésped por ID
         /// </summary>
@@ -229,7 +228,7 @@ namespace GarthHMS.Infrastructure.Repositories
         /// </summary>
         public async Task<bool> ToggleBlacklistAsync(Guid hotelId, Guid guestId, bool isBlacklisted, string? reason = null)
         {
-            var filasAfectadas = await _procedimientos.EjecutarAsync(
+            var resultado = await _procedimientos.EjecutarEscalarAsync<bool>( 
                 "guest_toggle_blacklist",
                 new
                 {
@@ -240,7 +239,7 @@ namespace GarthHMS.Infrastructure.Repositories
                 }
             );
 
-            return filasAfectadas > 0;
+            return resultado;  // ✅ Devolver directo
         }
 
         /// <summary>
