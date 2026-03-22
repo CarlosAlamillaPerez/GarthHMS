@@ -1,0 +1,678 @@
+﻿@* GarthHMS.Web/Views/Availability/Index.cshtml *@
+@{
+    ViewData["Title"] = "Gestión de Reservas";
+}
+
+@* =========================================================================
+   ESTILOS ESPECÍFICOS DEL MÓDULO
+   ========================================================================= *@
+<style>
+    /* -----------------------------------------------------------------------
+       LAYOUT PRINCIPAL: 40/60 SPLIT
+       ----------------------------------------------------------------------- */
+    .availability-container {
+        display: grid;
+        grid-template-columns: 40% 1fr;
+        gap: 1.5rem;
+        align-items: start;
+    }
+
+    /* -----------------------------------------------------------------------
+       CALENDARIO (IZQUIERDA)
+       ----------------------------------------------------------------------- */
+    .calendar-section {
+        position: sticky;
+        top: 80px;
+    }
+
+    .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.25rem;
+    }
+
+    .calendar-nav {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .calendar-nav-btn {
+        background: var(--bg-tertiary);
+        border: none;
+        color: var(--text-primary);
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition-fast);
+    }
+
+    .calendar-nav-btn:hover {
+        background: var(--primary);
+        color: #fff;
+    }
+
+    .calendar-month-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        min-width: 150px;
+        text-align: center;
+    }
+
+    /* Grid del calendario */
+    .calendar-weekdays {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
+        margin-bottom: 4px;
+    }
+
+    .calendar-weekday {
+        text-align: center;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+        padding: 5px 0;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .calendar-days {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
+    }
+
+    .calendar-day {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        cursor: pointer;
+        position: relative;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: var(--transition-fast);
+        border: 2px solid transparent;
+        user-select: none;
+        color: var(--text-primary);
+    }
+
+    .calendar-day:not(.other-month):hover {
+        border-color: var(--primary);
+    }
+
+    .calendar-day.other-month {
+        opacity: 0.25;
+        cursor: default;
+        pointer-events: none;
+        color: var(--text-secondary);
+    }
+
+    .calendar-day.today {
+        font-weight: 800;
+        border-color: var(--primary);
+    }
+
+    .calendar-day.selected {
+        background: var(--primary) !important;
+        color: #fff !important;
+        border-color: var(--primary) !important;
+    }
+
+    /* Color-coding por ocupación */
+    .calendar-day.occ-low    { background: rgba(56, 161, 105, 0.12); color: var(--success); }
+    .calendar-day.occ-medium { background: rgba(214, 158, 46, 0.15); color: var(--warning); }
+    .calendar-day.occ-high   { background: rgba(237, 137, 54, 0.20); color: #ED8936; }
+    .calendar-day.occ-full   { background: rgba(229,  62,  62, 0.15); color: var(--danger); }
+
+    .calendar-day-badge {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        background: var(--primary);
+        color: #fff;
+        font-size: 0.55rem;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    /* Leyenda */
+    .occ-legend {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        font-size: 0.73rem;
+        color: var(--text-secondary);
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .occ-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .occ-legend-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    /* Resumen del día */
+    .day-summary-box {
+        background: var(--bg-surface-alt);
+        border-radius: var(--border-radius-sm);
+        padding: 0.9rem 1rem;
+        margin-top: 1rem;
+    }
+
+    .day-summary-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+        margin-bottom: 0.65rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .day-summary-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.35rem 1.25rem;
+    }
+
+    .day-stat {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.82rem;
+        border-bottom: 1px dashed var(--border-color);
+        padding-bottom: 0.2rem;
+    }
+
+    .day-stat-label { color: var(--text-secondary); }
+    .day-stat-value { font-weight: 700; color: var(--text-primary); }
+
+    /* -----------------------------------------------------------------------
+       PANEL DERECHO — RESERVAS
+       ----------------------------------------------------------------------- */
+
+    /* Tabs */
+    .reservations-tabs {
+        display: flex;
+        gap: 0.1rem;
+        margin-bottom: 1rem;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .tab-btn {
+        background: transparent;
+        border: none;
+        padding: 0.6rem 1.1rem;
+        cursor: pointer;
+        font-size: 0.88rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        border-bottom: 3px solid transparent;
+        margin-bottom: -2px;
+        transition: var(--transition-fast);
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        white-space: nowrap;
+    }
+
+    .tab-btn:hover { color: var(--primary); }
+
+    .tab-btn.active {
+        color: var(--primary);
+        border-bottom-color: var(--primary);
+        font-weight: 700;
+    }
+
+    .tab-count {
+        background: var(--bg-surface-alt);
+        color: var(--text-secondary);
+        padding: 0.1rem 0.45rem;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        min-width: 20px;
+        text-align: center;
+    }
+
+    .tab-btn.active .tab-count {
+        background: var(--primary);
+        color: #fff;
+    }
+
+    /* Cabecera dinámica */
+    .reservations-header-box {
+        background: var(--bg-surface-alt);
+        border-radius: var(--border-radius-sm);
+        padding: 0.8rem 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .reservations-header-box h2 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0 0 0.15rem;
+    }
+
+    .reservations-header-box p {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    /* Lista de reservas */
+    .reservations-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+
+    /* -----------------------------------------------------------------------
+       CARD DE RESERVA
+       ----------------------------------------------------------------------- */
+    .reservation-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 1rem 1.1rem;
+        transition: var(--transition-fast);
+        cursor: pointer;
+    }
+
+    .reservation-card:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-md);
+        transform: translateY(-1px);
+    }
+
+    .card-top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .card-status-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    /* Badges de estado */
+    .status-badge {
+        padding: 0.25rem 0.55rem;
+        border-radius: 5px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .status-pending     { background: rgba(214,158, 46,.15); color: var(--warning); }
+    .status-confirmed   { background: rgba( 56,161,105,.15); color: var(--success); }
+    .status-checked_in  { background: rgba( 66,153,225,.15); color: var(--info); }
+    .status-checked_out { background: rgba(113,128,150,.12); color: var(--text-secondary); }
+    .status-cancelled   { background: rgba(229, 62, 62,.12); color: var(--danger); }
+    .status-no_show     { background: rgba(113,128,150,.12); color: var(--text-secondary); }
+
+    .folio-text {
+        font-size: 0.78rem;
+        color: var(--text-secondary);
+        font-weight: 600;
+        font-family: 'Courier New', monospace;
+    }
+
+    .vip-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        padding: 0.18rem 0.38rem;
+        border-radius: 4px;
+        font-size: 0.64rem;
+        font-weight: 700;
+        background: rgba(245,158,11,.15);
+        color: #d97706;
+        text-transform: uppercase;
+    }
+
+    .channel-badge {
+        padding: 0.22rem 0.48rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: var(--bg-surface-alt);
+        color: var(--text-secondary);
+        white-space: nowrap;
+    }
+
+    .guest-name-row {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.45rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .reservation-info-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.65rem;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .info-item i {
+        width: 15px;
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+        opacity: 0.7;
+    }
+
+    /* Estado de pago */
+    .payment-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.28rem 0.55rem;
+        border-radius: 5px;
+        font-size: 0.76rem;
+        font-weight: 600;
+    }
+
+    .payment-tag.paid    { background: rgba(56,161,105,.12); color: var(--success); }
+    .payment-tag.pending { background: rgba(237,137,54,.12); color: #ED8936; }
+
+    /* Footer de acciones */
+    .card-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .btn-action-main {
+        flex: 1;
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        padding: 0.42rem 0.9rem;
+        border-radius: var(--border-radius-sm);
+        font-size: 0.83rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition-fast);
+    }
+
+    .btn-action-main:hover { background: var(--primary-dark); }
+
+    .btn-action-main.warning { background: var(--warning); }
+    .btn-action-main.warning:hover { background: #b7791f; }
+
+    .btn-action-icon {
+        background: var(--bg-surface-alt);
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        width: 34px;
+        height: 34px;
+        border-radius: var(--border-radius-sm);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        transition: var(--transition-fast);
+        flex-shrink: 0;
+    }
+
+    .btn-action-icon:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--bg-surface);
+    }
+
+    /* -----------------------------------------------------------------------
+       ESTADOS VACÍOS Y LOADING
+       ----------------------------------------------------------------------- */
+    .empty-state {
+        text-align: center;
+        padding: 2.5rem 1rem;
+        color: var(--text-secondary);
+    }
+
+    .empty-state-icon {
+        font-size: 2.5rem;
+        margin-bottom: 0.75rem;
+        opacity: 0.4;
+    }
+
+    .empty-state h3 {
+        font-size: 0.95rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.2rem;
+        font-weight: 600;
+    }
+
+    .empty-state p {
+        font-size: 0.82rem;
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    .loading-state {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem;
+        color: var(--text-secondary);
+        gap: 0.5rem;
+        font-size: 0.88rem;
+    }
+</style>
+
+@* =========================================================================
+   CABECERA DEL MÓDULO
+   ========================================================================= *@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">
+            <i class="fas fa-calendar-alt text-primary"></i> Gestión de Reservas
+        </h2>
+        <p class="text-muted mb-0">Calendario de ocupación y listado de reservas</p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        @* Filtros rápidos *@
+        <select id="filterChannel" class="form-select form-select-sm" style="min-width:130px"
+                title="Canal de origen">
+            <option value="">Todos los canales</option>
+            <option value="direct">Directo</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="booking">Booking.com</option>
+            <option value="airbnb">Airbnb</option>
+            <option value="expedia">Expedia</option>
+            <option value="walkin">Walk-in</option>
+        </select>
+
+        <select id="filterStatus" class="form-select form-select-sm" style="min-width:130px"
+                title="Estado de reserva">
+            <option value="">Todos los estados</option>
+            <option value="pending">Pendiente</option>
+            <option value="confirmed">Confirmada</option>
+            <option value="checked_in">Check-in</option>
+        </select>
+
+        <button class="btn btn-outline-secondary btn-sm" onclick="clearFilters()">
+            <i class="fas fa-times me-1"></i>Limpiar
+        </button>
+
+        <button class="btn btn-primary" onclick="createReservation()">
+            <i class="fas fa-plus me-1"></i>Nueva Reserva
+        </button>
+    </div>
+</div>
+
+@* =========================================================================
+   LAYOUT PRINCIPAL: 40/60
+   ========================================================================= *@
+<div class="availability-container">
+
+    @* ===== IZQUIERDA: CALENDARIO ===== *@
+    <div class="calendar-section card card-body shadow-sm">
+
+        <div class="calendar-header">
+            <div class="calendar-nav">
+                <button class="calendar-nav-btn" onclick="previousMonth()" title="Mes anterior">
+                    <i class="fas fa-chevron-left fa-xs"></i>
+                </button>
+                <span class="calendar-month-title" id="calendarMonthTitle">Cargando…</span>
+                <button class="calendar-nav-btn" onclick="nextMonth()" title="Mes siguiente">
+                    <i class="fas fa-chevron-right fa-xs"></i>
+                </button>
+            </div>
+            <button class="btn btn-primary btn-sm px-3" onclick="goToToday()">
+                <i class="fas fa-dot-circle fa-xs me-1"></i>Hoy
+            </button>
+        </div>
+
+        @* Días de la semana *@
+        <div class="calendar-weekdays">
+            <div class="calendar-weekday">Dom</div>
+            <div class="calendar-weekday">Lun</div>
+            <div class="calendar-weekday">Mar</div>
+            <div class="calendar-weekday">Mié</div>
+            <div class="calendar-weekday">Jue</div>
+            <div class="calendar-weekday">Vie</div>
+            <div class="calendar-weekday">Sáb</div>
+        </div>
+
+        @* Días — se genera con JS *@
+        <div class="calendar-days" id="calendarDays"></div>
+
+        @* Leyenda *@
+        <div class="occ-legend">
+            <div class="occ-legend-item">
+                <div class="occ-legend-dot" style="background:rgba(56,161,105,.6)"></div>
+                <span>Baja</span>
+            </div>
+            <div class="occ-legend-item">
+                <div class="occ-legend-dot" style="background:rgba(214,158,46,.7)"></div>
+                <span>Media</span>
+            </div>
+            <div class="occ-legend-item">
+                <div class="occ-legend-dot" style="background:rgba(237,137,54,.7)"></div>
+                <span>Alta</span>
+            </div>
+            <div class="occ-legend-item">
+                <div class="occ-legend-dot" style="background:rgba(229,62,62,.6)"></div>
+                <span>Lleno</span>
+            </div>
+        </div>
+
+        @* Resumen del día *@
+        <div class="day-summary-box">
+            <div class="day-summary-title">
+                <i class="fas fa-chart-pie"></i>
+                <span id="daySummaryTitle">Selecciona un día</span>
+            </div>
+            <div class="day-summary-grid">
+                <div class="day-stat">
+                    <span class="day-stat-label">Total</span>
+                    <span class="day-stat-value" id="statTotal">—</span>
+                </div>
+                <div class="day-stat">
+                    <span class="day-stat-label">Ocupadas</span>
+                    <span class="day-stat-value" id="statOccupied">—</span>
+                </div>
+                <div class="day-stat">
+                    <span class="day-stat-label text-success">Disponibles</span>
+                    <span class="day-stat-value text-success" id="statAvailable">—</span>
+                </div>
+                <div class="day-stat">
+                    <span class="day-stat-label">% Ocupación</span>
+                    <span class="day-stat-value" id="statPercent">—</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ===== DERECHA: RESERVAS ===== *@
+    <div class="card card-body shadow-sm">
+
+        @* Tabs *@
+        <div class="reservations-tabs">
+            <button class="tab-btn active" data-tab="today" onclick="changeTab('today')">
+                <i class="fas fa-sun fa-xs"></i>
+                Hoy
+                <span class="tab-count" id="countToday">0</span>
+            </button>
+            <button class="tab-btn" data-tab="upcoming" onclick="changeTab('upcoming')">
+                <i class="fas fa-forward fa-xs"></i>
+                Próximas 7 días
+                <span class="tab-count" id="countUpcoming">0</span>
+            </button>
+            <button class="tab-btn" data-tab="bydate" onclick="changeTab('bydate')">
+                <i class="fas fa-calendar-day fa-xs"></i>
+                Por fecha
+                <span class="tab-count" id="countByDate">0</span>
+            </button>
+        </div>
+
+        @* Subtítulo dinámico *@
+        <div class="reservations-header-box">
+            <h2 id="reservationsTitle">Reservas de hoy</h2>
+            <p id="reservationsSubtitle">Cargando…</p>
+        </div>
+
+        @* Lista de reservas *@
+        <div class="reservations-list" id="reservationsList">
+            <div class="loading-state">
+                <i class="fas fa-circle-notch fa-spin"></i> Cargando reservas…
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        window.OperationMode = '@(User.FindFirst("OperationMode")?.Value ?? "hotel")';
+    </script>
+    <script src="~/js/reservations/availability.js"></script>
+}

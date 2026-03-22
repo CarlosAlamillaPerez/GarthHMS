@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 namespace GarthHMS.Web.Controllers
 {
     [Authorize]
-    [Route("HotelSettings")]  // ← ESTA ES LA LÍNEA CRÍTICA
+    [Route("HotelSettings")]
     public class HotelSettingsController : Controller
     {
         private readonly IHotelSettingsService _hotelSettingsService;

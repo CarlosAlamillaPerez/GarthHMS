@@ -1,0 +1,266 @@
+﻿// GarthHMS.Web/Controllers/ReservationsController.cs
+using System;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using GarthHMS.Core.DTOs.Reservation;
+using GarthHMS.Core.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+
+namespace GarthHMS.Web.Controllers
+{
+    [Authorize]
+    [Route("Reservations")]
+    public class ReservationsController : Controller
+    {
+        private readonly IReservationService _reservationService;
+        private readonly ILogger<ReservationsController> _logger;
+
+        public ReservationsController(
+            IReservationService reservationService,
+            ILogger<ReservationsController> logger)
+        {
+            _reservationService = reservationService;
+            _logger = logger;
+        }
+
+        // ====================================================================
+        // HELPERS
+        // ====================================================================
+
+        private Guid GetCurrentHotelId()
+        {
+            var claim = User.FindFirst("HotelId")?.Value;
+            return Guid.Parse(claim ?? Guid.Empty.ToString());
+        }
+
+        private Guid GetCurrentUserId()
+        {
+            var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return Guid.Parse(claim ?? Guid.Empty.ToString());
+        }
+
+        private string GetOperationMode()
+        {
+            return User.FindFirst("OperationMode")?.Value ?? "hotel";
+        }
+
+        // ====================================================================
+        // VISTA PRINCIPAL — redirige al calendario de disponibilidad
+        // ====================================================================
+
+        [HttpGet]
+        public IActionResult Index()
+        {
+            return RedirectToAction("Index", "Availability");
+        }
+
+        // ====================================================================
+        // PÁGINA CREAR RESERVA (Full Page — no modal)
+        // ====================================================================
+
+        [HttpGet("Create")]
+        public async Task<IActionResult> Create()
+        {
+            try
+            {
+                var hotelId = GetCurrentHotelId();
+                var operationMode = GetOperationMode();
+                var config = await _reservationService.GetFormConfigAsync(hotelId);
+
+                ViewBag.OperationMode = operationMode;
+                ViewBag.Config = config ?? new ReservationFormConfigDto();
+
+                return View("Create");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al abrir formulario de reserva");
+                TempData["ErrorMessage"] = "Error al cargar el formulario de reserva";
+                return RedirectToAction("Index", "Availability");
+            }
+        }
+
+        // ====================================================================
+        // API — CREAR RESERVA (POST JSON)
+        // ====================================================================
+
+        [HttpPost("Create")]
+        public async Task<IActionResult> Create([FromBody] CreateReservationDto dto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ",
+                        ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return Json(new { success = false, message = errors });
+                }
+
+                var hotelId = GetCurrentHotelId();
+                var userId = GetCurrentUserId();
+
+                var result = await _reservationService.CreateNightlyAsync(hotelId, dto, userId);
+
+                if (!result.IsSuccess)
+                    return Json(new { success = false, message = result.Message });
+
+                return Json(new
+                {
+                    success = true,
+                    message = dto.Status == "draft"
+                                        ? "Borrador guardado correctamente"
+                                        : "Reserva creada exitosamente",
+                    data = new
+                    {
+                        reservationId = result.Data.ReservationId,
+                        folio = result.Data.Folio,
+                        status = dto.Status
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al crear reserva");
+                return Json(new { success = false, message = "Error al crear la reserva" });
+            }
+        }
+
+        // ====================================================================
+        // API — LISTAR RESERVAS (GET JSON para Bootstrap Table)
+        // ====================================================================
+
+        [HttpGet("GetAll")]
+        public async Task<IActionResult> GetAll(
+            [FromQuery] string? search = null,
+            [FromQuery] string? status = null,
+            [FromQuery] string? source = null,
+            [FromQuery] string? dateFrom = null,
+            [FromQuery] string? dateTo = null,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 20)
+        {
+            try
+            {
+                var hotelId = GetCurrentHotelId();
+
+                DateTime? parsedFrom = DateTime.TryParse(dateFrom, out var df) ? df : null;
+                DateTime? parsedTo = DateTime.TryParse(dateTo, out var dt) ? dt : null;
+
+                var (items, total) = await _reservationService.GetListAsync(
+                    hotelId, search, status, source, parsedFrom, parsedTo, pageNumber, pageSize);
+
+                return Json(new { success = true, data = items, total });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener reservas");
+                return Json(new { success = false, message = "Error al cargar las reservas" });
+            }
+        }
+
+        // ====================================================================
+        // API — DETALLE DE UNA RESERVA (GET JSON)
+        // ====================================================================
+
+        [HttpGet("GetById/{id}")]
+        public async Task<IActionResult> GetById(Guid id)
+        {
+            try
+            {
+                var hotelId = GetCurrentHotelId();
+                var reservation = await _reservationService.GetByIdAsync(hotelId, id);
+
+                if (reservation == null)
+                    return Json(new { success = false, message = "Reserva no encontrada" });
+
+                return Json(new { success = true, data = reservation });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener reserva {ReservationId}", id);
+                return Json(new { success = false, message = "Error al obtener la reserva" });
+            }
+        }
+
+        // ====================================================================
+        // PARTIAL VIEW — Modal detalles de reserva
+        // ====================================================================
+
+        [HttpGet("GetDetails/{id}")]
+        public async Task<IActionResult> GetDetails(Guid id)
+        {
+            try
+            {
+                var hotelId = GetCurrentHotelId();
+                var reservation = await _reservationService.GetByIdAsync(hotelId, id);
+
+                if (reservation == null)
+                    return NotFound();
+
+                return PartialView("_ReservationDetailsModal", reservation);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener detalles de reserva {ReservationId}", id);
+                return StatusCode(500);
+            }
+        }
+
+        // ====================================================================
+        // API — CANCELAR RESERVA
+        // ====================================================================
+
+        [HttpPost("Cancel/{id}")]
+        public async Task<IActionResult> Cancel(Guid id, [FromBody] CancelReservationRequest? request = null)
+        {
+            try
+            {
+                var hotelId = GetCurrentHotelId();
+                var userId = GetCurrentUserId();
+
+                var result = await _reservationService.CancelAsync(
+                    hotelId, id, userId, request?.Reason);
+
+                if (!result.IsSuccess)
+                    return Json(new { success = false, message = result.Message });
+
+                return Json(new { success = true, message = "Reserva cancelada exitosamente" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al cancelar reserva {ReservationId}", id);
+                return Json(new { success = false, message = "Error al cancelar la reserva" });
+            }
+        }
+
+        // ====================================================================
+        // API — CONFIGURACIÓN DEL FORMULARIO
+        // ====================================================================
+
+        [HttpGet("GetFormConfig")]
+        public async Task<IActionResult> GetFormConfig()
+        {
+            try
+            {
+                var hotelId = GetCurrentHotelId();
+                var config = await _reservationService.GetFormConfigAsync(hotelId);
+
+                return Json(new { success = true, data = config ?? new ReservationFormConfigDto() });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener configuración del formulario");
+                return Json(new { success = false, message = "Error al obtener la configuración" });
+            }
+        }
+    }
+
+    // ── Request helpers ──────────────────────────────────────────────────────
+
+    public class CancelReservationRequest
+    {
+        public string? Reason { get; set; }
+    }
+}

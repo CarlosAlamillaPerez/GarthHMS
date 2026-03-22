@@ -14,10 +14,14 @@ namespace GarthHMS.Web.Controllers
     public class AccountController : Controller
     {
         private readonly IAuthService _authService;
+        private readonly IHotelSettingsService _hotelSettingsService;
 
-        public AccountController(IAuthService authService)
+        public AccountController(
+            IAuthService authService,
+            IHotelSettingsService hotelSettingsService)
         {
             _authService = authService;
+            _hotelSettingsService = hotelSettingsService;
         }
 
         // GET: /Account/Login
@@ -60,10 +64,17 @@ namespace GarthHMS.Web.Controllers
                 new Claim("MaxDiscount", user.MaxDiscountPercent.ToString())
             };
 
-            // Si no es SuperAdmin, agregar HotelId
+            // Si no es SuperAdmin, agregar HotelId y OperationMode
             if (user.HotelId != Guid.Empty)
             {
                 claims.Add(new Claim("HotelId", user.HotelId.ToString()));
+
+                // Obtener OperationMode desde HotelSettings
+                var settingsResult = await _hotelSettingsService.GetSettingsAsync(user.HotelId);
+                var operationMode = settingsResult.IsSuccess
+                    ? settingsResult.Data?.OperationMode ?? "hotel"
+                    : "hotel";
+                claims.Add(new Claim("OperationMode", operationMode));
             }
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

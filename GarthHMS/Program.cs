@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
 using GarthHMS.Core.Interfaces;
+using GarthHMS.Core.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +54,13 @@ builder.Services.AddSession(options =>
 // DEPENDENCY INJECTION - INFRASTRUCTURE
 // ========================================
 
+// ============================================================================
+// DAPPER TYPE HANDLERS
+// Registrar antes de cualquier uso de repositorios.
+// Necesario para que Dapper soporte DateOnly - PostgreSQL DATE.
+// ============================================================================
+Dapper.SqlMapper.AddTypeHandler(new GarthHMS.Infrastructure.Data.DateOnlyTypeHandler());
+
 // Acceso a datos
 builder.Services.AddScoped<BaseDeDatos>();
 builder.Services.AddScoped<Procedimientos>();
@@ -76,18 +84,23 @@ builder.Services.AddScoped<IHotelService, HotelService>();
 // Room Service
 builder.Services.AddScoped<IRoomTypeService, RoomTypeService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
-// Dashboard Service
-builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
-builder.Services.AddScoped<IDashboardService, DashboardService>();
+
 // Room Types Service 
 builder.Services.AddScoped<IRoomTypeService, RoomTypeService>();
 builder.Services.AddScoped<IRoomTypeRepository, RoomTypeRepository>();
+
+// Dashboard Service
+builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+
 // Roles Service
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IRoleService, RoleService>();
+
 // Hotel Settings Service
 builder.Services.AddScoped<IHotelSettingsRepository, HotelSettingsRepository>();
 builder.Services.AddScoped<IHotelSettingsService, HotelSettingsService>();
+
 // HourPackeges Service
 builder.Services.AddScoped<IHourPackageRepository, HourPackageRepository>();
 builder.Services.AddScoped<IHourPackageService, HourPackageService>();
@@ -95,6 +108,15 @@ builder.Services.AddScoped<IHourPackageService, HourPackageService>();
 // Guests Service (Huéspedes)
 builder.Services.AddScoped<IGuestRepository, GuestRepository>();
 builder.Services.AddScoped<IGuestService, GuestService>();
+
+// Availabiulity Service (Motor de Disponibilidad)
+builder.Services.AddScoped<IAvailabilityRepository, AvailabilityRepository>();
+builder.Services.AddScoped<IAvailabilityService, AvailabilityService>();
+
+//Reservations
+builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
+builder.Services.AddScoped<IReservationService, ReservationService>();
+
 
 // ============================================
 // CONFIGURACIÓN DE DAPPER

@@ -1,0 +1,678 @@
+﻿@* GarthHMS.Web/Views/Reservations/Index.cshtml *@
+@{
+    ViewData["Title"] = "Nueva Reserva";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var config = ViewBag.Config as GarthHMS.Core.DTOs.Reservation.ReservationFormConfigDto
+                 ?? new GarthHMS.Core.DTOs.Reservation.ReservationFormConfigDto();
+    var operationMode = ViewBag.OperationMode as string ?? "hotel";
+}
+
+<style>
+    /* ─── Secciones del formulario ────────────────────────────────────────── */
+    .res-section {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+        box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+
+    .res-section-header {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        padding: .85rem 1.25rem;
+        background: var(--bg-tertiary);
+        border-bottom: 1px solid var(--border-color);
+        font-weight: 600;
+        font-size: .95rem;
+        color: var(--text-primary);
+    }
+
+    .res-section-header .section-icon {
+        width: 28px; height: 28px;
+        border-radius: 6px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: .85rem;
+        flex-shrink: 0;
+    }
+
+    .res-section-body { padding: 1.25rem; }
+
+    /* ─── Panel huésped seleccionado ──────────────────────────────────────── */
+    #guestSelectedCard {
+        display: none;
+        align-items: center;
+        gap: 1rem;
+        padding: .9rem 1rem;
+        background: rgba(43,164,154,.07);
+        border: 1.5px solid var(--primary);
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    #guestSelectedCard .guest-avatar {
+        width: 42px; height: 42px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    #guestSelectedCard .guest-info { flex: 1; }
+    #guestSelectedCard .guest-name { font-weight: 600; font-size: 1rem; color: var(--text-primary); }
+    #guestSelectedCard .guest-meta { font-size: .82rem; color: var(--text-secondary); }
+
+    /* ─── Tabla de habitaciones agregadas ─────────────────────────────────── */
+    .rooms-added-table th { background: var(--secondary); font-size: .82rem; }
+    .rooms-added-table td { font-size: .88rem; vertical-align: middle; }
+    .room-type-badge-sm {
+        display: inline-block;
+        padding: .2rem .55rem;
+        background: var(--tertiary);
+        color: #fff;
+        border-radius: 4px;
+        font-size: .78rem;
+        font-weight: 500;
+    }
+
+    /* ─── Calculadora de precios ──────────────────────────────────────────── */
+    .price-box {
+        background: var(--bg-tertiary);
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        margin-top: 1rem;
+    }
+
+    .price-line {
+        display: flex;
+        justify-content: space-between;
+        padding: .35rem 0;
+        font-size: .9rem;
+    }
+
+    .price-line.divider { border-top: 1px solid var(--border-color); margin-top: .4rem; padding-top: .75rem; }
+    .price-line.total-line {
+        border-top: 2px solid var(--border-color);
+        margin-top: .4rem;
+        padding-top: .75rem;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    /* ─── Barra sticky de acciones ────────────────────────────────────────── */
+    .res-actions-bar {
+        position: sticky;
+        bottom: 0;
+        left: 0; right: 0;
+        z-index: 90;
+        background: var(--bg-card);
+        border-top: 1px solid var(--border-color);
+        padding: .9rem 1.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 -2px 8px rgba(0,0,0,.08);
+        border-radius: 0 0 10px 10px;
+    }
+
+    /* ─── Número incrementador ────────────────────────────────────────────── */
+    .num-ctrl {
+        display: flex; align-items: center; gap: .4rem;
+    }
+
+    .num-ctrl button {
+        width: 30px; height: 30px;
+        border-radius: 5px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: .15s;
+    }
+
+    .num-ctrl button:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .num-ctrl input { width: 52px; text-align: center; font-weight: 600; }
+
+    /* ─── Room selector modal ─────────────────────────────────────────────── */
+    .room-type-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: .75rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .room-type-card-sel {
+        border: 2px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1rem;
+        cursor: pointer;
+        text-align: center;
+        transition: .15s;
+    }
+
+    .room-type-card-sel:hover,
+    .room-type-card-sel.selected { border-color: var(--primary); background: rgba(43,164,154,.07); }
+    .room-type-card-sel .rt-name { font-weight: 600; font-size: .95rem; }
+    .room-type-card-sel .rt-price { color: var(--primary); font-weight: 600; font-size: .9rem; margin-top: .25rem; }
+    .room-type-card-sel .rt-avail { font-size: .78rem; color: var(--text-secondary); margin-top: .2rem; }
+
+    .rooms-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: .6rem;
+    }
+
+    .room-card-sel {
+        border: 2px solid var(--border-color);
+        border-radius: 8px;
+        padding: .65rem .5rem;
+        cursor: pointer;
+        text-align: center;
+        transition: .15s;
+    }
+
+    .room-card-sel:hover:not(.occupied),
+    .room-card-sel.selected { border-color: var(--primary); background: rgba(43,164,154,.07); }
+    .room-card-sel.occupied { opacity: .45; cursor: not-allowed; background: var(--bg-tertiary); }
+    .room-card-sel .rc-num { font-size: 1.2rem; font-weight: 700; color: var(--primary); }
+    .room-card-sel .rc-floor { font-size: .75rem; color: var(--text-secondary); }
+    .room-card-sel .rc-status {
+        display: inline-block; margin-top: .25rem;
+        padding: .1rem .4rem; border-radius: 3px;
+        font-size: .7rem; font-weight: 600; color: #fff;
+    }
+
+    .rc-status.available { background: var(--success); }
+    .rc-status.occupied  { background: var(--danger); }
+</style>
+
+<div class="page-header">
+    <div class="d-flex align-items-center gap-2">
+        <a href="/Availability" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div>
+            <div class="text-muted small">Reservaciones</div>
+            <h4 class="mb-0 fw-bold">
+                <i class="fas fa-calendar-plus text-primary me-2"></i>Nueva Reserva
+            </h4>
+        </div>
+    </div>
+</div>
+
+<div class="main-content" style="max-width: 920px; margin: 0 auto; padding-bottom: 120px;">
+
+    @* ──────────────────────────────────────────────────────────────────────── *@
+    @* SECCIÓN 1: INFORMACIÓN DEL HUÉSPED *@
+    @* ──────────────────────────────────────────────────────────────────────── *@
+    <div class="res-section">
+        <div class="res-section-header">
+            <div class="section-icon bg-primary text-white"><i class="fas fa-user"></i></div>
+            <span>Información del Huésped</span>
+            <span class="badge bg-danger ms-1" style="font-size:.7rem">Requerido</span>
+        </div>
+        <div class="res-section-body">
+
+            @* ── Huésped seleccionado ── *@
+            <div id="guestSelectedCard">
+                <div class="guest-avatar" id="guestInitials">?</div>
+                <div class="guest-info">
+                    <div class="guest-name" id="guestSelectedName">—</div>
+                    <div class="guest-meta">
+                        <span id="guestSelectedPhone"></span>
+                        <span id="guestSelectedEmail" class="ms-2"></span>
+                        <span id="guestVipBadge" class="badge bg-warning text-dark ms-2" style="display:none">
+                            <i class="fas fa-star"></i> VIP
+                        </span>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearGuest()">
+                    <i class="fas fa-times"></i> Cambiar
+                </button>
+            </div>
+
+            @* ── Acciones de búsqueda ── *@
+            <div id="guestSearchArea">
+                <div class="row g-2">
+                    <div class="col-md-8">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text"
+                                   id="guestQuickSearch"
+                                   class="form-control"
+                                   placeholder="Buscar huésped por nombre, teléfono o email..."
+                                   oninput="onGuestQuickSearch(this.value)" />
+                        </div>
+                    </div>
+                    <div class="col-md-4 d-flex gap-2">
+                        <button type="button" class="btn btn-primary flex-fill" onclick="openGuestSearchModal()">
+                            <i class="fas fa-search"></i> Buscar huésped
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" onclick="openCreateGuestModal()" title="Crear nuevo huésped">
+                            <i class="fas fa-user-plus"></i>
+                        </button>
+                    </div>
+                </div>
+
+                @* Quick results dropdown *@
+                <div id="guestQuickResults" class="border rounded mt-1" style="display:none; max-height:200px; overflow-y:auto; background: var(--bg-card);">
+                </div>
+            </div>
+
+            @* Campo oculto con el GuestId seleccionado *@
+            <input type="hidden" id="selectedGuestId" />
+
+        </div>
+    </div>
+
+    @* ──────────────────────────────────────────────────────────────────────── *@
+    @* SECCIÓN 2: DETALLES DE LA RESERVA *@
+    @* ──────────────────────────────────────────────────────────────────────── *@
+    <div class="res-section">
+        <div class="res-section-header">
+            <div class="section-icon bg-primary text-white"><i class="fas fa-calendar-alt"></i></div>
+            <span>Detalles de la Reserva</span>
+        </div>
+        <div class="res-section-body">
+
+            @* ── Canal de reserva ── *@
+            <div class="mb-3">
+                <label class="form-label fw-semibold">
+                    <i class="fas fa-satellite-dish text-primary me-1"></i>Canal de reserva <span class="text-danger">*</span>
+                </label>
+                <div class="d-flex flex-wrap gap-2" id="sourceRadioGroup">
+                    @foreach (var (val, lbl, icon) in new[] {
+                    ("whatsapp","WhatsApp","fab fa-whatsapp"),
+                    ("direct","Directo","fas fa-handshake"),
+                    ("phone","Teléfono","fas fa-phone"),
+                    ("walk_in","Presencial","fas fa-walking"),
+                    ("ota_booking","Booking.com","fas fa-globe"),
+                    ("ota_airbnb","Airbnb","fas fa-home"),
+                    })
+                    {
+                        <label class="source-btn d-flex align-items-center gap-1 px-3 py-2 rounded border cursor-pointer"
+                               style="cursor:pointer; font-size:.88rem; transition:.15s;"
+                               data-value="@val">
+                            <input type="radio" name="source" value="@val" class="d-none" @(val == "whatsapp" ? "checked" : "")>
+                            <i class="@icon"></i> @lbl
+                        </label>
+                    }
+                </div>
+            </div>
+
+            @* ── Fechas ── *@
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-sign-in-alt text-success me-1"></i>Check-in <span class="text-danger">*</span>
+                    </label>
+                    <input type="date" id="checkInDate" class="form-control" onchange="onDatesChange()" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-sign-out-alt text-danger me-1"></i>Check-out <span class="text-danger">*</span>
+                    </label>
+                    <input type="date" id="checkOutDate" class="form-control" onchange="onDatesChange()" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-moon text-primary me-1"></i>Noches
+                    </label>
+                    <div class="form-control text-center fw-bold text-primary" id="nightsDisplay">—</div>
+                </div>
+            </div>
+
+            @* ── Huéspedes ── *@
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Adultos <span class="text-danger">*</span></label>
+                    <div class="num-ctrl">
+                        <button type="button" onclick="changeGuests('adults', -1)">−</button>
+                        <input type="number" id="totalAdults" value="1" min="1" max="20" class="form-control" oninput="recalculate()" />
+                        <button type="button" onclick="changeGuests('adults', 1)">+</button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Niños (3-12 años)</label>
+                    <div class="num-ctrl">
+                        <button type="button" onclick="changeGuests('children', -1)">−</button>
+                        <input type="number" id="totalChildren" value="0" min="0" max="10" class="form-control" oninput="recalculate()" />
+                        <button type="button" onclick="changeGuests('children', 1)">+</button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Bebés (0-2 años)</label>
+                    <div class="num-ctrl">
+                        <button type="button" onclick="changeGuests('babies', -1)">−</button>
+                        <input type="number" id="totalBabies" value="0" min="0" max="5" class="form-control" oninput="recalculate()" />
+                        <button type="button" onclick="changeGuests('babies', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            @* ── Servicios adicionales ── *@
+            <div class="row g-3">
+                @* Mascotas *@
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold"><i class="fas fa-paw text-warning me-1"></i>Mascotas</label>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="hasPets"
+                                   onchange="togglePets(this.checked)" role="switch">
+                            <label class="form-check-label" for="hasPets">¿Trae mascotas?</label>
+                        </div>
+                        <div id="petsCountArea" style="display:none;">
+                            <div class="num-ctrl">
+                                <button type="button" onclick="changePets(-1)">−</button>
+                                <input type="number" id="petsCount" value="1" min="1"
+                                       max="@config.MaxPetsPerRoom" class="form-control" style="width:52px; text-align:center; font-weight:600;" />
+                                <button type="button" onclick="changePets(1)">+</button>
+                            </div>
+                            <small class="text-muted ms-1">máx. @config.MaxPetsPerRoom</small>
+                        </div>
+                    </div>
+                </div>
+
+                @* Estacionamiento *@
+                @if (config.HasParking)
+                {
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold"><i class="fas fa-car text-secondary me-1"></i>Estacionamiento</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="needsParking" role="switch">
+                            <label class="form-check-label" for="needsParking">¿Necesita estacionamiento?</label>
+                        </div>
+                        @if (config.ParkingCapacity > 0)
+                        {
+                            <small class="text-muted">Capacidad total: @config.ParkingCapacity cajones</small>
+                        }
+                    </div>
+                }
+
+                @* Motivo del viaje *@
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold"><i class="fas fa-suitcase text-primary me-1"></i>Motivo del viaje</label>
+                    <select id="travelReason" class="form-select">
+                        <option value="">Sin especificar</option>
+                        <option value="leisure">Placer / Turismo</option>
+                        <option value="business">Negocios</option>
+                        <option value="event">Evento</option>
+                        <option value="other">Otro</option>
+                    </select>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    @* ──────────────────────────────────────────────────────────────────────── *@
+    @* SECCIÓN 3: HABITACIONES Y PRECIOS *@
+    @* ──────────────────────────────────────────────────────────────────────── *@
+    <div class="res-section">
+        <div class="res-section-header">
+            <div class="section-icon bg-primary text-white"><i class="fas fa-bed"></i></div>
+            <span>Habitaciones y Precios</span>
+            <span id="roomsBadge" class="badge bg-secondary ms-auto" style="font-size:.72rem">Sin habitaciones</span>
+        </div>
+        <div class="res-section-body">
+
+            @* Tabla de habitaciones agregadas *@
+            <div class="table-responsive mb-3">
+                <table class="table table-sm rooms-added-table mb-0" id="roomsAddedTable">
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Habitación</th>
+                            <th>Piso</th>
+                            <th>Adultos</th>
+                            <th>Precio/Noche</th>
+                            <th>Subtotal</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="roomsAddedBody">
+                        <tr id="emptyRoomsRow">
+                            <td colspan="7" class="text-center py-4 text-muted">
+                                <i class="fas fa-bed fa-2x mb-2 d-block opacity-25"></i>
+                                No hay habitaciones — haz clic en <strong>Agregar Habitación</strong>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <button type="button" class="btn btn-primary" onclick="openRoomSelector()">
+                <i class="fas fa-plus"></i> Agregar Habitación
+            </button>
+
+            @* ── Calculadora de precios ── *@
+            <div class="price-box" id="priceBox" style="display:none">
+                <div class="price-line">
+                    <span class="text-secondary">Precio base:</span>
+                    <span id="priceBase" class="fw-semibold">$0</span>
+                </div>
+
+                @* Descuento *@
+                <div class="price-line">
+                    <span class="text-secondary">Descuento:</span>
+                    <div class="d-flex gap-2 align-items-center">
+                        <select id="discountType" class="form-select form-select-sm" style="width:160px" onchange="onDiscountChange()">
+                            <option value="0">Sin descuento</option>
+                            <option value="5">5%</option>
+                            <option value="10">10%</option>
+                            <option value="15">15%</option>
+                            <option value="20">20%</option>
+                            <option value="custom">Personalizado</option>
+                        </select>
+                        <input type="number" id="discountCustom" class="form-control form-control-sm" style="width:80px; display:none;"
+                               placeholder="%" min="0" max="100" oninput="recalculate()" />
+                    </div>
+                </div>
+                <div class="price-line">
+                    <span class="text-secondary">Monto descuento:</span>
+                    <span id="priceDiscount" class="fw-semibold text-danger">-$0</span>
+                </div>
+
+                @* Impuestos *@
+                @if (config.ChargesTaxes)
+                {
+                    <div class="price-line divider">
+                        <span class="text-secondary">IVA (@config.TaxIvaPercent%):</span>
+                        <span id="priceTaxIva" class="fw-semibold">$0</span>
+                    </div>
+                    <div class="price-line">
+                        <span class="text-secondary">ISH (@config.TaxIshPercent%):</span>
+                        <span id="priceTaxIsh" class="fw-semibold">$0</span>
+                    </div>
+                }
+
+                <div class="price-line total-line">
+                    <span>TOTAL A PAGAR:</span>
+                    <span id="priceTotal">$0</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    @* ──────────────────────────────────────────────────────────────────────── *@
+    @* SECCIÓN 4: ANTICIPO Y PAGO *@
+    @* ──────────────────────────────────────────────────────────────────────── *@
+    <div class="res-section">
+        <div class="res-section-header">
+            <div class="section-icon bg-primary text-white"><i class="fas fa-dollar-sign"></i></div>
+            <span>Anticipo y Pago</span>
+        </div>
+        <div class="res-section-body">
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">¿Requiere anticipo?</label>
+                <div class="d-flex gap-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="requiresDeposit"
+                               id="depositYes" value="yes" checked onchange="toggleDepositSection(true)">
+                        <label class="form-check-label" for="depositYes">Sí</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="requiresDeposit"
+                               id="depositNo" value="no" onchange="toggleDepositSection(false)">
+                        <label class="form-check-label" for="depositNo">No</label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="depositSection">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Monto del anticipo</label>
+                        <div class="d-flex gap-2 align-items-center">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="depositCalcType"
+                                       id="depositPct" value="pct" checked onchange="onDepositTypeChange()">
+                                <label class="form-check-label" for="depositPct">
+                                    @config.MinDepositPercent% (<span id="depositPctAmount">$0</span>)
+                                </label>
+                            </div>
+                            <div class="form-check ms-3">
+                                <input class="form-check-input" type="radio" name="depositCalcType"
+                                       id="depositFixed" value="fixed" onchange="onDepositTypeChange()">
+                                <label class="form-check-label" for="depositFixed">Monto fijo</label>
+                            </div>
+                        </div>
+                        <input type="number" id="depositCustomAmount" class="form-control mt-2"
+                               placeholder="$0.00" min="0" style="display:none;" oninput="recalculate()" />
+                        <small class="text-muted d-block mt-1">
+                            Saldo pendiente: <strong id="depositBalance" class="text-warning">$0</strong>
+                        </small>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Método de pago</label>
+                        <select id="depositMethod" class="form-select" onchange="toggleProofUpload()">
+                            <option value="">Sin pago registrado aún</option>
+                            <option value="cash">Efectivo</option>
+                            <option value="transfer">Transferencia bancaria</option>
+                            <option value="card">Tarjeta</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6" id="depositReferenceArea" style="display:none">
+                        <label class="form-label fw-semibold">Referencia / Número de operación</label>
+                        <input type="text" id="depositReference" class="form-control"
+                               placeholder="Ej: 12345678" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Fecha límite de pago (opcional)</label>
+                        <input type="datetime-local" id="depositDueDate" class="form-control" />
+                        <small class="text-muted">Si no se recibe antes de esta fecha, la reserva puede cancelarse</small>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    @* ──────────────────────────────────────────────────────────────────────── *@
+    @* SECCIÓN 5: NOTAS Y OBSERVACIONES *@
+    @* ──────────────────────────────────────────────────────────────────────── *@
+    <div class="res-section">
+        <div class="res-section-header">
+            <div class="section-icon bg-secondary" style="color:var(--text-primary)"><i class="fas fa-sticky-note"></i></div>
+            <span>Notas y Observaciones</span>
+            <small class="ms-auto text-muted">(Opcional)</small>
+        </div>
+        <div class="res-section-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-comment text-primary me-1"></i>Peticiones del huésped
+                    </label>
+                    <textarea id="guestNotes" class="form-control" rows="3"
+                              placeholder="Habitación en planta baja, cama extra, llegada tardía..."></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-lock text-secondary me-1"></i>Notas internas
+                        <small class="text-muted">(No visibles para el huésped)</small>
+                    </label>
+                    <textarea id="internalNotes" class="form-control" rows="3"
+                              placeholder="Cliente VIP, adeudo anterior, comportamiento especial..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        @* ── Barra de acciones sticky (dentro de la última sección) ── *@
+        <div class="res-actions-bar">
+            <a href="/Availability" class="btn btn-outline-secondary">
+                <i class="fas fa-times me-1"></i>Cancelar
+            </a>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-primary" onclick="submitReservation('draft')">
+                    <i class="fas fa-save me-1"></i>Guardar borrador
+                </button>
+                <button type="button" class="btn btn-success px-4" onclick="submitReservation('pending')">
+                    <i class="fas fa-check me-1"></i>Confirmar reserva
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+@* ── Template del selector de habitaciones (renderizado en JS) ─────────────── *@
+<script id="roomSelectorTpl" type="text/x-template">
+    <div style="text-align:left;">
+        <p class="text-muted small mb-3">
+            <i class="fas fa-info-circle text-primary me-1"></i>
+            Fechas: <strong id="selectorDates">—</strong>
+        </p>
+
+        <div id="selectorStep1">
+            <p class="fw-semibold mb-2">Paso 1 — Selecciona el tipo de habitación:</p>
+            <div class="room-type-grid" id="roomTypeGrid">
+                <div class="text-center py-3 text-muted">
+                    <i class="fas fa-spinner fa-spin"></i> Cargando tipos...
+                </div>
+            </div>
+        </div>
+
+        <div id="selectorStep2" style="display:none;">
+            <button type="button" class="btn btn-sm btn-link ps-0 mb-2" onclick="backToStep1()">
+                <i class="fas fa-arrow-left"></i> Cambiar tipo
+            </button>
+            <p class="fw-semibold mb-2">Paso 2 — Selecciona la habitación específica:</p>
+            <div class="rooms-grid" id="roomsGrid">
+                <div class="text-center py-3 text-muted col-span-4">
+                    <i class="fas fa-spinner fa-spin"></i> Cargando habitaciones...
+                </div>
+            </div>
+        </div>
+    </div>
+</script>
+
+@section Scripts {
+    <script>
+        // Pasar configuración del hotel al JS
+        window.HotelConfig = {
+            chargesTaxes:     @(config.ChargesTaxes ? "true" : "false"),
+            taxIvaPercent:    @config.TaxIvaPercent,
+            taxIshPercent:    @config.TaxIshPercent,
+            minDepositPct:    @config.MinDepositPercent,
+            maxPetsPerRoom:   @config.MaxPetsPerRoom,
+            hasParking:       @(config.HasParking ? "true" : "false"),
+            operationMode:    '@operationMode'
+        };
+    </script>
+    <script src="~/js/reservations/reservations-create.js"></script>
+}
