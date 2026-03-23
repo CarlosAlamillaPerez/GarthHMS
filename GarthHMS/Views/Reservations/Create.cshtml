@@ -193,6 +193,13 @@
 
     .rc-status.available { background: var(--success); }
     .rc-status.occupied  { background: var(--danger); }
+
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    
 </style>
 
 <div class="page-header">
@@ -286,7 +293,7 @@
 
             @* ── Canal de reserva ── *@
             <div class="mb-3">
-                <label class="form-label fw-semibold">
+                <label class="d-flex align-items-center justify-content-center justify-content-md-start">
                     <i class="fas fa-satellite-dish text-primary me-1"></i>Canal de reserva <span class="text-danger">*</span>
                 </label>
                 <div class="d-flex flex-wrap gap-2" id="sourceRadioGroup">
@@ -312,13 +319,13 @@
             @* ── Fechas ── *@
             <div class="row g-3 mb-3">
                 <div class="col-md-4">
-                    <label class="form-label fw-semibold">
+                    <label class="d-flex align-items-center justify-content-center justify-content-md-start">
                         <i class="fas fa-sign-in-alt text-success me-1"></i>Check-in <span class="text-danger">*</span>
                     </label>
                     <input type="date" id="checkInDate" class="form-control" onchange="onDatesChange()" />
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-semibold">
+                    <label class="d-flex align-items-center justify-content-center justify-content-md-start">
                         <i class="fas fa-sign-out-alt text-danger me-1"></i>Check-out <span class="text-danger">*</span>
                     </label>
                     <input type="date" id="checkOutDate" class="form-control" onchange="onDatesChange()" />
@@ -334,10 +341,10 @@
             @* ── Huéspedes ── *@
             <div class="row g-3 mb-3">
                 <div class="col-md-4">
-                    <label class="form-label fw-semibold">Adultos <span class="text-danger">*</span></label>
+                    <label class="d-flex align-items-center justify-content-center justify-content-md-start">Adultos <span class="text-danger">*</span></label>
                     <div class="num-ctrl">
                         <button type="button" onclick="changeGuests('adults', -1)">−</button>
-                        <input type="number" id="totalAdults" value="1" min="1" max="20" class="form-control" oninput="recalculate()" />
+                        <input type="number" id="totalAdults" value="1" min="1" max="99" class="form-control" oninput="recalculate()" />
                         <button type="button" onclick="changeGuests('adults', 1)">+</button>
                     </div>
                 </div>
@@ -345,7 +352,7 @@
                     <label class="form-label fw-semibold">Niños (3-12 años)</label>
                     <div class="num-ctrl">
                         <button type="button" onclick="changeGuests('children', -1)">−</button>
-                        <input type="number" id="totalChildren" value="0" min="0" max="10" class="form-control" oninput="recalculate()" />
+                        <input type="number" id="totalChildren" value="0" min="0" max="99" class="form-control" oninput="recalculate()" />
                         <button type="button" onclick="changeGuests('children', 1)">+</button>
                     </div>
                 </div>

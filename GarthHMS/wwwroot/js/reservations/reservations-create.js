@@ -189,9 +189,13 @@ async function openGuestSearchModal() {
         const tableRows = guests.map(g => `
             <tr style="cursor:pointer;"
                 onclick='chooseGuestFromModal(${JSON.stringify({
-            guestId: g.guestId, firstName: g.firstName, lastName: g.lastName,
-            phone: g.phone, email: g.email, isVip: g.isVip
-        })})'
+                    guestId: g.guestId,
+                    firstName: g.fullName,
+                    lastName: '',
+                    phone: g.phone,
+                    email: g.email,
+                    isVip: g.isVip
+                })})'
                 onmouseenter="this.style.background='var(--bg-secondary)'"
                 onmouseleave="this.style.background=''">
                 <td>
@@ -260,7 +264,14 @@ function filterGuestModalTable(query) {
 }
 
 function chooseGuestFromModal(guest) {
-    setSelectedGuest(guest);
+    setSelectedGuest({
+        guestId: guest.guestId,
+        firstName: guest.firstName,
+        lastName: guest.lastName,
+        phone: guest.phone,
+        email: guest.email,
+        isVip: guest.isVip || false
+    });
     Swal.close();
 }
 
@@ -387,6 +398,8 @@ async function loadRoomTypes(checkIn, checkOut) {
         const url = `/Availability/GetAvailableRooms?checkIn=${checkIn}&checkOut=${checkOut}`;
         const res = await fetch(url);
         const data = await res.json();
+        console.log('GetAvailableRooms response:', data);
+        console.log('Primera habitación completa:', JSON.stringify(data.data[0], null, 2));
 
         const grid = document.getElementById('roomTypeGrid');
         if (!data.success || !data.data?.length) {

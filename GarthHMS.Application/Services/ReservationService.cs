@@ -16,7 +16,7 @@ namespace GarthHMS.Application.Services
         private readonly ILogger<ReservationService> _logger;
 
         private static readonly string[] ValidStatuses = { "draft", "pending", "confirmed" };
-        private static readonly string[] ValidSources = { "direct", "phone", "whatsapp", "walk_in", "ota_booking", "ota_airbnb", "ota_expedia" };
+        private static readonly string[] ValidSources = { "direct", "walkin", "whatsapp", "booking", "airbnb", "expedia", "other" };
         private static readonly string[] ValidMethods = { "cash", "transfer", "card" };
 
         public ReservationService(

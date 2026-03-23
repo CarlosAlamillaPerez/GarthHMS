@@ -45,7 +45,7 @@ namespace GarthHMS.Infrastructure.Repositories
         {
             var result = await _procedimientos.EjecutarUnicoAsync<dynamic>(
                 "sp_dashboard_get_metrics",
-                new { p_hotel_id = hotelId, p_date = date }
+                new { p_hotel_id = hotelId, p_date = DateOnly.FromDateTime(date) }
             );
 
             return result != null ? MapToMetrics(result) : null;
