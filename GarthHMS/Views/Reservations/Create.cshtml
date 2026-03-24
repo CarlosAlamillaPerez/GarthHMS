@@ -199,6 +199,128 @@
         -webkit-appearance: none;
         margin: 0;
     }
+
+    /* ─── Tarjetas de estado de anticipo ─────────────────────────────────── */
+    .deposit-state-card {
+        display: block;
+        padding: .85rem 1rem;
+        border: 2px solid var(--border-color);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: .15s;
+        background: var(--bg-card);
+    }
+
+        .deposit-state-card:hover {
+            border-color: var(--primary);
+            background: rgba(43,164,154,.04);
+        }
+
+        .deposit-state-card.active {
+            border-color: var(--primary);
+            background: rgba(43,164,154,.07);
+        }
+
+    .deposit-state-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: .9rem;
+    }
+    /* ─── Mini cards de huéspedes ────────────────────────────────────────── */
+    .guest-summary-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: .75rem 1.25rem;
+        border-radius: 10px;
+        min-width: 90px;
+        border: 1.5px solid transparent;
+        transition: .2s;
+    }
+
+    .guest-card-icon {
+        font-size: 1.4rem;
+        margin-bottom: .3rem;
+    }
+
+    .guest-card-count {
+        font-size: 1.6rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .guest-card-label {
+        font-size: .75rem;
+        margin-top: .25rem;
+        font-weight: 500;
+    }
+
+    /* Adultos */
+    .guest-card-adults {
+        background: rgba(var(--primary-rgb, 43,164,154), .1);
+        border-color: rgba(var(--primary-rgb, 43,164,154), .25);
+    }
+
+        .guest-card-adults .guest-card-icon,
+        .guest-card-adults .guest-card-count {
+            color: var(--primary);
+        }
+
+        .guest-card-adults .guest-card-label {
+            color: var(--text-secondary);
+        }
+
+    /* Niños */
+    .guest-card-children {
+        background: rgba(255, 193, 7, .12);
+        border-color: rgba(255, 193, 7, .3);
+    }
+
+        .guest-card-children .guest-card-icon,
+        .guest-card-children .guest-card-count {
+            color: #d4a017;
+        }
+
+        .guest-card-children .guest-card-label {
+            color: var(--text-secondary);
+        }
+
+    /* Bebés */
+    .guest-card-babies {
+        background: rgba(13, 202, 240, .1);
+        border-color: rgba(13, 202, 240, .25);
+    }
+
+        .guest-card-babies .guest-card-icon,
+        .guest-card-babies .guest-card-count {
+            color: #0dcaf0;
+        }
+
+        .guest-card-babies .guest-card-label {
+            color: var(--text-secondary);
+        }
+
+    /* Dark mode automático via CSS variables del sistema */
+    [data-theme="dark"] .guest-card-adults {
+        background: rgba(43,164,154,.15);
+        border-color: rgba(43,164,154,.3);
+    }
+
+    [data-theme="dark"] .guest-card-children {
+        background: rgba(255,193,7,.12);
+        border-color: rgba(255,193,7,.25);
+    }
+
+    [data-theme="dark"] .guest-card-babies {
+        background: rgba(13,202,240,.1);
+        border-color: rgba(13,202,240,.2);
+    }
     
 </style>
 
@@ -298,12 +420,13 @@
                 </label>
                 <div class="d-flex flex-wrap gap-2" id="sourceRadioGroup">
                     @foreach (var (val, lbl, icon) in new[] {
-                    ("whatsapp","WhatsApp","fab fa-whatsapp"),
-                    ("direct","Directo","fas fa-handshake"),
-                    ("phone","Teléfono","fas fa-phone"),
-                    ("walk_in","Presencial","fas fa-walking"),
-                    ("ota_booking","Booking.com","fas fa-globe"),
-                    ("ota_airbnb","Airbnb","fas fa-home"),
+                    ("whatsapp",    "WhatsApp",   "fab fa-whatsapp"),
+                    ("direct",      "Directo",    "fas fa-handshake"),
+                    ("walkin",      "Presencial", "fas fa-walking"),
+                    ("booking",     "Booking.com","fas fa-globe"),
+                    ("airbnb",      "Airbnb",     "fab fa-airbnb"),
+                    ("expedia",     "Expedia",    "fas fa-plane"),
+                    ("other",       "Otro",       "fas fa-ellipsis-h"),
                     })
                     {
                         <label class="source-btn d-flex align-items-center gap-1 px-3 py-2 rounded border cursor-pointer"
@@ -338,33 +461,56 @@
                 </div>
             </div>
 
-            @* ── Huéspedes ── *@
-            <div class="row g-3 mb-3">
-                <div class="col-md-4">
-                    <label class="d-flex align-items-center justify-content-center justify-content-md-start">Adultos <span class="text-danger">*</span></label>
-                    <div class="num-ctrl">
-                        <button type="button" onclick="changeGuests('adults', -1)">−</button>
-                        <input type="number" id="totalAdults" value="1" min="1" max="99" class="form-control" oninput="recalculate()" />
-                        <button type="button" onclick="changeGuests('adults', 1)">+</button>
+            @* ── Huéspedes (calculado automáticamente al agregar habitaciones) ── *@
+            <div class="mb-3">
+                <label class="form-label fw-semibold d-block mb-2">
+                    <i class="fas fa-users text-primary me-1"></i>Huéspedes
+                </label>
+
+                @* Mini cards visibles *@
+                <div id="guestSummaryCards" class="d-flex flex-wrap justify-content-center gap-3 mb-2">
+
+                    @* Adultos — siempre visible *@
+                    <div class="guest-summary-card guest-card-adults">
+                        <div class="guest-card-icon">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <div class="guest-card-count" id="displayAdults">0</div>
+                        <div class="guest-card-label">Adultos</div>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Niños (3-12 años)</label>
-                    <div class="num-ctrl">
-                        <button type="button" onclick="changeGuests('children', -1)">−</button>
-                        <input type="number" id="totalChildren" value="0" min="0" max="99" class="form-control" oninput="recalculate()" />
-                        <button type="button" onclick="changeGuests('children', 1)">+</button>
+
+                    @* Niños — solo visible si > 0 *@
+                    <div class="guest-summary-card guest-card-children" id="cardChildren" style="display:none;">
+                        <div class="guest-card-icon">
+                            <i class="fas fa-child"></i>
+                        </div>
+                        <div class="guest-card-count" id="displayChildren">0</div>
+                        <div class="guest-card-label">Niños</div>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Bebés (0-2 años)</label>
-                    <div class="num-ctrl">
-                        <button type="button" onclick="changeGuests('babies', -1)">−</button>
-                        <input type="number" id="totalBabies" value="0" min="0" max="5" class="form-control" oninput="recalculate()" />
-                        <button type="button" onclick="changeGuests('babies', 1)">+</button>
+
+                    @* Bebés — solo visible si > 0 *@
+                    <div class="guest-summary-card guest-card-babies" id="cardBabies" style="display:none;">
+                        <div class="guest-card-icon">
+                            <i class="fas fa-baby"></i>
+                        </div>
+                        <div class="guest-card-count" id="displayBabies">0</div>
+                        <div class="guest-card-label">Bebés</div>
                     </div>
+
                 </div>
+
+                <p class="text-center text-muted small mb-0">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Se calcula automáticamente al agregar habitaciones
+                </p>
+
+                @* Inputs ocultos — escritos por JS *@
+                <input type="hidden" id="totalAdults" value="0" />
+                <input type="hidden" id="totalChildren" value="0" />
+                <input type="hidden" id="totalBabies" value="0" />
             </div>
+
+
 
             @* ── Servicios adicionales ── *@
             <div class="row g-3">
@@ -521,69 +667,158 @@
         </div>
         <div class="res-section-body">
 
-            <div class="mb-3">
-                <label class="form-label fw-semibold">¿Requiere anticipo?</label>
-                <div class="d-flex gap-3">
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="requiresDeposit"
-                               id="depositYes" value="yes" checked onchange="toggleDepositSection(true)">
-                        <label class="form-check-label" for="depositYes">Sí</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="requiresDeposit"
-                               id="depositNo" value="no" onchange="toggleDepositSection(false)">
-                        <label class="form-check-label" for="depositNo">No</label>
+            @* ── Caso plataforma OTA (se muestra automáticamente según canal) ── *@
+            <div id="depositPlatformMsg" style="display:none;">
+                <div class="alert alert-info d-flex align-items-start gap-3 mb-0">
+                    <i class="fas fa-info-circle fa-lg mt-1 text-info"></i>
+                    <div>
+                        <strong>Pago gestionado por la plataforma</strong>
+                        <p class="mb-1 mt-1 small">
+                            El cobro es responsabilidad de Booking.com / Airbnb.
+                            Se generará una alerta para que el gerente verifique la reserva en la plataforma.
+                        </p>
                     </div>
                 </div>
             </div>
 
-            <div id="depositSection">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Monto del anticipo</label>
-                        <div class="d-flex gap-2 align-items-center">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="depositCalcType"
-                                       id="depositPct" value="pct" checked onchange="onDepositTypeChange()">
-                                <label class="form-check-label" for="depositPct">
-                                    @config.MinDepositPercent% (<span id="depositPctAmount">$0</span>)
-                                </label>
+            @* ── Caso canales directos ── *@
+            <div id="depositDirectSection">
+
+                <label class="form-label fw-semibold mb-3">Estado del anticipo</label>
+
+                <div class="d-flex flex-column gap-2 mb-3" id="depositStateGroup">
+
+                    @* Opción 1: Sin anticipo *@
+                    <label class="deposit-state-card" id="cardDepositNone"
+                           onclick="onDepositStateChange('none')">
+                        <input type="radio" name="depositState" value="none" class="d-none">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="deposit-state-icon bg-secondary-subtle text-secondary">
+                                <i class="fas fa-ban"></i>
                             </div>
-                            <div class="form-check ms-3">
-                                <input class="form-check-input" type="radio" name="depositCalcType"
-                                       id="depositFixed" value="fixed" onchange="onDepositTypeChange()">
-                                <label class="form-check-label" for="depositFixed">Monto fijo</label>
+                            <div>
+                                <div class="fw-semibold">Sin anticipo requerido</div>
+                                <small class="text-muted">La reserva quedará pendiente hasta el check-in</small>
                             </div>
                         </div>
-                        <input type="number" id="depositCustomAmount" class="form-control mt-2"
-                               placeholder="$0.00" min="0" style="display:none;" oninput="recalculate()" />
-                        <small class="text-muted d-block mt-1">
-                            Saldo pendiente: <strong id="depositBalance" class="text-warning">$0</strong>
-                        </small>
-                    </div>
+                    </label>
 
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Método de pago</label>
-                        <select id="depositMethod" class="form-select" onchange="toggleProofUpload()">
-                            <option value="">Sin pago registrado aún</option>
-                            <option value="cash">Efectivo</option>
-                            <option value="transfer">Transferencia bancaria</option>
-                            <option value="card">Tarjeta</option>
-                        </select>
-                    </div>
+                    @* Opción 2: Anticipo solicitado, aún no ha pagado *@
+                    <label class="deposit-state-card" id="cardDepositPending"
+                           onclick="onDepositStateChange('pending')">
+                        <input type="radio" name="depositState" value="pending" class="d-none">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="deposit-state-icon bg-warning-subtle text-warning">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div>
+                                <div class="fw-semibold">Anticipo solicitado — aún no ha pagado</div>
+                                <small class="text-muted">El huésped pagará después (WhatsApp, teléfono, etc.)</small>
+                            </div>
+                        </div>
+                    </label>
 
-                    <div class="col-md-6" id="depositReferenceArea" style="display:none">
-                        <label class="form-label fw-semibold">Referencia / Número de operación</label>
-                        <input type="text" id="depositReference" class="form-control"
-                               placeholder="Ej: 12345678" />
-                    </div>
+                    @* Opción 3: Anticipo ya recibido *@
+                    <label class="deposit-state-card active" id="cardDepositReceived"
+                           onclick="onDepositStateChange('received')">
+                        <input type="radio" name="depositState" value="received" class="d-none" checked>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="deposit-state-icon bg-success-subtle text-success">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div>
+                                <div class="fw-semibold">Anticipo ya recibido — registrar pago</div>
+                                <small class="text-muted">El huésped pagó en este momento o acaba de transferir</small>
+                            </div>
+                        </div>
+                    </label>
 
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Fecha límite de pago (opcional)</label>
-                        <input type="datetime-local" id="depositDueDate" class="form-control" />
-                        <small class="text-muted">Si no se recibe antes de esta fecha, la reserva puede cancelarse</small>
+                </div>
+
+                @* ── Detalles: "pending" — IDs sin sufijo (depositPct, depositFixed, depositCustomAmount) ── *@
+                <div id="depositPendingDetails" style="display:none;" class="mt-3 pt-3 border-top">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-percentage text-primary me-1"></i>Porcentaje solicitado
+                            </label>
+                            <div class="d-flex gap-3 align-items-center">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="depositCalcTypeP"
+                                           id="depositPct" value="pct" checked onchange="onDepositTypeChange()">
+                                    <label class="form-check-label" for="depositPct">
+                                        @config.MinDepositPercent% (<span id="depositPctAmountP">$0</span>)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="depositCalcTypeP"
+                                           id="depositFixed" value="fixed" onchange="onDepositTypeChange()">
+                                    <label class="form-check-label" for="depositFixed">Monto fijo</label>
+                                </div>
+                            </div>
+                            <input type="number" id="depositCustomAmount" class="form-control mt-2"
+                                   placeholder="$0.00" min="0" style="display:none;" oninput="recalculate()" />
+                            <small class="text-muted d-block mt-1">
+                                Saldo pendiente: <strong id="depositBalanceP" class="text-warning">$0</strong>
+                            </small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-calendar-times text-warning me-1"></i>Fecha límite de pago (opcional)
+                            </label>
+                            <input type="datetime-local" id="depositDueDateP" class="form-control" />
+                            <small class="text-muted">Si no se recibe antes de esta fecha, la reserva puede cancelarse</small>
+                        </div>
                     </div>
                 </div>
+
+                @* ── Detalles: "received" — IDs con sufijo R (depositPctR, depositFixedR, depositCustomAmountR) ── *@
+                <div id="depositReceivedDetails" class="mt-3 pt-3 border-top">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Monto recibido</label>
+                            <div class="d-flex gap-3 align-items-center mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="depositCalcTypeR"
+                                           id="depositPctR" value="pct" checked onchange="onDepositTypeChange()">
+                                    <label class="form-check-label" for="depositPctR">
+                                        @config.MinDepositPercent% (<span id="depositPctAmount">$0</span>)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="depositCalcTypeR"
+                                           id="depositFixedR" value="fixed" onchange="onDepositTypeChange()">
+                                    <label class="form-check-label" for="depositFixedR">Monto específico</label>
+                                </div>
+                            </div>
+                            <input type="number" id="depositCustomAmountR" class="form-control"
+                                   placeholder="$0.00" min="0" style="display:none;" oninput="recalculate()" />
+                            <small class="text-muted d-block mt-1">
+                                Saldo pendiente: <strong id="depositBalance" class="text-warning">$0</strong>
+                            </small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label d-flex align-items-center justify-content-center justify-content-md-start">Método de pago <span class="text-danger">*</span></label>
+                            <select id="depositMethod" class="form-select" onchange="toggleProofUpload()">
+                                <option value="">— Selecciona —</option>
+                                <option value="cash">💵 Efectivo</option>
+                                <option value="transfer">🏦 Transferencia bancaria</option>
+                                <option value="card">💳 Tarjeta</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6" id="depositReferenceArea" style="display:none">
+                            <label class="form-label fw-semibold">Referencia / Número de operación</label>
+                            <input type="text" id="depositReference" class="form-control"
+                                   placeholder="Ej: 12345678" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Fecha límite de pago (opcional)</label>
+                            <input type="datetime-local" id="depositDueDate" class="form-control" />
+                            <small class="text-muted">Fecha en que debe liquidarse el saldo restante</small>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
         </div>
@@ -664,6 +899,56 @@
                     <i class="fas fa-spinner fa-spin"></i> Cargando habitaciones...
                 </div>
             </div>
+        </div>
+
+         <div id="selectorStep3" style="display:none;">
+            <button type="button" class="btn btn-sm btn-link ps-0 mb-3" onclick="backToStep2()">
+                <i class="fas fa-arrow-left"></i> Cambiar habitación
+            </button>
+
+            <p id="step3RoomLabel" class="fw-semibold mb-3 text-primary"></p>
+
+            <div class="row g-3">
+                <div class="col-4">
+                    <label class="form-label fw-semibold text-center d-block">
+                        <i class="fas fa-user-tie text-primary me-1"></i>Adultos
+                    </label>
+                    <div class="num-ctrl justify-content-center">
+                        <button type="button" onclick="changeStep3('step3Adults', -1)">−</button>
+                        <input type="number" id="step3Adults" value="1" min="1" class="form-control"
+                               style="width:52px; text-align:center; font-weight:600;" readonly />
+                        <button type="button" onclick="changeStep3('step3Adults', 1)">+</button>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <label class="form-label fw-semibold text-center d-block">
+                        <i class="fas fa-child text-warning me-1"></i>Niños
+                    </label>
+                    <div class="num-ctrl justify-content-center">
+                        <button type="button" onclick="changeStep3('step3Children', -1)">−</button>
+                        <input type="number" id="step3Children" value="0" min="0" class="form-control"
+                               style="width:52px; text-align:center; font-weight:600;" readonly />
+                        <button type="button" onclick="changeStep3('step3Children', 1)">+</button>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <label class="form-label fw-semibold text-center d-block">
+                        <i class="fas fa-baby text-info me-1"></i>Bebés
+                    </label>
+                    <div class="num-ctrl justify-content-center">
+                        <button type="button" onclick="changeStep3('step3Babies', -1)">−</button>
+                        <input type="number" id="step3Babies" value="0" min="0" class="form-control"
+                               style="width:52px; text-align:center; font-weight:600;" readonly />
+                        <button type="button" onclick="changeStep3('step3Babies', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-3 text-center">
+                <small class="text-muted">Total personas: </small>
+                <strong id="step3TotalPersons" style="color:var(--success)">1</strong>
+            </div>
+            <div class="mt-2 text-center small" id="step3PriceBreakdown"></div>
         </div>
     </div>
 </script>

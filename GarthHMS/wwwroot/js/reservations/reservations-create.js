@@ -45,19 +45,32 @@ $(document).ready(function () {
 // ─── Botones de canal (radio) ────────────────────────────────────────────────
 function initSourceButtons() {
     document.querySelectorAll('.source-btn').forEach(btn => {
+
         btn.addEventListener('click', () => {
+            // Reset estilos
             document.querySelectorAll('.source-btn').forEach(b => {
                 b.style.background = '';
                 b.style.color = '';
                 b.style.borderColor = '';
             });
+
+            // Aplicar estilo al seleccionado
             btn.style.background = 'var(--primary)';
             btn.style.color = '#fff';
             btn.style.borderColor = 'var(--primary)';
-            btn.querySelector('input[type=radio]').checked = true;
+
+            // Marcar radio
+            const radio = btn.querySelector('input[type=radio]');
+            if (radio) radio.checked = true;
+
+            if (btn.dataset.value) {
+                onSourceChange(btn.dataset.value);
+            }
         });
 
-        if (btn.querySelector('input[type=radio]').checked) {
+        // Estado inicial
+        const radio = btn.querySelector('input[type=radio]');
+        if (radio?.checked) {
             btn.style.background = 'var(--primary)';
             btn.style.color = '#fff';
             btn.style.borderColor = 'var(--primary)';
@@ -398,8 +411,6 @@ async function loadRoomTypes(checkIn, checkOut) {
         const url = `/Availability/GetAvailableRooms?checkIn=${checkIn}&checkOut=${checkOut}`;
         const res = await fetch(url);
         const data = await res.json();
-        console.log('GetAvailableRooms response:', data);
-        console.log('Primera habitación completa:', JSON.stringify(data.data[0], null, 2));
 
         const grid = document.getElementById('roomTypeGrid');
         if (!data.success || !data.data?.length) {
@@ -420,13 +431,23 @@ async function loadRoomTypes(checkIn, checkOut) {
                     roomTypeId: room.roomTypeId,
                     roomTypeName: room.roomTypeName,
                     roomTypeCode: room.roomTypeCode,
-                    pricePerNight: room.pricePerNight,
+                    pricePerNight: room.basePriceNightly,
+                    baseCapacity: room.baseCapacity,
+                    maxCapacity: room.maxCapacity,
+                    extraPersonCharge: room.extraPersonCharge, 
                     available: 0,
                     rooms: []
                 });
+                console.log('Tipo agrupado:', typeMap.get(room.roomTypeId));
             }
+
             const t = typeMap.get(room.roomTypeId);
-            if (room.isAvailable) t.available++;
+
+            // Ajustar capacidades de forma segura
+            t.maxCapacity = Math.max(t.maxCapacity ?? 0, room.maxCapacity);
+            t.baseCapacity = t.baseCapacity ?? room.baseCapacity;
+
+            t.available++;
             t.rooms.push(room);
         });
 
@@ -434,8 +455,14 @@ async function loadRoomTypes(checkIn, checkOut) {
 
         grid.innerHTML = ResCreate.sel.roomTypes.map(t => `
             <div class="room-type-card-sel" data-type-id="${t.roomTypeId}" onclick="selectRoomType('${t.roomTypeId}')">
-                <div class="rt-name">${t.roomTypeName} <small style="font-weight:400;opacity:.7;">${t.roomTypeCode}</small></div>
+                <div class="rt-name">
+                    ${t.roomTypeName} 
+                    <small style="font-weight:400;opacity:.7;">${t.roomTypeCode}</small>
+                </div>
                 <div class="rt-price">$${formatMoney(t.pricePerNight)}/noche</div>
+                <div class="rt-capacity">
+                    ${t.baseCapacity} - ${t.maxCapacity} personas
+                </div>
                 <div class="rt-avail">
                     <span style="color:${t.available > 0 ? 'var(--success)' : 'var(--danger)'}">
                         ${t.available} disponible${t.available !== 1 ? 's' : ''}
@@ -466,14 +493,14 @@ function selectRoomType(typeId) {
 
     const roomsHtml = type.rooms.map(r => {
         const alreadyAdded = usedIds.has(r.roomId);
-        const occupied = !r.isAvailable || alreadyAdded;
+        const occupied = alreadyAdded;
         return `
             <div class="room-card-sel ${occupied ? 'occupied' : ''} ${alreadyAdded ? 'already-added' : ''}"
                  data-room-id="${r.roomId}"
                  title="${alreadyAdded ? 'Ya agregada a esta reserva' : (occupied ? 'No disponible' : 'Disponible')}"
                  onclick="${occupied ? '' : `chooseRoom('${typeId}', '${r.roomId}')`}">
                 <div class="rc-num">${r.roomNumber}</div>
-                <div class="rc-floor">Piso ${r.floor || '?'}</div>
+                <div class="rc-floor">Piso ${r.floor ?? '?'}</div>
                 <div>
                     <span class="rc-status ${occupied ? 'occupied' : 'available'}">
                         ${alreadyAdded ? 'Agregada' : (occupied ? 'Ocupada' : 'Disponible')}
@@ -499,11 +526,16 @@ function backToStep1() {
     Swal.getConfirmButton().disabled = true;
 }
 
-function chooseRoom(typeId, roomId) {
+window.chooseRoom = function (typeId, roomId) {
     const type = ResCreate.sel.roomTypes.find(t => t.roomTypeId === typeId);
     const room = type?.rooms.find(r => r.roomId === roomId);
-    if (!room || !room.isAvailable) return;
+    if (!room) return;
 
+    // Marcar visualmente la habitación seleccionada
+    document.querySelectorAll('.room-card-sel').forEach(c => c.classList.remove('selected'));
+    document.querySelector(`.room-card-sel[data-room-id="${roomId}"]`)?.classList.add('selected');
+
+    // Guardar referencia temporal
     ResCreate.sel.selectedRoom = {
         roomId: room.roomId,
         roomTypeId: typeId,
@@ -512,22 +544,100 @@ function chooseRoom(typeId, roomId) {
         roomTypeName: type.roomTypeName,
         roomTypeCode: type.roomTypeCode,
         pricePerNight: type.pricePerNight,
-        numAdults: parseInt(document.getElementById('totalAdults').value) || 1,
-        numChildren: parseInt(document.getElementById('totalChildren').value) || 0,
-        numBabies: parseInt(document.getElementById('totalBabies').value) || 0,
-        hasPets: document.getElementById('hasPets').checked,
-        numPets: parseInt(document.getElementById('petsCount').value) || 0,
-        petChargeApplied: 0,
-        vehiclePlate: null,
-        extraPersonCharge: 0,
-        subtotal: 0  // se recalcula al agregar
+        maxCapacity: type.maxCapacity,
+        extraPersonCharge: type.extraPersonCharge,
+        baseCapacity: type.baseCapacity,
+        numAdults: 1, numChildren: 0, numBabies: 0,
+        hasPets: false, numPets: 0, petChargeApplied: 0,
+        vehiclePlate: null, extraPersonCharge: type.extraPersonCharge, subtotal: 0
     };
 
-    document.querySelectorAll('.room-card-sel').forEach(c => c.classList.remove('selected'));
-    document.querySelector(`.room-card-sel[data-room-id="${roomId}"]`)?.classList.add('selected');
+    // Mostrar Step 3
+    showStep3(type.roomTypeName, room.roomNumber, type.maxCapacity);
+};
 
+window.showStep3 = function (typeName, roomNumber, maxCapacity) {
+    console.log('selectedRoom en Step3:', ResCreate.sel.selectedRoom);
+    document.getElementById('selectorStep2').style.display = 'none';
+    document.getElementById('selectorStep3').style.display = 'block';
+
+    document.getElementById('step3RoomLabel').textContent =
+        `Hab. ${roomNumber} — ${typeName} (máx. ${maxCapacity} personas)`;
+
+    // Resetear controles
+    document.getElementById('step3Adults').value = 1;
+    document.getElementById('step3Children').value = 0;
+    document.getElementById('step3Babies').value = 0;
+
+    updateStep3Total();
     Swal.getConfirmButton().disabled = false;
-}
+};
+
+window.backToStep2 = function () {
+    document.getElementById('selectorStep3').style.display = 'none';
+    document.getElementById('selectorStep2').style.display = 'block';
+    ResCreate.sel.selectedRoom = null;
+    Swal.getConfirmButton().disabled = true;
+};
+
+window.changeStep3 = function (field, delta) {
+    const el = document.getElementById(field);
+    const max = ResCreate.sel.selectedRoom?.maxCapacity ?? 10;
+    let val = parseInt(el.value || 0) + delta;
+
+    const adults = parseInt(document.getElementById('step3Adults').value || 0);
+    const children = parseInt(document.getElementById('step3Children').value || 0);
+    const thisValue = parseInt(el.value || 0);
+
+    // Bebés no cuentan para el límite de capacidad
+    const occupying = field === 'step3Babies'
+        ? 0  // si estamos cambiando bebés, no validar contra el máximo
+        : (adults + children) - thisValue + val;
+
+    if (val < 0) val = 0;
+    if (field === 'step3Adults' && val < 1) val = 1;
+
+    if (field !== 'step3Babies' && occupying > max) {
+        Swal.showValidationMessage(`Máximo ${max} personas para esta habitación`);
+        return;
+    }
+
+    Swal.resetValidationMessage();
+    el.value = val;
+    updateStep3Total();
+};
+
+window.updateStep3Total = function () {
+    const adults = parseInt(document.getElementById('step3Adults').value || 0);
+    const children = parseInt(document.getElementById('step3Children').value || 0);
+    const babies = parseInt(document.getElementById('step3Babies').value || 0);
+    const occupying = adults + children;
+    const max = ResCreate.sel.selectedRoom?.maxCapacity ?? 10;
+    const base = ResCreate.sel.selectedRoom?.baseCapacity ?? max;
+    const extra = ResCreate.sel.selectedRoom?.extraPersonCharge ?? 0;
+    const basePrice = ResCreate.sel.selectedRoom?.pricePerNight ?? 0;
+
+    const extrasCount = Math.max(0, occupying - base);
+    const extraCharge = extrasCount * extra;
+    const pricePerNight = basePrice + extraCharge;
+
+    // Actualizar contador
+    document.getElementById('step3TotalPersons').textContent =
+        `${occupying} / ${max} (+ ${babies} bebé${babies !== 1 ? 's' : ''})`;
+    document.getElementById('step3TotalPersons').style.color =
+        occupying > max ? 'var(--danger)' : occupying === max ? 'var(--warning)' : 'var(--success)';
+
+    // Mostrar desglose de precio
+    const priceEl = document.getElementById('step3PriceBreakdown');
+    if (priceEl) {
+        if (extrasCount > 0) {
+            priceEl.innerHTML =
+                `$${formatMoney(basePrice)}/noche + <span class="text-warning">${extrasCount} extra × $${formatMoney(extra)} = <strong>$${formatMoney(pricePerNight)}/noche</strong></span>`;
+        } else {
+            priceEl.innerHTML = `<strong>$${formatMoney(pricePerNight)}/noche</strong>`;
+        }
+    }
+};
 
 function addRoomToList(room) {
     if (ResCreate.rooms.find(r => r.roomId === room.roomId)) {
@@ -535,13 +645,56 @@ function addRoomToList(room) {
         return;
     }
 
+    room.numAdults = parseInt(document.getElementById('step3Adults')?.value || 1);
+    room.numChildren = parseInt(document.getElementById('step3Children')?.value || 0);
+    room.numBabies = parseInt(document.getElementById('step3Babies')?.value || 0);
+
+    // Calcular cargo extra
+    const occupying = room.numAdults + room.numChildren;
+    const extrasCount = Math.max(0, occupying - (room.baseCapacity ?? occupying));
+    room.extraPersonCharge = extrasCount * (room.extraPersonCharge ?? 0);
+    room.pricePerNight = room.pricePerNight + room.extraPersonCharge;
+
     const nights = getNights();
     room.subtotal = room.pricePerNight * nights;
 
     ResCreate.rooms.push(room);
     renderRoomsTable();
+    updateGuestTotals();
     recalculate();
     showSuccessToast(`Habitación ${room.roomNumber} agregada`);
+}
+
+function updateGuestTotals() {
+    const totals = ResCreate.rooms.reduce((acc, r) => {
+        acc.adults += r.numAdults || 0;
+        acc.children += r.numChildren || 0;
+        acc.babies += r.numBabies || 0;
+        return acc;
+    }, { adults: 0, children: 0, babies: 0 });
+
+    // Actualizar inputs ocultos (usados al enviar el formulario)
+    const elAdults = document.getElementById('totalAdults');
+    const elChildren = document.getElementById('totalChildren');
+    const elBabies = document.getElementById('totalBabies');
+    if (elAdults) elAdults.value = totals.adults || 1;
+    if (elChildren) elChildren.value = totals.children;
+    if (elBabies) elBabies.value = totals.babies;
+
+    // Actualizar mini cards
+    const displayAdults = document.getElementById('displayAdults');
+    const displayChildren = document.getElementById('displayChildren');
+    const displayBabies = document.getElementById('displayBabies');
+    const cardChildren = document.getElementById('cardChildren');
+    const cardBabies = document.getElementById('cardBabies');
+
+    if (displayAdults) displayAdults.textContent = totals.adults || 1;
+    if (displayChildren) displayChildren.textContent = totals.children;
+    if (displayBabies) displayBabies.textContent = totals.babies;
+
+    // Mostrar/ocultar cards de niños y bebés según si hay al menos 1
+    if (cardChildren) cardChildren.style.display = totals.children > 0 ? 'flex' : 'none';
+    if (cardBabies) cardBabies.style.display = totals.babies > 0 ? 'flex' : 'none';
 }
 
 function removeRoom(index) {
@@ -560,6 +713,7 @@ function removeRoom(index) {
         if (r.isConfirmed) {
             ResCreate.rooms.splice(index, 1);
             renderRoomsTable();
+            updateGuestTotals();
             recalculate();
         }
     });
@@ -642,17 +796,20 @@ function recalculate() {
 
     finance.total = afterDiscount + finance.taxIva + finance.taxIsh;
 
-    // Anticipo
-    const requiresDeposit = document.getElementById('depositYes')?.checked;
-    if (requiresDeposit) {
-        const pctMode = document.getElementById('depositPct')?.checked;
+    // Anticipo — nuevo sistema
+    const state = ResCreate.depositState;
+    if (state === 'received' || state === 'pending') {
+        const pctId = state === 'received' ? 'depositPct' : 'depositPct';
+        const amountId = state === 'received' ? 'depositCustomAmountR' : 'depositCustomAmount';
+        const pctMode = document.getElementById(pctId)?.checked;
         if (pctMode) {
             finance.depositAmount = finance.total * (config.minDepositPct / 100);
         } else {
-            finance.depositAmount = parseFloat(document.getElementById('depositCustomAmount')?.value || 0);
+            finance.depositAmount = parseFloat(document.getElementById(amountId)?.value || 0);
         }
         finance.depositAmount = Math.min(finance.depositAmount, finance.total);
     } else {
+        // 'none' o 'platform'
         finance.depositAmount = 0;
     }
     finance.balance = finance.total - finance.depositAmount;
@@ -664,15 +821,15 @@ function updatePriceDisplay() {
     const f = ResCreate.finance;
     setText('priceBase', `$${formatMoney(f.basePrice)}`);
     setText('priceDiscount', `-$${formatMoney(f.discountAmount)}`);
-
     if (window.HotelConfig.chargesTaxes) {
         setText('priceTaxIva', `$${formatMoney(f.taxIva)}`);
         setText('priceTaxIsh', `$${formatMoney(f.taxIsh)}`);
     }
-
     setText('priceTotal', `$${formatMoney(f.total)}`);
-    setText('depositPctAmount', `$${formatMoney(f.depositAmount)}`);
-    setText('depositBalance', `$${formatMoney(f.balance)}`);
+    setText('depositPctAmount', `$${formatMoney(f.depositAmount)}`);  // received
+    setText('depositPctAmountP', `$${formatMoney(f.depositAmount)}`);  // pending
+    setText('depositBalance', `$${formatMoney(f.balance)}`);        // received
+    setText('depositBalanceP', `$${formatMoney(f.balance)}`);        // pending
 }
 
 function onDiscountChange() {
@@ -689,15 +846,18 @@ function toggleDepositSection(show) {
 }
 
 function onDepositTypeChange() {
-    const isFixed = document.getElementById('depositFixed')?.checked;
-    document.getElementById('depositCustomAmount').style.display = isFixed ? 'block' : 'none';
+    const state = ResCreate.depositState;
+    const fixedId = state === 'received' ? 'depositFixed' : 'depositFixed';
+    const inputId = state === 'received' ? 'depositCustomAmount' : 'depositCustomAmount';
+    const isFixed = document.getElementById(fixedId)?.checked;
+    document.getElementById(inputId).style.display = isFixed ? 'block' : 'none';
     recalculate();
 }
 
 function toggleProofUpload() {
-    const method = document.getElementById('depositMethod').value;
+    const method = document.getElementById('depositMethod')?.value;
     const refArea = document.getElementById('depositReferenceArea');
-    refArea.style.display = (method === 'transfer' || method === 'card') ? 'block' : 'none';
+    if (refArea) refArea.style.display = (method === 'transfer' || method === 'card') ? 'block' : 'none';
 }
 
 // ─── ENVÍO DEL FORMULARIO ─────────────────────────────────────────────────────
@@ -733,8 +893,19 @@ async function submitReservation(status) {
         // ── Construcción del DTO ───────────────────────────────────────────
         recalculate();
         const f = ResCreate.finance;
-        const requiresDeposit = document.getElementById('depositYes').checked;
-        const depositMethod = document.getElementById('depositMethod').value || null;
+
+        // 🔥 NUEVA LÓGICA DE ANTICIPO
+        const depositState = ResCreate.depositState;
+        const isPlatform = depositState === 'platform';
+        const requiresDeposit = (depositState === 'received' || depositState === 'pending');
+
+        const depositMethod = depositState === 'received'
+            ? (document.getElementById('depositMethod')?.value || null)
+            : null;
+
+        const internalNoteExtra = isPlatform
+            ? '\n[PAGO EN PLATAFORMA - Verificar en Booking/Airbnb]'
+            : '';
 
         const dto = {
             guestId: ResCreate.guest.guestId,
@@ -758,12 +929,14 @@ async function submitReservation(status) {
             requiresDeposit: requiresDeposit,
             depositAmount: requiresDeposit ? f.depositAmount : 0,
             depositPaymentMethod: requiresDeposit && depositMethod ? depositMethod : null,
-            depositReference: document.getElementById('depositReference')?.value?.trim() || null,
+            depositReference: depositState === 'received'
+                ? (document.getElementById('depositReference')?.value?.trim() || null)
+                : null,
             depositProofUrl: null,
             depositDueDate: document.getElementById('depositDueDate')?.value || null,
 
             guestNotes: document.getElementById('guestNotes').value.trim() || null,
-            internalNotes: document.getElementById('internalNotes').value.trim() || null,
+            internalNotes: (document.getElementById('internalNotes').value.trim() || '') + internalNoteExtra,
 
             rooms: ResCreate.rooms.map(r => ({
                 roomId: r.roomId,
@@ -789,7 +962,9 @@ async function submitReservation(status) {
             ? 'Se guardará como borrador. Podrás completarla después.'
             : `Se creará la reserva con folio asignado automáticamente.<br>
                Total: <strong>$${formatMoney(f.total)}</strong>
-               ${requiresDeposit ? `· Anticipo: <strong>$${formatMoney(f.depositAmount)}</strong>` : '· Sin anticipo registrado'}`;
+               ${requiresDeposit
+                ? `· Anticipo: <strong>$${formatMoney(f.depositAmount)}</strong>`
+                : '· Sin anticipo registrado'}`;
 
         const confirmResult = await Swal.fire({
             title: status === 'draft' ? '💾 Guardar borrador' : '✅ Confirmar reserva',
@@ -842,7 +1017,6 @@ async function submitReservation(status) {
         } else if (swalResult.isDenied) {
             window.location.href = `/Availability?reservationId=${result.data.reservationId}`;
         } else {
-            // Nueva reserva — reset del formulario
             resetForm();
         }
 
@@ -880,6 +1054,16 @@ function resetForm() {
 
     renderRoomsTable();
     recalculate();
+
+    ResCreate.depositState = 'received';
+    if (typeof onDepositStateChange === 'function') {
+        onDepositStateChange('received');
+    }
+
+    if (typeof onSourceChange === 'function') {
+        onSourceChange('whatsapp');
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
     showInfoToast('Formulario limpio — listo para nueva reserva');
 }
@@ -909,3 +1093,76 @@ function sourceLabel(s) {
     };
     return map[s] || s || '—';
 }
+
+
+
+
+
+
+
+
+
+
+
+
+// ─── ANTICIPO — lógica completa ───────────────────────────────────────────────
+
+// Estado actual del anticipo: 'none' | 'pending' | 'received' | 'platform'
+ResCreate.depositState = 'received';
+
+/**
+ * Llamado cuando cambia el canal (source).
+ * Detecta si es OTA y cambia la UI del anticipo automáticamente.
+ */
+function onSourceChange(sourceValue) {
+    const isPlatform = (sourceValue === 'booking' || sourceValue === 'airbnb'
+        || sourceValue === 'ota_booking' || sourceValue === 'ota_airbnb');
+    document.getElementById('depositPlatformMsg').style.display = isPlatform ? 'block' : 'none';
+    document.getElementById('depositDirectSection').style.display = isPlatform ? 'none' : 'block';
+
+    if (isPlatform) {
+        ResCreate.depositState = 'platform';
+    } else {
+        const checked = document.querySelector('input[name="depositState"]:checked');
+        ResCreate.depositState = checked?.value || 'received';
+    }
+    recalculate();
+}
+
+/**
+ * Llamado al hacer clic en una de las 3 tarjetas de estado.
+ */
+function onDepositStateChange(state) {
+    ResCreate.depositState = state;
+
+    document.querySelectorAll('.deposit-state-card').forEach(c => c.classList.remove('active'));
+    const cardMap = { none: 'cardDepositNone', pending: 'cardDepositPending', received: 'cardDepositReceived' };
+    document.getElementById(cardMap[state])?.classList.add('active');
+
+    const radio = document.querySelector(`input[name="depositState"][value="${state}"]`);
+    if (radio) radio.checked = true;
+
+    document.getElementById('depositPendingDetails').style.display = state === 'pending' ? 'block' : 'none';
+    document.getElementById('depositReceivedDetails').style.display = state === 'received' ? 'block' : 'none';
+
+    recalculate();
+}
+
+function onDepositTypeChange() {
+    const state = ResCreate.depositState;
+    const fixedId = state === 'received' ? 'depositFixedR' : 'depositFixed';
+    const inputId = state === 'received' ? 'depositCustomAmountR' : 'depositCustomAmount';
+    const isFixed = document.getElementById(fixedId)?.checked;
+    if (document.getElementById(inputId)) {
+        document.getElementById(inputId).style.display = isFixed ? 'block' : 'none';
+    }
+    recalculate();
+}
+
+function toggleProofUpload() {
+    const method = document.getElementById('depositMethod')?.value;
+    const refArea = document.getElementById('depositReferenceArea');
+    if (refArea) refArea.style.display = (method === 'transfer' || method === 'card') ? 'block' : 'none';
+}
+
+

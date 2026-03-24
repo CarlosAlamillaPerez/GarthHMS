@@ -57,7 +57,7 @@ namespace GarthHMS.Infrastructure.Repositories
                     p_deposit_payment_method = dto.DepositPaymentMethod,
                     p_deposit_reference = dto.DepositReference,
                     p_deposit_proof_url = dto.DepositProofUrl,
-                    p_deposit_due_date = dto.DepositDueDate,
+                    p_deposit_due_date = dto.DepositDueDate.HasValue ? (object)dto.DepositDueDate.Value: DBNull.Value,
                     p_guest_notes = dto.GuestNotes,
                     p_internal_notes = dto.InternalNotes,
                     p_rooms = roomsJson
