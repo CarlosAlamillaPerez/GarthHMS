@@ -117,14 +117,14 @@ namespace GarthHMS.Application.Services
                 throw new InvalidOperationException(
                     "La fecha de check-in debe ser anterior al check-out.");
 
-            if (checkIn.Date < DateTime.Today)
+            // Permitimos hasta 2 días atrás como margen — el frontend controla la regla de 5am
+            if (checkIn.Date < DateTime.UtcNow.Date.AddDays(-2))
                 throw new InvalidOperationException(
                     "La fecha de check-in no puede ser en el pasado.");
 
-            var maxDays = 365;
-            if ((checkOut.Date - checkIn.Date).TotalDays > maxDays)
+            if ((checkOut.Date - checkIn.Date).TotalDays > 365)
                 throw new InvalidOperationException(
-                    $"La estancia no puede exceder {maxDays} días.");
+                    "La estancia no puede exceder 365 días.");
         }
     }
 }

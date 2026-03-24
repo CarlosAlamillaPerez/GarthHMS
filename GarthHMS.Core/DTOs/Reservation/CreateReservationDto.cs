@@ -56,6 +56,8 @@ namespace GarthHMS.Core.DTOs.Reservation
         [Range(0, 9999999.99, ErrorMessage = "Total inválido")]
         public decimal Total { get; set; }
 
+        public bool RequiresInvoice { get; set; } = false;
+
         // ─── Anticipo ──────────────────────────────────────────────────────
         public bool RequiresDeposit { get; set; } = true;
 

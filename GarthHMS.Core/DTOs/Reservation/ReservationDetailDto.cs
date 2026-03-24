@@ -157,6 +157,7 @@ namespace GarthHMS.Core.DTOs.Reservation
     public class ReservationFormConfigDto
     {
         public string OperationMode { get; set; } = "hotel";
+        public bool CanInvoice { get; set; } = false;
         public bool ChargesTaxes { get; set; } = true;
         public decimal TaxIvaPercent { get; set; } = 16;
         public decimal TaxIshPercent { get; set; } = 3;

@@ -60,6 +60,7 @@ namespace GarthHMS.Infrastructure.Repositories
                     p_deposit_due_date = dto.DepositDueDate.HasValue ? (object)dto.DepositDueDate.Value: DBNull.Value,
                     p_guest_notes = dto.GuestNotes,
                     p_internal_notes = dto.InternalNotes,
+                    p_requires_invoice = dto.RequiresInvoice,
                     p_rooms = roomsJson
                 }
             );

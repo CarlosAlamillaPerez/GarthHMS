@@ -79,17 +79,84 @@ function initSourceButtons() {
 }
 
 // ─── Fechas ──────────────────────────────────────────────────────────────────
+const LATE_NIGHT_CUTOFF_HOUR = 5; // antes de las 5am se permite día anterior
+
+function getMinCheckInDate() {
+    const now = new Date();
+    const hour = now.getHours();
+
+    // Usar fecha local explícita, no ISO (que convierte a UTC)
+    const pad = n => String(n).padStart(2, '0');
+    const localToday = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+
+    if (hour < LATE_NIGHT_CUTOFF_HOUR) {
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        return `${yesterday.getFullYear()}-${pad(yesterday.getMonth() + 1)}-${pad(yesterday.getDate())}`;
+    }
+    return localToday;
+}
+
 function initDates() {
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('checkInDate').min = today;
-    document.getElementById('checkOutDate').min = today;
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const localToday = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+
+    document.getElementById('checkInDate').min = getMinCheckInDate();
+    document.getElementById('checkOutDate').min = localToday;
 }
 
 function onDatesChange() {
     const ci = document.getElementById('checkInDate').value;
     const co = document.getElementById('checkOutDate').value;
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
 
-    if (!ci || !co) return;
+    // Fecha local — NO usar toISOString() porque convierte a UTC
+    const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+
+    // Limpiar aviso anterior
+    const existingAlert = document.getElementById('lateNightAlert');
+    if (existingAlert) existingAlert.remove();
+
+    if (!ci) return;
+
+    // Validar que no sea fecha pasada fuera de ventana madrugada
+    if (ci < today) {
+        if (now.getHours() >= LATE_NIGHT_CUTOFF_HOUR) {
+            showWarningToast('No se puede seleccionar una fecha pasada después de las 5:00am');
+            document.getElementById('checkInDate').value = '';
+            return;
+        }
+
+        // Es día anterior y estamos en ventana de madrugada — mostrar aviso
+        const horasRestantes = LATE_NIGHT_CUTOFF_HOUR - now.getHours();
+        const minutosRestantes = 60 - now.getMinutes();
+        const tiempoTexto = horasRestantes > 1
+            ? `${horasRestantes} horas`
+            : `${minutosRestantes} minutos`;
+
+        const alert = document.createElement('div');
+        alert.id = 'lateNightAlert';
+        alert.className = 'alert alert-warning d-flex align-items-start gap-2 mt-2 mb-0 py-2';
+        alert.innerHTML = `
+            <i class="fas fa-moon mt-1 text-warning"></i>
+            <div>
+                <strong>Reserva de madrugada</strong> — Esta reserva contará a partir de ayer
+                (${formatDate(ci)}). El check-out será a la hora normal aunque el huésped
+                haya llegado esta madrugada.
+                <br><small class="text-muted">Esta opción estará disponible por aproximadamente ${tiempoTexto} más (hasta las 5:00am).</small>
+            </div>`;
+
+        document.getElementById('checkInDate').closest('.col-md-4')
+            .insertAdjacentElement('afterend', alert);
+
+        // Mover el alert fuera del col para que ocupe todo el ancho
+        document.getElementById('checkInDate').closest('.row')
+            .insertAdjacentElement('afterend', alert);
+    }
+
+    if (!co) return;
 
     if (co <= ci) {
         showWarningToast('La fecha de check-out debe ser posterior al check-in');
@@ -99,9 +166,9 @@ function onDatesChange() {
     }
 
     const nights = Math.round((new Date(co) - new Date(ci)) / 86400000);
-    document.getElementById('nightsDisplay').textContent = `${nights} noche${nights !== 1 ? 's' : ''}`;
+    document.getElementById('nightsDisplay').textContent =
+        `${nights} noche${nights !== 1 ? 's' : ''}`;
 
-    // Recalcular habitaciones ya agregadas (subtotales por noche cambian)
     recalculate();
     renderRoomsTable();
 }
@@ -182,12 +249,15 @@ function selectGuestFromSearch(guest) {
     document.getElementById('guestQuickResults').style.display = 'none';
     document.getElementById('guestQuickSearch').value = '';
     setSelectedGuest({
-        guestId: guest.guestId || guest.guest_id,
-        firstName: guest.firstName || guest.first_name || '',
-        lastName: guest.lastName || guest.last_name || '',
-        phone: guest.phone || '',
-        email: guest.email || '',
-        isVip: guest.isVip || guest.is_vip || false
+        guestId: guest.guestId,
+        firstName: guest.fullName,
+        lastName: '',
+        phone: guest.phone,
+        email: guest.email,
+        isVip: guest.isVip || false,
+        billingRfc: guest.billingRfc || null,          
+        billingBusinessName: guest.billingBusinessName || null, 
+        billingEmail: guest.billingEmail || null         
     });
 }
 
@@ -327,13 +397,51 @@ async function openCreateGuestModal() {
             showCloseButton: true,
             allowOutsideClick: false,
             didOpen: () => {
-                // Inicializar tabs de Bootstrap si los hay
-                document.querySelectorAll('#createGuestTabs button').forEach(el => new bootstrap.Tab(el));
+                document.querySelectorAll('#createGuestTabs button')
+                    .forEach(el => new bootstrap.Tab(el));
+
+                // Interceptar el submit aquí, sin depender de guests.js
+                $(document).off('submit.guestFromReservation').on('submit.guestFromReservation', '#createForm', async function (e) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+
+                    const formData = getFormData('createForm');
+
+                    if (!formData.FirstName || !formData.LastName || !formData.Phone) {
+                        showErrorToast('Nombre, Apellido y Teléfono son requeridos');
+                        return;
+                    }
+                    if (!formData.IsBlacklisted) formData.BlacklistReason = null;
+
+                    showLoading('Guardando huésped...');
+                    const result = await postJSON('/Guests/Create', formData);
+                    hideLoading();
+
+                    if (!result.success) {
+                        showErrorToast(result.message || 'Error al crear el huésped');
+                        return;
+                    }
+
+                    // Seleccionar automáticamente el huésped recién creado
+                    setSelectedGuest({
+                        guestId: result.data.guestId,
+                        firstName: result.data.firstName || formData.FirstName,
+                        lastName: result.data.lastName || formData.LastName,
+                        phone: formData.Phone,
+                        email: formData.Email || null,
+                        isVip: false
+                    });
+
+                    $(document).off('submit.guestFromReservation');
+                    Swal.close();
+                    showSuccessToast('Huésped creado y seleccionado');
+                });
+            },
+            willClose: () => {
+                $(document).off('submit.guestFromReservation');
             }
         });
 
-        // Nota: el handleCreate del guests.js manejará el submit.
-        // Si se crea exitosamente, el evento 'guestCreated' nos notificará.
     } catch (err) {
         console.error('Error al abrir modal de creación de huésped:', err);
         showErrorToast('Error al abrir el formulario');
@@ -894,7 +1002,7 @@ async function submitReservation(status) {
         recalculate();
         const f = ResCreate.finance;
 
-        // 🔥 NUEVA LÓGICA DE ANTICIPO
+        // LÓGICA DE ANTICIPO
         const depositState = ResCreate.depositState;
         const isPlatform = depositState === 'platform';
         const requiresDeposit = (depositState === 'received' || depositState === 'pending');
@@ -918,6 +1026,7 @@ async function submitReservation(status) {
             totalChildren: parseInt(document.getElementById('totalChildren').value) || 0,
             totalBabies: parseInt(document.getElementById('totalBabies').value) || 0,
             travelReason: document.getElementById('travelReason').value || null,
+            requiresInvoice: ResCreate.requiresInvoice,
 
             subtotal: f.basePrice,
             discountAmount: f.discountAmount,
@@ -1166,3 +1275,38 @@ function toggleProofUpload() {
 }
 
 
+// ─── FACTURA ──────────────────────────────────────────────────────────────────
+
+ResCreate.requiresInvoice = false;
+
+function toggleInvoice() {
+    ResCreate.requiresInvoice = !ResCreate.requiresInvoice;
+    const card = document.getElementById('invoiceKpi');
+    const icon = document.getElementById('invoiceKpiCheck');
+    const sub = document.getElementById('invoiceKpiSub');
+    const info = document.getElementById('invoiceBillingInfo');
+    const text = document.getElementById('invoiceBillingText');
+
+    if (ResCreate.requiresInvoice) {
+        card.classList.add('active');
+        icon.className = 'fas fa-toggle-on fa-2x text-primary';
+        sub.textContent = 'Factura solicitada';
+
+        // Mostrar datos fiscales del huésped si los tiene
+        const g = ResCreate.guest;
+        if (g?.billingRfc) {
+            text.innerHTML = `<strong>RFC:</strong> ${g.billingRfc} &nbsp;|&nbsp;
+                              <strong>Razón social:</strong> ${g.billingBusinessName || '—'} &nbsp;|&nbsp;
+                              <strong>Email fiscal:</strong> ${g.billingEmail || '—'}`;
+        } else {
+            text.innerHTML = `El huésped no tiene datos fiscales registrados. 
+                              Se podrán capturar durante el check-in.`;
+        }
+        if (info) info.style.display = 'block';
+    } else {
+        card.classList.remove('active');
+        icon.className = 'fas fa-toggle-off fa-2x text-muted';
+        sub.textContent = 'Clic para activar';
+        if (info) info.style.display = 'none';
+    }
+}
