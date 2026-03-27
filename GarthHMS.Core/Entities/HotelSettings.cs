@@ -26,9 +26,9 @@ namespace GarthHMS.Core.Entities
         public string OperationMode { get; set; } = "hotel"; // hotel, motel, hybrid
 
         // ===== HORARIOS =====
-        public TimeSpan CheckInTime { get; set; } = new TimeSpan(15, 0, 0); // 15:00
-        public TimeSpan CheckOutTime { get; set; } = new TimeSpan(12, 0, 0); // 12:00
-        public TimeSpan LateCheckoutTime { get; set; } = new TimeSpan(14, 0, 0); // 14:00
+        public string CheckInTime { get; set; } = "15:00:00";
+        public string CheckOutTime { get; set; } = "12:00:00";
+        public string LateCheckoutTime { get; set; } = "14:00:00";
         public decimal LateCheckoutCharge { get; set; } = 0;
 
         // ===== POLÍTICAS =====

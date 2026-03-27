@@ -60,6 +60,7 @@ builder.Services.AddSession(options =>
 // Necesario para que Dapper soporte DateOnly - PostgreSQL DATE.
 // ============================================================================
 Dapper.SqlMapper.AddTypeHandler(new GarthHMS.Infrastructure.Data.DateOnlyTypeHandler());
+Dapper.SqlMapper.AddTypeHandler(new GarthHMS.Infrastructure.Data.TimeOnlyTypeHandler());
 
 // Acceso a datos
 builder.Services.AddScoped<BaseDeDatos>();

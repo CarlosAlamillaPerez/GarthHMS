@@ -203,6 +203,14 @@ async function handleUpdate(e) {
             return;
         }
 
+        // Convertir HH:mm → HH:mm:ss para que C# pueda deserializar TimeSpan
+        if (formData.CheckInTime && formData.CheckInTime.length === 5)
+            formData.CheckInTime = formData.CheckInTime + ':00';
+        if (formData.CheckOutTime && formData.CheckOutTime.length === 5)
+            formData.CheckOutTime = formData.CheckOutTime + ':00';
+        if (formData.LateCheckoutTime && formData.LateCheckoutTime.length === 5)
+            formData.LateCheckoutTime = formData.LateCheckoutTime + ':00';
+
         showLoading('Guardando configuración...');
 
         const result = await postJSON('/HotelSettings/Update', formData);
@@ -243,8 +251,8 @@ function validateSettings(data) {
     const checkOutTime = $('#checkOutTime').val();
     const lateCheckoutTime = $('#lateCheckoutTime').val();
 
-    if (checkInTime >= checkOutTime) {
-        showErrorToast('La hora de check-in debe ser anterior a la hora de check-out');
+    if (checkInTime === checkOutTime) {
+        showErrorToast('La hora de check-in no puede ser igual a la hora de check-out');
         $('#schedule-tab').tab('show');
         $('#checkInTime').focus();
         return false;

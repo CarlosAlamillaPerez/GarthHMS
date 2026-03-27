@@ -449,6 +449,30 @@
         </div>
     </div>
 
+    @* ── KPI Factura (solo si hotel puede facturar) ── *@
+    @if (config.CanInvoice)
+    {
+        <div class="col-12 mb-3">
+            <div id="invoiceKpi" class="invoice-kpi-card" onclick="toggleInvoice()">
+                <div class="invoice-kpi-icon">
+                    <i class="fas fa-file-invoice"></i>
+                </div>
+                <div class="invoice-kpi-text">
+                    <div class="fw-semibold">Requiere Factura</div>
+                    <small id="invoiceKpiSub" class="text-muted">Clic para activar</small>
+                </div>
+                <div class="invoice-kpi-toggle">
+                    <i id="invoiceKpiCheck" class="fas fa-toggle-off fa-2x text-muted"></i>
+                </div>
+            </div>
+
+            <div id="invoiceBillingInfo" style="display:none;" class="mt-2 p-3 rounded border border-primary-subtle bg-primary-subtle small">
+                <i class="fas fa-info-circle text-primary me-1"></i>
+                <span id="invoiceBillingText"></span>
+            </div>
+        </div>
+    }
+
     @* ──────────────────────────────────────────────────────────────────────── *@
     @* SECCIÓN 2: DETALLES DE LA RESERVA *@
     @* ──────────────────────────────────────────────────────────────────────── *@
@@ -873,29 +897,6 @@
     @* ──────────────────────────────────────────────────────────────────────── *@
     @* SECCIÓN 5: NOTAS Y OBSERVACIONES *@
     @* ──────────────────────────────────────────────────────────────────────── *@
-    @* ── KPI Factura (solo si hotel puede facturar) ── *@
-    @if (config.CanInvoice)
-    {
-        <div class="col-12 mb-3">
-            <div id="invoiceKpi" class="invoice-kpi-card" onclick="toggleInvoice()">
-                <div class="invoice-kpi-icon">
-                    <i class="fas fa-file-invoice"></i>
-                </div>
-                <div class="invoice-kpi-text">
-                    <div class="fw-semibold">Requiere Factura</div>
-                    <small id="invoiceKpiSub" class="text-muted">Clic para activar</small>
-                </div>
-                <div class="invoice-kpi-toggle">
-                    <i id="invoiceKpiCheck" class="fas fa-toggle-off fa-2x text-muted"></i>
-                </div>
-            </div>
-
-            <div id="invoiceBillingInfo" style="display:none;" class="mt-2 p-3 rounded border border-primary-subtle bg-primary-subtle small">
-                <i class="fas fa-info-circle text-primary me-1"></i>
-                <span id="invoiceBillingText"></span>
-            </div>
-        </div>
-    }
     <div class="res-section">
         <div class="res-section-header">
             <div class="section-icon bg-secondary" style="color:var(--text-primary)"><i class="fas fa-sticky-note"></i></div>

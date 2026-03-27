@@ -47,13 +47,13 @@ namespace GarthHMS.Core.DTOs.HotelSettings
 
         // ===== HORARIOS =====
         [Required(ErrorMessage = "La hora de check-in es requerida")]
-        public TimeSpan CheckInTime { get; set; } = new TimeSpan(15, 0, 0);
+        public string CheckInTime { get; set; } = "15:00:00";
 
         [Required(ErrorMessage = "La hora de check-out es requerida")]
-        public TimeSpan CheckOutTime { get; set; } = new TimeSpan(12, 0, 0);
+        public string CheckOutTime { get; set; } = "12:00:00";
 
         [Required(ErrorMessage = "La hora de check-out tardío es requerida")]
-        public TimeSpan LateCheckoutTime { get; set; } = new TimeSpan(14, 0, 0);
+        public string LateCheckoutTime { get; set; } = "14:00:00";
 
         [Range(0, 9999.99, ErrorMessage = "El cargo por check-out tardío debe estar entre 0 y 9999.99")]
         public decimal LateCheckoutCharge { get; set; } = 0;

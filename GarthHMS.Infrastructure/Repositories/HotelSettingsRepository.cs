@@ -20,12 +20,50 @@ namespace GarthHMS.Infrastructure.Repositories
 
         public async Task<HotelSettings?> GetByHotelIdAsync(Guid hotelId)
         {
-            var result = await _procedimientos.EjecutarUnicoAsync<HotelSettings>(
+            var result = await _procedimientos.EjecutarUnicoAsync<dynamic>(
                 "sp_hotel_settings_get_by_hotel_id",
                 new { p_hotel_id = hotelId }
             );
 
-            return result;
+            if (result == null) return null;
+
+            return new HotelSettings
+            {
+                HotelSettingsId = result.hotel_settings_id,
+                HotelId = result.hotel_id,
+                HotelName = result.hotel_name,
+                Address = result.address,
+                City = result.city,
+                State = result.state,
+                PostalCode = result.postal_code,
+                Country = result.country,
+                Phone = result.phone,
+                Email = result.email,
+                Website = result.website,
+                OperationMode = result.operation_mode,
+                CheckInTime = result.check_in_time?.ToString(),
+                CheckOutTime = result.check_out_time?.ToString(),
+                LateCheckoutTime = result.late_checkout_time?.ToString(),
+                LateCheckoutCharge = result.late_checkout_charge,
+                CancellationHours = result.cancellation_hours,
+                CancellationPolicyText = result.cancellation_policy_text,
+                ChargesTaxes = result.charges_taxes,
+                TaxIvaPercent = result.tax_iva_percent,
+                TaxIshPercent = result.tax_ish_percent,
+                MinDepositPercent = result.min_deposit_percent,
+                RequireCompanionDetails = result.require_companion_details,
+                CanInvoice = result.can_invoice,
+                SatRfc = result.sat_rfc,
+                SatBusinessName = result.sat_business_name,
+                SatTaxRegime = result.sat_tax_regime,
+                LogoUrl = result.logo_url,
+                PrimaryColor = result.primary_color,
+                SecondaryColor = result.secondary_color,
+                Timezone = result.timezone,
+                CreatedAt = result.created_at,
+                UpdatedAt = result.updated_at,
+                UpdatedBy = result.updated_by
+            };
         }
 
         public async Task<Guid> CreateAsync(HotelSettings settings)
@@ -49,9 +87,9 @@ namespace GarthHMS.Infrastructure.Repositories
                 p_operation_mode = settings.OperationMode,
 
                 // Horarios
-                p_check_in_time = settings.CheckInTime,
-                p_check_out_time = settings.CheckOutTime,
-                p_late_checkout_time = settings.LateCheckoutTime,
+                p_check_in_time = TimeOnly.Parse(settings.CheckInTime),
+                p_check_out_time = TimeOnly.Parse(settings.CheckOutTime),
+                p_late_checkout_time = TimeOnly.Parse(settings.LateCheckoutTime),
                 p_late_checkout_charge = settings.LateCheckoutCharge,
 
                 // Políticas
@@ -116,9 +154,9 @@ namespace GarthHMS.Infrastructure.Repositories
                 p_operation_mode = settings.OperationMode,
 
                 // Horarios
-                p_check_in_time = settings.CheckInTime,
-                p_check_out_time = settings.CheckOutTime,
-                p_late_checkout_time = settings.LateCheckoutTime,
+                p_check_in_time = TimeOnly.Parse(settings.CheckInTime),
+                p_check_out_time = TimeOnly.Parse(settings.CheckOutTime),
+                p_late_checkout_time = TimeOnly.Parse(settings.LateCheckoutTime),
                 p_late_checkout_charge = settings.LateCheckoutCharge,
 
                 // Políticas

@@ -98,7 +98,7 @@ namespace GarthHMS.Web.Controllers
                 return Redirect(returnUrl);
             }
 
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Index", "Dashboard");
         }
 
         // POST: /Account/Logout

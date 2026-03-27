@@ -90,12 +90,12 @@ namespace GarthHMS.Application.Services
         private (bool IsValid, string ErrorMessage) ValidateSettings(UpdateHotelSettingsDto dto)
         {
             // 1. Validar horarios
-            if (dto.CheckInTime >= dto.CheckOutTime)
+            if (dto.CheckInTime == dto.CheckOutTime)
             {
-                return (false, "La hora de check-in debe ser anterior a la hora de check-out");
+                return (false, "La hora de check-in no puede ser igual a la hora de check-out");
             }
 
-            if (dto.LateCheckoutTime <= dto.CheckOutTime)
+            if (TimeOnly.Parse(dto.LateCheckoutTime) <= TimeOnly.Parse(dto.CheckOutTime))
             {
                 return (false, "La hora de check-out tardío debe ser posterior a la hora de check-out normal");
             }

@@ -25,9 +25,9 @@ namespace GarthHMS.Core.DTOs.HotelSettings
         public string OperationMode { get; set; } = null!;
 
         // ===== HORARIOS =====
-        public TimeSpan CheckInTime { get; set; }
-        public TimeSpan CheckOutTime { get; set; }
-        public TimeSpan LateCheckoutTime { get; set; }
+        public string CheckInTime { get; set; } = "15:00:00";
+        public string CheckOutTime { get; set; } = "12:00:00";
+        public string LateCheckoutTime { get; set; } = "14:00:00";
         public decimal LateCheckoutCharge { get; set; }
 
         // ===== POLÍTICAS =====
