@@ -80,6 +80,15 @@ namespace GarthHMS.Core.DTOs.Reservation
         // ─── Habitaciones ──────────────────────────────────────────────────
         [MinLength(1, ErrorMessage = "Debes agregar al menos una habitación")]
         public List<CreateReservationRoomDto> Rooms { get; set; } = new();
+        public List<CreateCompanionDto> Companions { get; set; } = new();
+    }
+
+    public class CreateCompanionDto
+    {
+        public string FullName { get; set; } = string.Empty;
+        public int? Age { get; set; }
+        public string? Phone { get; set; }
+        public string? Relationship { get; set; }
     }
 
     public class CreateReservationRoomDto
@@ -122,5 +131,7 @@ namespace GarthHMS.Core.DTOs.Reservation
 
         [Range(0, 9999999.99)]
         public decimal Subtotal { get; set; }
+
+        public List<CreateCompanionDto> Companions { get; set; } = new();
     }
 }

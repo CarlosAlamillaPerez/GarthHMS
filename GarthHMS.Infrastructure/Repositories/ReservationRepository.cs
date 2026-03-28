@@ -60,8 +60,8 @@ namespace GarthHMS.Infrastructure.Repositories
                     p_deposit_due_date = dto.DepositDueDate.HasValue ? (object)dto.DepositDueDate.Value: DBNull.Value,
                     p_guest_notes = dto.GuestNotes,
                     p_internal_notes = dto.InternalNotes,
-                    p_requires_invoice = dto.RequiresInvoice,
-                    p_rooms = roomsJson
+                    p_rooms = roomsJson,
+                    p_requires_invoice = dto.RequiresInvoice
                 }
             );
 
@@ -291,10 +291,17 @@ namespace GarthHMS.Infrastructure.Repositories
                 vehicle_description = r.VehicleDescription,
                 price_per_night = r.PricePerNight,
                 extra_person_charge = r.ExtraPersonCharge,
-                subtotal = r.Subtotal
+                subtotal = r.Subtotal,
+                companions = r.Companions.Select(c => new
+                {
+                    fullName = c.FullName,
+                    age = c.Age,
+                    phone = c.Phone,
+                    relationship = c.Relationship
+                }).ToList()
             });
 
-            return JsonSerializer.Serialize(roomObjects);
+            return System.Text.Json.JsonSerializer.Serialize(roomObjects);
         }
     }
 }

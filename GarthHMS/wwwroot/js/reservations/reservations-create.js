@@ -277,7 +277,10 @@ async function openGuestSearchModal() {
                     lastName: '',
                     phone: g.phone,
                     email: g.email,
-                    isVip: g.isVip
+                    isVip: g.isVip,
+                    billingRfc: g.billingRfc || null,              
+                    billingBusinessName: g.billingBusinessName || null,
+                    billingEmail: g.billingEmail || null           
                 })})'
                 onmouseenter="this.style.background='var(--bg-secondary)'"
                 onmouseleave="this.style.background=''">
@@ -347,13 +350,17 @@ function filterGuestModalTable(query) {
 }
 
 function chooseGuestFromModal(guest) {
+    console.log(guest);
     setSelectedGuest({
         guestId: guest.guestId,
         firstName: guest.firstName,
-        lastName: guest.lastName,
+        lastName: "",
         phone: guest.phone,
         email: guest.email,
-        isVip: guest.isVip || false
+        isVip: guest.isVip || false,
+        billingRfc: guest.billingRfc || null,
+        billingBusinessName: guest.billingBusinessName || null,
+        billingEmail: guest.billingEmail || null
     });
     Swal.close();
 }
@@ -546,7 +553,6 @@ async function loadRoomTypes(checkIn, checkOut) {
                     available: 0,
                     rooms: []
                 });
-                console.log('Tipo agrupado:', typeMap.get(room.roomTypeId));
             }
 
             const t = typeMap.get(room.roomTypeId);
@@ -665,7 +671,6 @@ window.chooseRoom = function (typeId, roomId) {
 };
 
 window.showStep3 = function (typeName, roomNumber, maxCapacity) {
-    console.log('selectedRoom en Step3:', ResCreate.sel.selectedRoom);
     document.getElementById('selectorStep2').style.display = 'none';
     document.getElementById('selectorStep3').style.display = 'block';
 
@@ -870,7 +875,168 @@ function renderRoomsTable() {
     badge.style.background = 'var(--primary)';
     badge.style.color = '#fff';
     document.getElementById('priceBox').style.display = 'block';
+
+    renderCompanions();
 }
+
+// ─── ACOMPAÑANTES ────────────────────────────────────────────────────────────
+
+function renderCompanions() {
+    const container = document.getElementById('companionsContainer');
+    if (!container) return; // sección no existe si hotel no lo requiere
+
+    if (ResCreate.rooms.length === 0) {
+        container.innerHTML = `
+            <div class="text-muted text-center py-3">
+                <i class="fas fa-bed me-2"></i>
+                Agrega habitaciones para ver los campos de acompañantes
+            </div>`;
+        return;
+    }
+
+    const optional = window.HotelConfig?.companionsOptional ?? true;
+    const requiredMark = optional ? '' : '<span class="text-danger">*</span>';
+
+    let html = '';
+
+    ResCreate.rooms.forEach((room, roomIdx) => {
+        // Slots: adultos extra (sin contar al huésped principal) + niños
+        // Los bebés nunca cuentan
+        const adultSlots = Math.max(0, (room.numAdults || 1) - 1);
+        const childSlots = room.numChildren || 0;
+        const totalSlots = adultSlots + childSlots;
+
+        // Inicializar array de companions si no existe
+        if (!room.companions) room.companions = [];
+        // Ajustar tamaño del array al número de slots
+        while (room.companions.length < totalSlots) room.companions.push({});
+        room.companions.length = totalSlots;
+
+        html += `
+        <div class="mb-4">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="fas fa-door-open text-primary"></i>
+                <strong>Hab. ${room.roomNumber} — ${room.roomTypeName}</strong>
+                <span class="badge bg-secondary">${room.numAdults} adulto${room.numAdults !== 1 ? 's' : ''} · ${room.numChildren} niño${room.numChildren !== 1 ? 's' : ''}</span>
+            </div>`;
+
+        if (totalSlots === 0) {
+            html += `
+            <div class="text-muted small ps-3">
+                <i class="fas fa-info-circle me-1"></i>
+                Solo 1 adulto (el huésped principal) — sin acompañantes en esta habitación.
+            </div>`;
+        } else {
+            html += `
+            <div class="text-muted small ps-3 mb-2">
+                <i class="fas fa-info-circle me-1"></i>
+                El huésped principal ya ocupa 1 lugar de adulto.
+                ${optional ? 'Los datos son opcionales.' : 'Los nombres son requeridos para confirmar.'}
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:40px">#</th>
+                            <th>Tipo</th>
+                            <th>Nombre completo ${requiredMark}</th>
+                            <th style="width:80px">Edad</th>
+                            <th style="width:130px">Parentesco</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+            let slotIdx = 0;
+
+            // Filas de adultos extra
+            for (let a = 0; a < adultSlots; a++, slotIdx++) {
+                const c = room.companions[slotIdx] || {};
+                html += companionRow(roomIdx, slotIdx, 'Adulto', c, optional);
+            }
+
+            // Filas de niños
+            for (let ch = 0; ch < childSlots; ch++, slotIdx++) {
+                const c = room.companions[slotIdx] || {};
+                html += companionRow(roomIdx, slotIdx, 'Niño', c, optional);
+            }
+
+            html += `
+                    </tbody>
+                </table>
+            </div>`;
+        }
+
+        html += `</div>`;
+
+        if (roomIdx < ResCreate.rooms.length - 1) {
+            html += `<hr class="my-3">`;
+        }
+    });
+
+    container.innerHTML = html;
+}
+
+function companionRow(roomIdx, slotIdx, tipo, companion, optional) {
+    const ph = optional ? 'Opcional' : 'Requerido';
+    return `
+        <tr>
+            <td class="text-center text-muted small">${slotIdx + 1}</td>
+            <td><span class="badge ${tipo === 'Adulto' ? 'bg-primary' : 'bg-warning text-dark'}">${tipo}</span></td>
+            <td>
+                <input type="text" class="form-control form-control-sm"
+                    placeholder="${ph}"
+                    value="${companion.fullName || ''}"
+                    oninput="updateCompanion(${roomIdx}, ${slotIdx}, 'fullName', this.value)" />
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm" min="0" max="120"
+                    placeholder="Edad"
+                    value="${companion.age || ''}"
+                    oninput="updateCompanion(${roomIdx}, ${slotIdx}, 'age', this.value)" />
+            </td>
+            <td>
+                <input type="text" class="form-control form-control-sm"
+                    placeholder="Ej: esposa"
+                    value="${companion.relationship || ''}"
+                    oninput="updateCompanion(${roomIdx}, ${slotIdx}, 'relationship', this.value)" />
+            </td>
+        </tr>`;
+}
+
+function updateCompanion(roomIdx, slotIdx, field, value) {
+    if (!ResCreate.rooms[roomIdx]) return;
+    if (!ResCreate.rooms[roomIdx].companions) ResCreate.rooms[roomIdx].companions = [];
+    if (!ResCreate.rooms[roomIdx].companions[slotIdx]) ResCreate.rooms[roomIdx].companions[slotIdx] = {};
+    ResCreate.rooms[roomIdx].companions[slotIdx][field] = value;
+}
+
+function validateCompanions() {
+    const optional = window.HotelConfig?.companionsOptional ?? true;
+    const required = window.HotelConfig?.requireCompanionDetails ?? false;
+
+    if (!required || optional) return true; // sin validación necesaria
+    if (!validateCompanions()) return;
+
+    for (let roomIdx = 0; roomIdx < ResCreate.rooms.length; roomIdx++) {
+        const room = ResCreate.rooms[roomIdx];
+        const adultSlots = Math.max(0, (room.numAdults || 1) - 1);
+        const childSlots = room.numChildren || 0;
+        const totalSlots = adultSlots + childSlots;
+
+        for (let i = 0; i < totalSlots; i++) {
+            const name = room.companions?.[i]?.fullName?.trim();
+            if (!name) {
+                showErrorToast(
+                    `Falta el nombre del acompañante ${i + 1} en Hab. ${room.roomNumber}`
+                );
+                document.getElementById('companionsSection')?.scrollIntoView({ behavior: 'smooth' });
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 
 // ─── CÁLCULO DE PRECIOS ───────────────────────────────────────────────────────
 
@@ -1062,7 +1228,8 @@ async function submitReservation(status) {
                 vehicleDescription: null,
                 pricePerNight: r.pricePerNight,
                 extraPersonCharge: r.extraPersonCharge || 0,
-                subtotal: r.subtotal
+                subtotal: r.subtotal,
+                companions: (r.companions || []).filter(c => c.fullName?.trim())
             }))
         };
 
@@ -1089,6 +1256,8 @@ async function submitReservation(status) {
 
         // ── Enviar al servidor ─────────────────────────────────────────────
         showLoading(status === 'draft' ? 'Guardando borrador...' : 'Creando reserva...');
+
+        console.log('=== ROOMS JSON ===', JSON.stringify(dto.rooms, null, 2));
 
         const result = await postJSON('/Reservations/Create', dto);
 

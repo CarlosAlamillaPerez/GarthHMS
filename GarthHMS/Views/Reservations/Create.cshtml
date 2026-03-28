@@ -727,6 +727,33 @@
         </div>
     </div>
 
+    @* ── Sección Acompañantes (solo si el hotel lo requiere) ── *@
+    @if (config.RequireCompanionDetails)
+    {
+        <div class="section-card mb-3" id="companionsSection">
+            <div class="section-header @(config.CompanionsOptional ? "bg-info" : "bg-primary")">
+                <i class="fas fa-users"></i>
+                Acompañantes
+                @if (config.CompanionsOptional)
+                {
+                    <span class="badge bg-white text-info ms-2" style="font-size:.75rem;">Opcional</span>
+                }
+                else
+                {
+                    <span class="badge bg-white text-primary ms-2" style="font-size:.75rem;">Requerido</span>
+                }
+            </div>
+            <div class="section-body">
+                <div id="companionsContainer">
+                    <div class="text-muted text-center py-3">
+                        <i class="fas fa-bed me-2"></i>
+                        Agrega habitaciones para ver los campos de acompañantes
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
     @* ──────────────────────────────────────────────────────────────────────── *@
     @* SECCIÓN 4: ANTICIPO Y PAGO *@
     @* ──────────────────────────────────────────────────────────────────────── *@
@@ -1027,13 +1054,15 @@
     <script>
         // Pasar configuración del hotel al JS
         window.HotelConfig = {
-            chargesTaxes:     @(config.ChargesTaxes ? "true" : "false"),
-            taxIvaPercent:    @config.TaxIvaPercent,
-            taxIshPercent:    @config.TaxIshPercent,
-            minDepositPct:    @config.MinDepositPercent,
-            maxPetsPerRoom:   @config.MaxPetsPerRoom,
-            hasParking:       @(config.HasParking ? "true" : "false"),
-            operationMode:    '@operationMode'
+            chargesTaxes: @(config.ChargesTaxes ? "true" : "false"),
+            taxIvaPercent: @config.TaxIvaPercent,
+            taxIshPercent: @config.TaxIshPercent,
+            minDepositPct: @config.MinDepositPercent,
+            maxPetsPerRoom: @config.MaxPetsPerRoom,
+            hasParking: @(config.HasParking ? "true" : "false"),
+            operationMode: '@operationMode',
+            requireCompanionDetails: @(config.RequireCompanionDetails ? "true" : "false"), 
+            companionsOptional: @(config.CompanionsOptional ? "true" : "false")       
         };
     </script>
     <script src="~/js/reservations/reservations-create.js"></script>

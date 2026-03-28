@@ -185,6 +185,7 @@ namespace GarthHMS.Application.Services
 
                 // Modo de operación
                 OperationMode = settings.OperationMode,
+                CompanionsOptional = settings.CompanionsOptional,
 
                 // Horarios
                 CheckInTime = settings.CheckInTime,
@@ -247,6 +248,7 @@ namespace GarthHMS.Application.Services
 
                 // Modo de operación
                 OperationMode = dto.OperationMode,
+                CompanionsOptional = dto.CompanionsOptional,
 
                 // Horarios
                 CheckInTime = dto.CheckInTime,

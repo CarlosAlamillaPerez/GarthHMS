@@ -24,6 +24,7 @@ namespace GarthHMS.Core.Entities
 
         // ===== MODO DE OPERACIÓN =====
         public string OperationMode { get; set; } = "hotel"; // hotel, motel, hybrid
+        public bool CompanionsOptional { get; set; } = false;
 
         // ===== HORARIOS =====
         public string CheckInTime { get; set; } = "15:00:00";

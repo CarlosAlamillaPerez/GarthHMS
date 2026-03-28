@@ -41,6 +41,7 @@ namespace GarthHMS.Infrastructure.Repositories
                 Email = result.email,
                 Website = result.website,
                 OperationMode = result.operation_mode,
+                CompanionsOptional = result.companions_optional,
                 CheckInTime = result.check_in_time?.ToString(),
                 CheckOutTime = result.check_out_time?.ToString(),
                 LateCheckoutTime = result.late_checkout_time?.ToString(),
@@ -106,6 +107,7 @@ namespace GarthHMS.Infrastructure.Repositories
 
                 // Huéspedes
                 p_require_companion_details = settings.RequireCompanionDetails,
+                p_companions_optional = settings.CompanionsOptional,
 
                 // Facturación
                 p_can_invoice = settings.CanInvoice,
@@ -173,6 +175,8 @@ namespace GarthHMS.Infrastructure.Repositories
 
                 // Huéspedes
                 p_require_companion_details = settings.RequireCompanionDetails,
+                p_companions_optional = settings.CompanionsOptional,
+
 
                 // Facturación
                 p_can_invoice = settings.CanInvoice,

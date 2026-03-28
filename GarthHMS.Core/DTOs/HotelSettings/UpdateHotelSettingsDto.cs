@@ -44,6 +44,7 @@ namespace GarthHMS.Core.DTOs.HotelSettings
         [Required(ErrorMessage = "El modo de operación es requerido")]
         [RegularExpression("^(hotel|motel|hybrid)$", ErrorMessage = "Modo inválido. Valores permitidos: hotel, motel, hybrid")]
         public string OperationMode { get; set; } = "hotel";
+        public bool CompanionsOptional { get; set; } = false;
 
         // ===== HORARIOS =====
         [Required(ErrorMessage = "La hora de check-in es requerida")]

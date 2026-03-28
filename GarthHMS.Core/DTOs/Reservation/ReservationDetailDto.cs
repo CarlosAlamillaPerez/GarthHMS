@@ -165,5 +165,7 @@ namespace GarthHMS.Core.DTOs.Reservation
         public int MaxPetsPerRoom { get; set; } = 3;
         public bool HasParking { get; set; } = false;
         public int ParkingCapacity { get; set; } = 0;
+        public bool RequireCompanionDetails { get; set; } = false;
+        public bool CompanionsOptional { get; set; } = false;
     }
 }

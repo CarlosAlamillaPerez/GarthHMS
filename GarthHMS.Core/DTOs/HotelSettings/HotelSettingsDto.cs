@@ -23,6 +23,7 @@ namespace GarthHMS.Core.DTOs.HotelSettings
 
         // ===== MODO DE OPERACIÓN =====
         public string OperationMode { get; set; } = null!;
+        public bool CompanionsOptional { get; set; }
 
         // ===== HORARIOS =====
         public string CheckInTime { get; set; } = "15:00:00";

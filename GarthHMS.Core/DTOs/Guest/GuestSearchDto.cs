@@ -15,6 +15,9 @@ namespace GarthHMS.Core.DTOs.Guest
         public bool IsVip { get; set; }
         public bool IsBlacklisted { get; set; }
         public int TotalStays { get; set; }
+        public string? BillingRfc { get; set; }
+        public string? BillingBusinessName { get; set; }
+        public string? BillingEmail { get; set; }
 
         /// <summary>
         /// Texto para mostrar en el autocomplete

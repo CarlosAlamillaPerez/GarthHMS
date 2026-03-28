@@ -61,6 +61,14 @@ function setupEventListeners() {
         }
     });
 
+    // Mostrar/ocultar "¿Opcional?" según el switch de acompañantes
+    $('#requireCompanionDetails').on('change', function () {
+        $('#companionsOptionalArea').toggle($(this).is(':checked'));
+        if (!$(this).is(':checked')) {
+            $('#companionsOptional').prop('checked', false);
+        }
+    });
+
     // Preview del logo
     $('#logoUrl').on('blur', function () {
         const url = $(this).val();
@@ -129,6 +137,8 @@ function populateForm(data) {
         $('#cancellationPolicyText').val(data.cancellationPolicyText || '');
         $('#minDepositPercent').val(data.minDepositPercent || 50);
         $('#requireCompanionDetails').prop('checked', data.requireCompanionDetails || false);
+        $('#companionsOptionalArea').toggle(data.requireCompanionDetails || false);
+        $('#companionsOptional').prop('checked', data.companionsOptional || false);
 
         // TAB 4: IMPUESTOS
         $('#chargesTaxes').prop('checked', data.chargesTaxes !== false); // Default true
@@ -218,10 +228,8 @@ async function handleUpdate(e) {
         hideLoading();
 
         if (result.success) {
-            showSuccessToast(result.message || 'Configuración actualizada exitosamente');
-
-            // Recargar datos
             await loadSettings();
+            showSuccessToast(result.message || 'Configuración actualizada exitosamente');
         } else {
             showErrorToast(result.message || 'Error al actualizar la configuración');
             console.error('Error del servidor:', result);

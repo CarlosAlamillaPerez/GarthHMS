@@ -19,6 +19,9 @@ namespace GarthHMS.Core.DTOs.Guest
         public int TotalStays { get; set; }
         public DateTime? LastStayDate { get; set; }
         public DateTime CreatedAt { get; set; }
+        public string? BillingRfc { get; set; }
+        public string? BillingBusinessName { get; set; }
+        public string? BillingEmail { get; set; }
 
         /// <summary>
         /// Total de registros (para paginación) - Viene del SP
