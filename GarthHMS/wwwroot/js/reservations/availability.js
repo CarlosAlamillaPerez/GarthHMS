@@ -30,7 +30,10 @@ const AvailabilityModule = {
     filters: {
         channel: '',
         status: ''
-    }
+    },
+    // Barra de Busqueda
+    searchDebounceTimer: null,
+    isSearchMode: false
 };
 
 // ============================================================================
@@ -66,6 +69,48 @@ $(document).ready(function () {
 
     // Cargar pestaña inicial: Hoy
     loadTodayReservations();
+
+    // Búsqueda global — dispara con debounce
+    $('#globalSearchInput').on('input', function () {
+        const q = this.value.trim();
+
+        clearTimeout(AvailabilityModule.searchDebounceTimer);
+
+        // Mostrar botón X siempre que haya texto
+        $('#searchClearBtn').toggle(q.length > 0);
+
+        if (q.length === 0) {
+            exitSearchMode();
+            return;
+        }
+
+        // Activar modo búsqueda INMEDIATO (UX más rápida)
+        if (!AvailabilityModule.isSearchMode) {
+            enterSearchMode(q);
+        }
+
+        // Evitar búsquedas muy cortas
+        if (q.length < 2) return;
+
+        AvailabilityModule.searchDebounceTimer = setTimeout(() => {
+            searchReservations(q);
+        }, 300);
+    });
+
+    // Botón X para limpiar
+    $('#searchClearBtn').on('click', function () {
+        $('#globalSearchInput').val('');
+        exitSearchMode();
+        $('#globalSearchInput').focus();
+    });
+
+    // Limpiar búsqueda al cambiar tab manualmente
+    $('.tab-btn').on('click', function () {
+        if (AvailabilityModule.isSearchMode) {
+            $('#globalSearchInput').val('');
+            exitSearchMode(false); // false = no recargar, changeTab ya lo hace
+        }
+    });
 });
 
 // ============================================================================
@@ -567,11 +612,43 @@ function buildReservationCard(r) {
                     title="Llamar huésped">
                 <i class="fas fa-phone"></i>
             </button>
-            <button class="btn-action-icon"
-                    onclick="event.stopPropagation(); showReservationMenu('${r.reservationId}', '${r.folio}', '${r.guestFullName}', '${r.status}')"
-                    title="Más opciones">
-                <i class="fas fa-ellipsis-v"></i>
-            </button>
+            <div class="btn-group">
+                <button type="button"
+                        class="btn-action-icon dropdown-toggle-no-caret"
+                        data-bs-toggle="dropdown"
+                        data-bs-boundary="viewport"
+                        onclick="event.stopPropagation()"
+                        title="Más opciones">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                        <a class="dropdown-item" href="javascript:void(0)"
+                           onclick="viewReservationDetails('${r.reservationId}')">
+                            <i class="fas fa-eye text-info me-2"></i>Ver detalle completo
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="javascript:void(0)"
+                           onclick="editReservation('${r.reservationId}')">
+                            <i class="fas fa-edit text-warning me-2"></i>Editar reserva
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="javascript:void(0)"
+                           onclick="copyFolio('${r.folio}')">
+                            <i class="fas fa-copy text-secondary me-2"></i>Copiar folio
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a class="dropdown-item text-danger" href="javascript:void(0)"
+                           onclick="cancelReservation('${r.reservationId}', '${r.folio}', '${r.guestFullName}')">
+                            <i class="fas fa-times-circle me-2"></i>Cancelar reserva
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>`;
 }
@@ -697,41 +774,25 @@ function callGuest(phone, name) {
     });
 }
 
-/** Menú de opciones adicionales */
-function showReservationMenu(reservationId, folio, guestName, status) {
-    Swal.fire({
-        title: `<i class="fas fa-ellipsis-h me-2"></i>Opciones — ${folio}`,
-        html: `
-            <div class="d-flex flex-column gap-2 text-start">
-                <button class="btn btn-outline-secondary text-start"
-                        onclick="viewReservationDetails('${reservationId}'); Swal.close();">
-                    <i class="fas fa-eye me-2 text-info"></i>Ver detalle completo
-                </button>
-                <button class="btn btn-outline-secondary text-start"
-                        onclick="editReservation('${reservationId}'); Swal.close();">
-                    <i class="fas fa-edit me-2 text-warning"></i>Editar reserva
-                </button>
-                <hr class="my-1">
-                <button class="btn btn-outline-danger text-start"
-                        onclick="cancelReservation('${reservationId}', '${folio}', '${guestName}'); Swal.close();">
-                    <i class="fas fa-times-circle me-2"></i>Cancelar reserva
-                </button>
-            </div>`,
-        showConfirmButton: false,
-        showCloseButton: true,
-        width: '420px'
-    });
-}
-
 /** Editar reserva — placeholder Componente 3 */
 function editReservation(reservationId) {
     Swal.fire({
-        title: '<i class="fas fa-edit text-warning me-2"></i>Editar Reserva',
-        html: `<p>La edición de reservas estará disponible en el <strong>Componente 3: Reservas Nightly</strong>.</p>`,
         icon: 'info',
+        title: 'Próximamente',
+        text: 'La edición de reservas estará disponible en una próxima actualización.',
         confirmButtonText: 'Entendido',
         confirmButtonColor: '#2BA49A'
     });
+}
+
+async function copyFolio(folio) {
+    try {
+        await navigator.clipboard.writeText(folio);
+        showSuccessToast(`Folio ${folio} copiado al portapapeles`);
+    } catch (err) {
+        console.error('Error al copiar folio:', err);
+        showErrorToast('No se pudo copiar el folio');
+    }
 }
 
 /** Cancelar reserva — placeholder Componente 3 */
@@ -812,4 +873,79 @@ async function fetchJSON(url) {
     const response = await fetch(url);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await response.json();
+}
+
+// ============================================================================
+// BÚSQUEDA GLOBAL
+// ============================================================================
+
+async function searchReservations(q) {
+    enterSearchMode(q);
+    showLoadingList();
+
+    try {
+        const result = await fetchJSON(`/Availability/SearchReservations?q=${encodeURIComponent(q)}`);
+
+        if (!result.success) {
+            showEmptyState('Error al buscar', 'No se pudo completar la búsqueda.');
+            return;
+        }
+
+        const count = result.data?.length ?? 0;
+        $('#searchModeText').text(
+            count === 0
+                ? `Sin resultados para "${q}"`
+                : `${count} resultado${count !== 1 ? 's' : ''} para "${q}"`
+        );
+
+        if (count === 0) {
+            showEmptyState(
+                'Sin resultados',
+                `No se encontraron reservas para "${q}".`
+            );
+            return;
+        }
+
+        // Reutilizamos el mismo renderizador — las tarjetas son idénticas
+        AvailabilityModule.allReservations = result.data;
+        renderReservationList(result.data);
+
+    } catch (err) {
+        console.error('Error en búsqueda global:', err);
+        showEmptyState('Error al buscar', 'No se pudo conectar con el servidor.');
+    }
+}
+
+function enterSearchMode(q) {
+    AvailabilityModule.isSearchMode = true;
+
+    // Mostrar X y banner
+    $('#searchClearBtn').show();
+    $('#searchModeBanner').show();
+    $('#searchModeText').text(`Buscando "${q}"…`);
+
+    // Deshabilitar tabs visualmente
+    $('#reservationsTabs').addClass('tabs-disabled');
+
+    // Ocultar header dinámico (no aplica en modo búsqueda)
+    $('.reservations-header-box').hide();
+}
+
+function exitSearchMode(reload = true) {
+    AvailabilityModule.isSearchMode = false;
+
+    // Ocultar X y banner
+    $('#searchClearBtn').hide();
+    $('#searchModeBanner').hide();
+
+    // Rehabilitar tabs
+    $('#reservationsTabs').removeClass('tabs-disabled');
+
+    // Restaurar header
+    $('.reservations-header-box').show();
+
+    // Volver al tab activo
+    if (reload) {
+        changeTab(AvailabilityModule.currentTab);
+    }
 }

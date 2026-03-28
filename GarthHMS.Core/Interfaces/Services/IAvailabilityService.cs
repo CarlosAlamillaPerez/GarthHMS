@@ -60,5 +60,11 @@ namespace GarthHMS.Core.Interfaces.Services
         /// Lanza InvalidOperationException si las fechas son inválidas
         /// </summary>
         Task<IEnumerable<AvailableRoomDto>> GetAvailableRoomsAsync(AvailabilityQueryDto query);
+
+        /// <summary>
+        /// Búsqueda global de reservas por folio, nombre o teléfono (sin filtro de fecha)
+        /// </summary>
+        Task<IEnumerable<ReservationListItemDto>> SearchReservationsAsync(
+            Guid hotelId, string query, int limit = 20);
     }
 }

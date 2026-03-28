@@ -504,6 +504,80 @@
         gap: 0.5rem;
         font-size: 0.88rem;
     }
+
+    /* -----------------------------------------------------------------------
+       BARRA DE BÚSQUEDA GLOBAL
+       ----------------------------------------------------------------------- */
+    .search-bar-wrap {
+        margin-bottom: 0.85rem;
+    }
+
+    .search-input-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--bg-surface-alt);
+        border: 1.5px solid var(--border-color);
+        border-radius: var(--border-radius-sm);
+        padding: 0.45rem 0.75rem;
+        transition: var(--transition-fast);
+    }
+
+        .search-input-group:focus-within {
+            border-color: var(--primary);
+            background: var(--bg-card);
+        }
+
+        .search-input-group i {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .search-input-group input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 0.88rem;
+            color: var(--text-primary);
+        }
+
+            .search-input-group input::placeholder {
+                color: var(--text-secondary);
+            }
+
+    .search-clear-btn {
+        background: none;
+        border: none;
+        padding: 0;
+        color: var(--text-secondary);
+        cursor: pointer;
+        font-size: 0.8rem;
+        display: none;
+        flex-shrink: 0;
+    }
+
+        .search-clear-btn:hover {
+            color: var(--danger);
+        }
+
+    .search-mode-banner {
+        display: none;
+        font-size: 0.78rem;
+        color: var(--primary);
+        padding: 0.3rem 0.1rem 0;
+        font-weight: 600;
+    }
+
+    .tabs-disabled .tab-btn {
+        opacity: 0.4;
+        pointer-events: none;
+    }
+
+    .dropdown-toggle-no-caret::after {
+        display: none !important;
+    }
 </style>
 
 @* =========================================================================
@@ -634,6 +708,26 @@
 
     @* ===== DERECHA: RESERVAS ===== *@
     <div class="card card-body shadow-sm">
+
+        @* Barra de búsqueda global *@
+        <div class="search-bar-wrap">
+            <div class="search-input-group">
+                <i class="fas fa-search"></i>
+                <input type="text"
+                       id="globalSearchInput"
+                       placeholder="Buscar por folio (R-2026-0006) o nombre de huésped…"
+                       autocomplete="off"
+                       maxlength="100" />
+                <button class="search-clear-btn" id="searchClearBtn" title="Limpiar búsqueda">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="search-mode-banner" id="searchModeBanner">
+                <i class="fas fa-search fa-xs me-1"></i>
+                <span id="searchModeText">Buscando…</span>
+                <span class="text-muted fw-normal ms-1">— Limpiar para volver al panel</span>
+            </div>
+        </div>
 
         @* Tabs *@
         <div class="reservations-tabs">

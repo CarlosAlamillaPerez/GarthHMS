@@ -213,6 +213,31 @@ namespace GarthHMS.Web.Controllers
         }
 
         /// <summary>
+        /// Búsqueda global por folio, nombre de huésped o teléfono
+        /// GET /Availability/SearchReservations?q=R-2026&limit=20
+        /// </summary>
+        [HttpGet("SearchReservations")]
+        public async Task<IActionResult> SearchReservations(string? q, int limit = 20)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 2)
+                    return Ok(new { success = true, data = Array.Empty<object>() });
+
+                var hotelId = GetCurrentHotelId();
+                var reservations = await _availabilityService.SearchReservationsAsync(
+                    hotelId, q.Trim(), Math.Min(limit, 50));
+
+                return Ok(new { success = true, data = MapReservationList(reservations) });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en búsqueda global de reservas");
+                return BadRequest(new { success = false, message = "Error al buscar reservas" });
+            }
+        }
+
+        /// <summary>
         /// Reservas activas para la fecha seleccionada en el calendario
         /// GET /Availability/GetReservationsByDate?date=2026-03-07
         /// </summary>
@@ -335,5 +360,7 @@ namespace GarthHMS.Web.Controllers
                 roomCount = r.RoomCount
             });
         }
+
+        
     }
 }

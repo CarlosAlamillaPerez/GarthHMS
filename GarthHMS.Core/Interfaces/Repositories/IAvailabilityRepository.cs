@@ -70,5 +70,12 @@ namespace GarthHMS.Core.Interfaces.Repositories
             DateTime checkInDate,
             DateTime checkOutDate,
             Guid? roomTypeId = null);
+
+        /// <summary>
+        /// Búsqueda global de reservas por folio, nombre de huésped o teléfono
+        /// SP: sp_availability_search_reservations
+        /// </summary>
+        Task<IEnumerable<ReservationListItemDto>> SearchReservationsAsync(
+            Guid hotelId, string query, int limit = 20);
     }
 }

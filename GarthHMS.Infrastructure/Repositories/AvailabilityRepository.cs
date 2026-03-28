@@ -229,5 +229,55 @@ namespace GarthHMS.Infrastructure.Repositories
             }
             return list;
         }
+
+        // ====================================================================
+        // BÚSQUEDA GLOBAL
+        // ====================================================================
+
+        public async Task<IEnumerable<ReservationListItemDto>> SearchReservationsAsync(
+            Guid hotelId, string query, int limit = 20)
+        {
+            var results = await _procedimientos.EjecutarListaAsync<dynamic>(
+                "sp_availability_search_reservations",
+                new
+                {
+                    p_hotel_id = hotelId,
+                    p_query = query,
+                    p_limit = limit
+                }
+            );
+
+            var list = new List<ReservationListItemDto>();
+            if (results == null) return list;
+
+            foreach (var row in results)
+            {
+                list.Add(new ReservationListItemDto
+                {
+                    ReservationId = row.reservation_id,
+                    Folio = row.folio?.ToString() ?? "",
+                    Status = row.status?.ToString() ?? "",
+                    ReservationType = row.reservation_type?.ToString() ?? "nightly",
+                    Source = row.source?.ToString() ?? "",
+                    CheckInDate = ((DateOnly)row.check_in_date).ToDateTime(TimeOnly.MinValue),
+                    CheckOutDate = ((DateOnly)row.check_out_date).ToDateTime(TimeOnly.MinValue),
+                    NumNights = row.num_nights,
+                    Total = row.total,
+                    DepositAmount = row.deposit_amount,
+                    DepositPaidAt = row.deposit_paid_at,
+                    BalancePending = row.balance_pending,
+                    GuestId = row.guest_id,
+                    GuestFirstName = row.guest_first_name?.ToString() ?? "",
+                    GuestLastName = row.guest_last_name?.ToString() ?? "",
+                    GuestPhone = row.guest_phone?.ToString() ?? "",
+                    IsVip = row.is_vip,
+                    RoomsSummary = row.rooms_summary?.ToString() ?? "",
+                    RoomCount = row.room_count
+                });
+            }
+
+            return list;
+        }
+
     }
 }

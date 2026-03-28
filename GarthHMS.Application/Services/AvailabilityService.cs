@@ -126,5 +126,22 @@ namespace GarthHMS.Application.Services
                 throw new InvalidOperationException(
                     "La estancia no puede exceder 365 días.");
         }
+
+        // ====================================================================
+        // BÚSQUEDA GLOBAL
+        // ====================================================================
+
+        public async Task<IEnumerable<ReservationListItemDto>> SearchReservationsAsync(
+            Guid hotelId, string query, int limit = 20)
+        {
+            if (string.IsNullOrWhiteSpace(query) || query.Trim().Length < 2)
+                throw new ArgumentException("La búsqueda debe tener al menos 2 caracteres.");
+
+            _logger.LogInformation(
+                "Búsqueda global '{Query}' en hotel {HotelId}", query, hotelId);
+
+            return await _availabilityRepository.SearchReservationsAsync(
+                hotelId, query.Trim(), limit);
+        }
     }
 }
