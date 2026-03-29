@@ -29,6 +29,7 @@ namespace GarthHMS.Infrastructure.Repositories
         {
             // Serializar habitaciones a JSON para el SP
             var roomsJson = SerializeRooms(dto.Rooms);
+            var paymentsJson = SerializePayments(dto.PaymentSplits);
 
             var result = await _procedimientos.EjecutarUnicoAsync<dynamic>(
                 "sp_reservation_create_nightly",
@@ -61,7 +62,8 @@ namespace GarthHMS.Infrastructure.Repositories
                     p_guest_notes = dto.GuestNotes,
                     p_internal_notes = dto.InternalNotes,
                     p_rooms = roomsJson,
-                    p_requires_invoice = dto.RequiresInvoice
+                    p_requires_invoice = dto.RequiresInvoice,
+                    p_payments = paymentsJson
                 }
             );
 
@@ -83,6 +85,7 @@ namespace GarthHMS.Infrastructure.Repositories
             Guid hotelId, UpdateReservationDto dto, Guid updatedBy)
         {
             var roomsJson = SerializeRooms(dto.Rooms);
+            var paymentsJson = SerializePayments(dto.PaymentSplits);
 
             var result = await _procedimientos.EjecutarEscalarAsync<bool>(
                 "sp_reservation_update_nightly",
@@ -111,13 +114,12 @@ namespace GarthHMS.Infrastructure.Repositories
                     p_deposit_payment_method = dto.DepositPaymentMethod,
                     p_deposit_reference = dto.DepositReference,
                     p_deposit_proof_url = dto.DepositProofUrl,
-                    p_deposit_due_date = dto.DepositDueDate.HasValue
-                                                ? (object)DateOnly.FromDateTime(dto.DepositDueDate.Value)
-                                                : DBNull.Value,
+                    p_deposit_due_date = dto.DepositDueDate.HasValue? (object)DateOnly.FromDateTime(dto.DepositDueDate.Value): DBNull.Value,
                     p_guest_notes = dto.GuestNotes,
                     p_internal_notes = dto.InternalNotes,
                     p_rooms = roomsJson,
-                    p_requires_invoice = dto.RequiresInvoice
+                    p_requires_invoice = dto.RequiresInvoice,
+                    p_payments = paymentsJson
                 }
             );
 
@@ -297,6 +299,21 @@ namespace GarthHMS.Infrastructure.Repositories
                 catch { dto.Rooms = new List<ReservationRoomDetailDto>(); }
             }
 
+            // Deserializar pagos
+            var paymentsJson = row.payments_json?.ToString();
+            if (!string.IsNullOrEmpty(paymentsJson) && paymentsJson != "[]")
+            {
+                try
+                {
+                    var payments = System.Text.Json.JsonSerializer.Deserialize<List<ReservationPaymentDto>>(
+                        paymentsJson,
+                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                    );
+                    dto.Payments = payments ?? new List<ReservationPaymentDto>();
+                }
+                catch { dto.Payments = new List<ReservationPaymentDto>(); }
+            }
+
             return dto;
         }
 
@@ -353,6 +370,20 @@ namespace GarthHMS.Infrastructure.Repositories
             });
 
             return System.Text.Json.JsonSerializer.Serialize(roomObjects);
+        }
+
+        private static string? SerializePayments(List<PaymentSplitDto> splits)
+        {
+            if (splits == null || !splits.Any()) return null;
+
+            var list = splits.Select(s => new
+            {
+                method = s.Method,
+                amount = s.Amount,
+                reference = s.Reference
+            });
+
+            return System.Text.Json.JsonSerializer.Serialize(list);
         }
     }
 }

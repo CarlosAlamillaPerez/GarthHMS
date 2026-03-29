@@ -34,6 +34,9 @@ const ResCreate = {
 
     // Timer para quick search
     searchTimer: null,
+    depositState: 'none',
+    requiresInvoice: false,
+    paymentSplits: []
 };
 
 // ─── Inicialización ─────────────────────────────────────────────────────────
@@ -1100,6 +1103,11 @@ function recalculate() {
     finance.balance = finance.total - finance.depositAmount;
 
     updatePriceDisplay();
+
+    // Refrescar faltante en splits si está activo el modo recibido
+    if (ResCreate.depositState === 'received' && ResCreate.paymentSplits.length > 0) {
+        renderPaymentSplits();
+    }
 }
 
 function updatePriceDisplay() {
@@ -1241,8 +1249,40 @@ async function submitReservation(status) {
                 extraPersonCharge: r.extraPersonCharge || 0,
                 subtotal: r.subtotal,
                 companions: (r.companions || []).filter(c => c.fullName?.trim())
-            }))
+            })),
+
+            paymentSplits: ResCreate.depositState === 'received'
+                ? ResCreate.paymentSplits
+                    .filter(p => parseFloat(p.amount) > 0)
+                    .map(p => ({
+                        method: p.method,
+                        amount: parseFloat(p.amount),
+                        reference: p.reference || null
+                    }))
+                : []
         };
+
+        // Validar splits si hay anticipo recibido
+        if (ResCreate.depositState === 'received') {
+            const splits = ResCreate.paymentSplits.filter(p => parseFloat(p.amount) > 0);
+
+            if (splits.length === 0) {
+                showErrorToast('Agrega al menos un método de pago con monto');
+                return;
+            }
+
+            const cashCount = splits.filter(p => p.method === 'cash').length;
+            if (cashCount > 1) {
+                showErrorToast('Solo puedes registrar efectivo una vez. Combina los montos en una sola fila.');
+                return;
+            }
+
+            const missingRef = splits.find(p => p.method !== 'cash' && !p.reference?.trim());
+            if (missingRef) {
+                showErrorToast('Agrega la referencia para los pagos por transferencia o tarjeta');
+                return;
+            }
+        }
 
         // ── Confirmar antes de guardar ─────────────────────────────────────
         const confirmMsg = status === 'draft'
@@ -1304,35 +1344,6 @@ async function submitReservation(status) {
                 window.location.href = '/Availability';
             }
         });
-
-        // ── Éxito ──────────────────────────────────────────────────────────
-        const swalResult = await Swal.fire({
-            icon: 'success',
-            title: status === 'draft' ? '💾 Borrador guardado' : '🎉 Reserva confirmada',
-            html: `
-                <div style="font-size:1.1rem;margin:1rem 0;">
-                    Folio: <span style="font-weight:700;color:var(--primary);font-size:1.3rem;">${result.data.folio}</span>
-                </div>
-                <p style="color:var(--text-secondary);font-size:.9rem;">
-                    ${status === 'draft' ? 'Guardada como borrador' : 'La reserva ha sido creada correctamente'}
-                </p>
-            `,
-            showCancelButton: true,
-            showDenyButton: true,
-            confirmButtonText: 'Ver en calendario',
-            cancelButtonText: 'Nueva reserva',
-            denyButtonText: 'Ver detalles',
-            confirmButtonColor: 'var(--primary)',
-            denyButtonColor: 'var(--tertiary)',
-        });
-
-        if (swalResult.isConfirmed) {
-            window.location.href = '/Availability';
-        } else if (swalResult.isDenied) {
-            window.location.href = `/Availability?reservationId=${result.data.reservationId}`;
-        } else {
-            resetForm();
-        }
 
     } catch (err) {
         hideLoading();
@@ -1458,6 +1469,13 @@ function onDepositStateChange(state) {
 
     document.getElementById('depositPendingDetails').style.display = state === 'pending' ? 'block' : 'none';
     document.getElementById('depositReceivedDetails').style.display = state === 'received' ? 'block' : 'none';
+    if (state === 'received') {
+        if (ResCreate.paymentSplits.length === 0) {
+            initPaymentSplits();
+        } else {
+            renderPaymentSplits();
+        }
+    }
 
     recalculate();
 }
@@ -1561,19 +1579,17 @@ async function preloadEditData(r) {
         ResCreate.requiresInvoice = r.requiresInvoice ?? false;
 
         // ── Anticipo ──────────────────────────────────────────────────────
-        if (r.hasDeposit) {
+        if (r.hasDeposit && r.payments?.length) {
             ResCreate.depositState = 'received';
             selectDepositState?.('received');
-
-            const depositMethod = document.getElementById('depositMethod');
-            if (depositMethod && r.depositPaymentMethod)
-                depositMethod.value = r.depositPaymentMethod;
-
-            const depositRef = document.getElementById('depositReference');
-            if (depositRef && r.depositReference)
-                depositRef.value = r.depositReference;
-
-        } else if (r.depositDueDate) {
+            // Precargar splits desde los pagos existentes
+            ResCreate.paymentSplits = r.payments.map(p => ({
+                method:    p.method    ?? 'cash',
+                amount:    p.amount    ?? 0,
+                reference: p.reference ?? ''
+            }));
+            renderPaymentSplits();
+        } else if (r.depositAmount > 0 && !r.hasDeposit) {
             ResCreate.depositState = 'pending';
             selectDepositState?.('pending');
         }
@@ -1620,18 +1636,29 @@ async function preloadEditData(r) {
         setTimeout(() => {
             const sourceVal = (r.source || '').toLowerCase();
 
-            document.querySelectorAll('.source-btn')
-                .forEach(b => b.classList.remove('active'));
+            // Reset todos los botones — mismo código que initSourceButtons
+            document.querySelectorAll('.source-btn').forEach(b => {
+                b.style.background = '';
+                b.style.color = '';
+                b.style.borderColor = '';
+                b.classList.remove('active');
+            });
 
             const sourceBtn = document.querySelector(`.source-btn[data-value="${sourceVal}"]`);
 
             if (sourceBtn) {
+                // Aplicar exactamente igual que el click en initSourceButtons
+                sourceBtn.style.background = 'var(--primary)';
+                sourceBtn.style.color = '#fff';
+                sourceBtn.style.borderColor = 'var(--primary)';
                 sourceBtn.classList.add('active');
 
-                const radio = document.querySelector(`input[name="source"][value="${sourceVal}"]`);
+                const radio = sourceBtn.querySelector('input[type=radio]');
                 if (radio) radio.checked = true;
+            } else {
+                console.warn('❌ No se encontró botón para:', sourceVal);
             }
-        }, 100);
+        }, 150);
 
         // ── Toast ─────────────────────────────────────────────────────────
         showInfoToast(`Editando reserva ${r.folio}`);
@@ -1640,4 +1667,112 @@ async function preloadEditData(r) {
         console.error('Error al precargar datos de edición:', err);
         showErrorToast('Error al cargar los datos de la reserva');
     }
+}
+
+// =============================================================================
+// PAYMENT SPLITS — Pagos mixtos
+// =============================================================================
+
+function initPaymentSplits() {
+    ResCreate.paymentSplits = [];
+    addPaymentSplit();
+}
+
+function addPaymentSplit() {
+    const idx = ResCreate.paymentSplits.length;
+    ResCreate.paymentSplits.push({ method: 'cash', amount: 0, reference: '' });
+    renderPaymentSplits();
+}
+
+function removePaymentSplit(idx) {
+    if (ResCreate.paymentSplits.length <= 1) {
+        showWarningToast('Debe haber al menos un método de pago');
+        return;
+    }
+    ResCreate.paymentSplits.splice(idx, 1);
+    renderPaymentSplits();
+}
+
+function updateSplitField(idx, field, value) {
+    if (!ResCreate.paymentSplits[idx]) return;
+    ResCreate.paymentSplits[idx][field] = value;
+
+    if (field === 'amount') recalculateSplits();
+}
+
+function recalculateSplits() {
+    const total = ResCreate.paymentSplits.reduce(
+        (s, p) => s + (parseFloat(p.amount) || 0), 0);
+
+    const el = document.getElementById('splitsTotal');
+    if (el) el.textContent = `$${formatMoney(total)} MXN`;
+
+    // Sincronizar con finanzas
+    ResCreate.finance.depositAmount = total;
+    recalculate();
+}
+
+function renderPaymentSplits() {
+    const container = document.getElementById('paymentSplitsContainer');
+    if (!container) return;
+
+    // Métodos ya usados
+    const usedCash = ResCreate.paymentSplits.some(p => p.method === 'cash');
+
+    container.innerHTML = ResCreate.paymentSplits.map((split, idx) => `
+        <div class="d-flex gap-2 align-items-center mb-2">
+
+            <select class="form-select form-select-sm" style="width:150px;flex-shrink:0;"
+                    onchange="updateSplitField(${idx}, 'method', this.value); renderPaymentSplits()">
+                <option value="cash"     ${split.method === 'cash' ? 'selected' : ''}>💵 Efectivo</option>
+                <option value="transfer" ${split.method === 'transfer' ? 'selected' : ''}>🏦 Transferencia</option>
+                <option value="card"     ${split.method === 'card' ? 'selected' : ''}>💳 Tarjeta</option>
+            </select>
+
+            <div class="input-group input-group-sm" style="width:150px;flex-shrink:0;">
+                <span class="input-group-text">$</span>
+                <input type="number" class="form-control"
+                       placeholder="0.00" min="0" step="0.01"
+                       value="${split.amount || ''}"
+                       oninput="updateSplitField(${idx}, 'amount', parseFloat(this.value) || 0)">
+            </div>
+
+            <input type="text" class="form-control form-control-sm"
+                   style="display:${split.method !== 'cash' ? 'block' : 'none'};"
+                   placeholder="Referencia / No. operación"
+                   value="${split.reference || ''}"
+                   oninput="updateSplitField(${idx}, 'reference', this.value)">
+
+            <div style="display:${split.method === 'cash' ? 'block' : 'none'};flex:1;"></div>
+
+            <button type="button" class="btn btn-sm btn-outline-danger flex-shrink-0"
+                    onclick="removePaymentSplit(${idx})" title="Quitar">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `).join('');
+
+    // Calcular totales
+    const totalPaid = ResCreate.paymentSplits.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
+    const totalReserva = ResCreate.finance?.total || 0;
+    const faltante = Math.max(0, totalReserva - totalPaid);
+
+    container.insertAdjacentHTML('beforeend', `
+        <div class="d-flex justify-content-end flex-column align-items-end mt-2 gap-1">
+            <div class="d-flex gap-3">
+                <small class="text-muted">Total registrado:</small>
+                <small class="fw-bold text-success">$${formatMoney(totalPaid)} MXN</small>
+            </div>
+            ${faltante > 0 ? `
+            <div class="d-flex gap-3">
+                <small class="text-muted">Faltante para cubrir total:</small>
+                <small class="fw-bold text-danger">-$${formatMoney(faltante)} MXN</small>
+            </div>` : `
+            <div class="d-flex gap-3">
+                <small class="fw-bold text-success">
+                    <i class="fas fa-check-circle me-1"></i>Pago completo
+                </small>
+            </div>`}
+        </div>
+    `);
 }

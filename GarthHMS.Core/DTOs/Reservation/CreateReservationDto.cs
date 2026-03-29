@@ -80,6 +80,7 @@ namespace GarthHMS.Core.DTOs.Reservation
         // ─── Habitaciones ──────────────────────────────────────────────────
         [MinLength(1, ErrorMessage = "Debes agregar al menos una habitación")]
         public List<CreateReservationRoomDto> Rooms { get; set; } = new();
+        public List<PaymentSplitDto> PaymentSplits { get; set; } = new();
         public List<CreateCompanionDto> Companions { get; set; } = new();
     }
 
@@ -135,6 +136,17 @@ namespace GarthHMS.Core.DTOs.Reservation
         public List<CreateCompanionDto> Companions { get; set; } = new();
     }
 
+    public class PaymentSplitDto
+    {
+        [Required]
+        public string Method { get; set; } = "cash";
+
+        [Range(0.01, 999999.99)]
+        public decimal Amount { get; set; }
+
+        public string? Reference { get; set; }
+    }
+
     // ─── Editar Reserva ────────────────────────────────────────────────────────
     public class UpdateReservationDto
     {
@@ -185,5 +197,6 @@ namespace GarthHMS.Core.DTOs.Reservation
 
         [MinLength(1, ErrorMessage = "Debes agregar al menos una habitación")]
         public List<CreateReservationRoomDto> Rooms { get; set; } = new();
+        public List<PaymentSplitDto> PaymentSplits { get; set; } = new();
     }
 }

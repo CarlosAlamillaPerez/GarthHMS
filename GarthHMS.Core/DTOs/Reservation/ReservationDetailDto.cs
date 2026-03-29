@@ -48,6 +48,7 @@ namespace GarthHMS.Core.DTOs.Reservation
         public string? InternalNotes { get; set; }
 
         public List<ReservationRoomDetailDto> Rooms { get; set; } = new();
+        public List<ReservationPaymentDto> Payments { get; set; } = new();
 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
@@ -152,6 +153,34 @@ namespace GarthHMS.Core.DTOs.Reservation
 
         public bool HasDeposit => DepositPaidAt.HasValue;
         public bool IsCheckInToday => CheckInDate.Date == DateTime.Today;
+    }
+
+    public class ReservationPaymentDto
+    {
+        public Guid PaymentId { get; set; }
+        public decimal Amount { get; set; }
+        public string Method { get; set; } = string.Empty;
+        public string? Reference { get; set; }
+        public string PaymentType { get; set; } = "deposit";
+        public DateTime PaymentDate { get; set; }
+        public Guid RegisteredBy { get; set; }
+
+        public string MethodLabel => Method switch
+        {
+            "cash" => "Efectivo",
+            "transfer" => "Transferencia",
+            "card" => "Tarjeta",
+            _ => "Otro"
+        };
+
+        public string PaymentTypeLabel => PaymentType switch
+        {
+            "deposit" => "Anticipo",
+            "balance" => "Abono",
+            "full" => "Pago total",
+            "refund" => "Devolución",
+            _ => PaymentType
+        };
     }
 
     public class ReservationFormConfigDto
