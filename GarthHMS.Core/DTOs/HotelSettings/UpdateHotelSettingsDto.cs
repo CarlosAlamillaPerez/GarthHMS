@@ -65,6 +65,17 @@ namespace GarthHMS.Core.DTOs.HotelSettings
 
         public string? CancellationPolicyText { get; set; }
 
+        [RegularExpression("^(free|window|tiered|non_refundable)$", ErrorMessage = "Tipo de política inválido")]
+        public string CancellationPolicyType { get; set; } = "window";
+
+        [Range(0, 100, ErrorMessage = "El porcentaje debe estar entre 0 y 100")]
+        public int RefundPercentOnCancel { get; set; } = 0;
+
+        public string? RefundTiers { get; set; }
+
+        [Range(0, 100, ErrorMessage = "El porcentaje debe estar entre 0 y 100")]
+        public int NoShowChargePercent { get; set; } = 100;
+
         // ===== IMPUESTOS =====
         public bool ChargesTaxes { get; set; } = true;
 

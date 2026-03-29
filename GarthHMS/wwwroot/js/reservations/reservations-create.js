@@ -40,6 +40,11 @@ const ResCreate = {
 $(document).ready(function () {
     initSourceButtons();
     initDates();
+
+    // Si estamos en modo edición, precargar datos
+    if (window.IsEditMode && window.EditReservation) {
+        preloadEditData(window.EditReservation);
+    }
 });
 
 // ─── Botones de canal (radio) ────────────────────────────────────────────────
@@ -350,7 +355,6 @@ function filterGuestModalTable(query) {
 }
 
 function chooseGuestFromModal(guest) {
-    console.log(guest);
     setSelectedGuest({
         guestId: guest.guestId,
         firstName: guest.firstName,
@@ -779,33 +783,40 @@ function addRoomToList(room) {
 }
 
 function updateGuestTotals() {
-    const totals = ResCreate.rooms.reduce((acc, r) => {
+
+    // CALCULAR DESDE ROOMS (source of truth)
+    const totals = (ResCreate.rooms || []).reduce((acc, r) => {
         acc.adults += r.numAdults || 0;
         acc.children += r.numChildren || 0;
         acc.babies += r.numBabies || 0;
         return acc;
     }, { adults: 0, children: 0, babies: 0 });
 
-    // Actualizar inputs ocultos (usados al enviar el formulario)
+    // Asegurar mínimo 1 adulto
+    const totalAdults = totals.adults > 0 ? totals.adults : 1;
+
+    // ACTUALIZAR INPUTS (para submit)
     const elAdults = document.getElementById('totalAdults');
     const elChildren = document.getElementById('totalChildren');
     const elBabies = document.getElementById('totalBabies');
-    if (elAdults) elAdults.value = totals.adults || 1;
+
+    if (elAdults) elAdults.value = totalAdults;
     if (elChildren) elChildren.value = totals.children;
     if (elBabies) elBabies.value = totals.babies;
 
-    // Actualizar mini cards
+    // ACTUALIZAR UI (cards)
     const displayAdults = document.getElementById('displayAdults');
     const displayChildren = document.getElementById('displayChildren');
     const displayBabies = document.getElementById('displayBabies');
-    const cardChildren = document.getElementById('cardChildren');
-    const cardBabies = document.getElementById('cardBabies');
 
-    if (displayAdults) displayAdults.textContent = totals.adults || 1;
+    if (displayAdults) displayAdults.textContent = totalAdults;
     if (displayChildren) displayChildren.textContent = totals.children;
     if (displayBabies) displayBabies.textContent = totals.babies;
 
-    // Mostrar/ocultar cards de niños y bebés según si hay al menos 1
+    // MOSTRAR / OCULTAR CARDS DINÁMICAMENTE
+    const cardChildren = document.getElementById('cardChildren');
+    const cardBabies = document.getElementById('cardBabies');
+
     if (cardChildren) cardChildren.style.display = totals.children > 0 ? 'flex' : 'none';
     if (cardBabies) cardBabies.style.display = totals.babies > 0 ? 'flex' : 'none';
 }
@@ -1255,11 +1266,14 @@ async function submitReservation(status) {
         if (!confirmResult.isConfirmed) return;
 
         // ── Enviar al servidor ─────────────────────────────────────────────
-        showLoading(status === 'draft' ? 'Guardando borrador...' : 'Creando reserva...');
+        const isEdit = window.IsEditMode === true;
 
-        console.log('=== ROOMS JSON ===', JSON.stringify(dto.rooms, null, 2));
+        if (isEdit) dto.reservationId = window.EditReservation?.reservationId;
 
-        const result = await postJSON('/Reservations/Create', dto);
+        showLoading(isEdit ? 'Guardando cambios...' : (status === 'draft' ? 'Guardando borrador...' : 'Creando reserva...'));
+
+        const endpoint = isEdit ? '/Reservations/Update' : '/Reservations/Create';
+        const result = await postJSON(endpoint, dto);
 
         hideLoading();
 
@@ -1268,6 +1282,28 @@ async function submitReservation(status) {
             console.error('Error del servidor:', result);
             return;
         }
+
+        await Swal.fire({
+            icon: 'success',
+            title: isEdit ? '✅ Reserva actualizada' : (status === 'draft' ? '💾 Borrador guardado' : '🎉 Reserva confirmada'),
+            html: isEdit
+                ? `<p>La reserva <strong style="color:var(--primary)">${window.EditReservation?.folio}</strong> fue actualizada correctamente.</p>`
+                : `<div style="font-size:1.1rem;margin:1rem 0;">
+               Folio: <span style="font-weight:700;color:var(--primary);font-size:1.3rem;">${result.data?.folio ?? ''}</span>
+           </div>
+           <p style="color:var(--text-secondary);font-size:.9rem;">
+               ${status === 'draft' ? 'Borrador guardado. Podrás completarla después.' : 'Reserva registrada exitosamente.'}
+           </p>`,
+            confirmButtonText: 'Ver reservaciones',
+            confirmButtonColor: '#2BA49A',
+            showCancelButton: !isEdit,
+            cancelButtonText: 'Crear otra',
+            cancelButtonColor: '#718096'
+        }).then(r => {
+            if (isEdit || r.isConfirmed) {
+                window.location.href = '/Availability';
+            }
+        });
 
         // ── Éxito ──────────────────────────────────────────────────────────
         const swalResult = await Swal.fire({
@@ -1477,5 +1513,131 @@ function toggleInvoice() {
         icon.className = 'fas fa-toggle-off fa-2x text-muted';
         sub.textContent = 'Clic para activar';
         if (info) info.style.display = 'none';
+    }
+}
+
+// =============================================================================
+// MODO EDICIÓN — Precarga de datos
+// =============================================================================
+
+async function preloadEditData(r) {
+    try {
+        // ── Huésped ──────────────────────────────────────────────────────
+        setSelectedGuest({
+            guestId: r.guestId,
+            firstName: r.guestFirstName,
+            lastName: r.guestLastName,
+            phone: r.guestPhone ?? '',
+            email: r.guestEmail ?? '',
+            isVip: r.guestIsVip ?? false
+        });
+
+        // ── Fechas ────────────────────────────────────────────────────────
+        const ci = r.checkInDate?.split('T')[0];
+        const co = r.checkOutDate?.split('T')[0];
+        document.getElementById('checkInDate').value = ci ?? '';
+        document.getElementById('checkOutDate').value = co ?? '';
+        onDatesChange();
+
+        // ── Personas ──────────────────────────────────────────────────────
+        const totalAdults = document.getElementById('totalAdults');
+        const totalChildren = document.getElementById('totalChildren');
+        const totalBabies = document.getElementById('totalBabies');
+        if (totalAdults) totalAdults.value = r.totalAdults ?? 1;
+        if (totalChildren) totalChildren.value = r.totalChildren ?? 0;
+        if (totalBabies) totalBabies.value = r.totalBabies ?? 0;
+
+        // ── Motivo de viaje ───────────────────────────────────────────────
+        const travelReason = document.getElementById('travelReason');
+        if (travelReason) travelReason.value = r.travelReason ?? '';
+
+        // ── Notas ─────────────────────────────────────────────────────────
+        const guestNotes = document.getElementById('guestNotes');
+        const internalNotes = document.getElementById('internalNotes');
+        if (guestNotes) guestNotes.value = r.guestNotes ?? '';
+        if (internalNotes) internalNotes.value = r.internalNotes ?? '';
+
+        // ── Factura ───────────────────────────────────────────────────────
+        ResCreate.requiresInvoice = r.requiresInvoice ?? false;
+
+        // ── Anticipo ──────────────────────────────────────────────────────
+        if (r.hasDeposit) {
+            ResCreate.depositState = 'received';
+            selectDepositState?.('received');
+
+            const depositMethod = document.getElementById('depositMethod');
+            if (depositMethod && r.depositPaymentMethod)
+                depositMethod.value = r.depositPaymentMethod;
+
+            const depositRef = document.getElementById('depositReference');
+            if (depositRef && r.depositReference)
+                depositRef.value = r.depositReference;
+
+        } else if (r.depositDueDate) {
+            ResCreate.depositState = 'pending';
+            selectDepositState?.('pending');
+        }
+
+        // ── Habitaciones ──────────────────────────────────────────────────
+        if (r.rooms?.length) {
+            for (const room of r.rooms) {
+                const companions = room.companions ?? [];
+
+                ResCreate.rooms.push({
+                    roomId: room.roomId,
+                    roomTypeId: room.roomTypeId,
+                    roomNumber: room.roomNumber,
+                    floor: room.floor,
+                    roomTypeName: room.roomTypeName,
+                    roomTypeCode: room.roomTypeCode,
+                    pricePerNight: room.pricePerNight,
+                    extraPersonCharge: room.extraPersonCharge ?? 0,
+                    baseCapacity: room.numAdults,
+                    maxCapacity: room.numAdults + room.numChildren + room.numBabies,
+                    numAdults: room.numAdults,
+                    numChildren: room.numChildren ?? 0,
+                    numBabies: room.numBabies ?? 0,
+                    hasPets: room.hasPets ?? false,
+                    numPets: room.numPets ?? 0,
+                    petChargeApplied: room.petChargeApplied ?? 0,
+                    vehiclePlate: room.vehiclePlate ?? null,
+                    subtotal: room.subtotal,
+                    companions: companions.map(c => ({
+                        fullName: c.fullName ?? '',
+                        age: c.age ?? '',
+                        phone: c.phone ?? '',
+                        relationship: c.relationship ?? ''
+                    }))
+                });
+            }
+
+            renderRoomsTable();
+            recalculate();
+            updateGuestTotals();
+        }
+
+        // ── Canal — al final, después de todos los awaits ─────────────────
+        setTimeout(() => {
+            const sourceVal = (r.source || '').toLowerCase();
+
+            document.querySelectorAll('.source-btn')
+                .forEach(b => b.classList.remove('active'));
+
+            const sourceBtn = document.querySelector(`.source-btn[data-value="${sourceVal}"]`);
+
+            if (sourceBtn) {
+                sourceBtn.classList.add('active');
+
+                const radio = document.querySelector(`input[name="source"][value="${sourceVal}"]`);
+                if (radio) radio.checked = true;
+            }
+        }, 100);
+
+        // ── Toast ─────────────────────────────────────────────────────────
+        showInfoToast(`Editando reserva ${r.folio}`);
+
+    } catch (err) {
+        console.error('Error al precargar datos de edición:', err);
+        showErrorToast('Error al cargar los datos de la reserva');
     }
 }

@@ -83,6 +83,72 @@ namespace GarthHMS.Web.Controllers
         }
 
         // ====================================================================
+        // PÁGINA EDITAR RESERVA (Full Page — reutiliza vista Create)
+        // ====================================================================
+
+        [HttpGet("Edit/{id}")]
+        public async Task<IActionResult> Edit(Guid id)
+        {
+            try
+            {
+                var hotelId = GetCurrentHotelId();
+                var operationMode = GetOperationMode();
+                var config = await _reservationService.GetFormConfigAsync(hotelId);
+                var reservation = await _reservationService.GetByIdAsync(hotelId, id);
+
+                if (reservation == null)
+                    return NotFound();
+
+                // Solo se pueden editar estos estados
+                if (reservation.Status is "checked_in" or "checked_out" or "cancelled" or "no_show")
+                {
+                    TempData["ErrorMessage"] = $"No se puede editar una reserva con estado '{reservation.StatusLabel}'";
+                    return RedirectToAction("Index", "Availability");
+                }
+
+                ViewBag.IsEdit = true;
+                ViewBag.OperationMode = operationMode;
+                ViewBag.Config = config ?? new ReservationFormConfigDto();
+                ViewBag.Reservation = reservation;
+
+                return View("Create");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al cargar edición de reserva {ReservationId}", id);
+                return RedirectToAction("Index", "Availability");
+            }
+        }
+
+        // ====================================================================
+        // API — ACTUALIZAR RESERVA
+        // ====================================================================
+
+        [HttpPost("Update")]
+        public async Task<IActionResult> Update([FromBody] UpdateReservationDto dto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return Json(new { success = false, message = "Datos inválidos" });
+
+                var hotelId = GetCurrentHotelId();
+                var userId = GetCurrentUserId();
+                var result = await _reservationService.UpdateNightlyAsync(hotelId, dto, userId);
+
+                if (!result.IsSuccess)
+                    return Json(new { success = false, message = result.Message });
+
+                return Json(new { success = true, message = result.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al actualizar reserva");
+                return Json(new { success = false, message = "Error al actualizar la reserva" });
+            }
+        }
+
+        // ====================================================================
         // API — CREAR RESERVA (POST JSON)
         // ====================================================================
 

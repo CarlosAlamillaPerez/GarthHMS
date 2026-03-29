@@ -1,6 +1,20 @@
 ﻿@* GarthHMS.Web/Views/Reservations/Index.cshtml *@
 @{
-    ViewData["Title"] = "Nueva Reserva";
+    <h4 class="mb-0 fw-bold">
+        @if (ViewBag.IsEdit == true)
+        {
+            var res = ViewBag.Reservation as GarthHMS.Core.DTOs.Reservation.ReservationDetailDto;
+            <i class="fas fa-edit text-warning me-2"></i>
+
+            @($"Editando {res?.Folio}")
+        }
+        else
+        {
+            <i class="fas fa-calendar-plus text-primary me-2"></i>
+
+            @("Nueva Reserva")
+        }
+    </h4>
     Layout = "~/Views/Shared/_Layout.cshtml";
 
     var config = ViewBag.Config as GarthHMS.Core.DTOs.Reservation.ReservationFormConfigDto
@@ -1061,9 +1075,15 @@
             maxPetsPerRoom: @config.MaxPetsPerRoom,
             hasParking: @(config.HasParking ? "true" : "false"),
             operationMode: '@operationMode',
-            requireCompanionDetails: @(config.RequireCompanionDetails ? "true" : "false"), 
-            companionsOptional: @(config.CompanionsOptional ? "true" : "false")       
+            requireCompanionDetails: @(config.RequireCompanionDetails ? "true" : "false"),
+            companionsOptional: @(config.CompanionsOptional ? "true" : "false")
         };
+
+        // — modo edición —
+        window.IsEditMode = @((ViewBag.IsEdit == true ? "true" : "false"));
+        window.EditReservation = @(ViewBag.IsEdit == true
+        ? Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Reservation as GarthHMS.Core.DTOs.Reservation.ReservationDetailDto, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }))
+        : Html.Raw("null"));
     </script>
     <script src="~/js/reservations/reservations-create.js"></script>
 }

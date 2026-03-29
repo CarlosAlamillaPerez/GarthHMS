@@ -196,6 +196,10 @@ namespace GarthHMS.Application.Services
                 // Políticas
                 CancellationHours = settings.CancellationHours,
                 CancellationPolicyText = settings.CancellationPolicyText,
+                CancellationPolicyType = settings.CancellationPolicyType,
+                RefundPercentOnCancel = settings.RefundPercentOnCancel,
+                RefundTiers = settings.RefundTiers,
+                NoShowChargePercent = settings.NoShowChargePercent,
 
                 // Impuestos
                 ChargesTaxes = settings.ChargesTaxes,
@@ -259,6 +263,10 @@ namespace GarthHMS.Application.Services
                 // Políticas
                 CancellationHours = dto.CancellationHours,
                 CancellationPolicyText = dto.CancellationPolicyText?.Trim(),
+                CancellationPolicyType = dto.CancellationPolicyType,
+                RefundPercentOnCancel = dto.RefundPercentOnCancel,
+                RefundTiers = string.IsNullOrWhiteSpace(dto.RefundTiers) ? null : dto.RefundTiers.Trim(),
+                NoShowChargePercent = dto.NoShowChargePercent,
 
                 // Impuestos
                 ChargesTaxes = dto.ChargesTaxes,

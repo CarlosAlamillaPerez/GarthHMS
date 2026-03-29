@@ -48,6 +48,8 @@ namespace GarthHMS.Infrastructure.Repositories
                 LateCheckoutCharge = result.late_checkout_charge,
                 CancellationHours = result.cancellation_hours,
                 CancellationPolicyText = result.cancellation_policy_text,
+                CancellationPolicyType = result.cancellation_policy_type?.ToString() ?? "window",RefundPercentOnCancel = result.refund_percent_on_cancel != null ? (int)result.refund_percent_on_cancel : 0,RefundTiers = result.refund_tiers?.ToString(),
+                NoShowChargePercent = result.no_show_charge_percent != null ? (int)result.no_show_charge_percent : 100,
                 ChargesTaxes = result.charges_taxes,
                 TaxIvaPercent = result.tax_iva_percent,
                 TaxIshPercent = result.tax_ish_percent,
@@ -96,6 +98,10 @@ namespace GarthHMS.Infrastructure.Repositories
                 // Políticas
                 p_cancellation_hours = settings.CancellationHours,
                 p_cancellation_policy_text = settings.CancellationPolicyText,
+                p_cancellation_policy_type = settings.CancellationPolicyType,
+                p_refund_percent_on_cancel = settings.RefundPercentOnCancel,
+                p_refund_tiers = settings.RefundTiers,
+                p_no_show_charge_percent = settings.NoShowChargePercent,
 
                 // Impuestos
                 p_charges_taxes = settings.ChargesTaxes,
@@ -164,6 +170,10 @@ namespace GarthHMS.Infrastructure.Repositories
                 // Políticas
                 p_cancellation_hours = settings.CancellationHours,
                 p_cancellation_policy_text = settings.CancellationPolicyText,
+                p_cancellation_policy_type = settings.CancellationPolicyType,
+                p_refund_percent_on_cancel = settings.RefundPercentOnCancel,
+                p_refund_tiers = settings.RefundTiers,
+                p_no_show_charge_percent = settings.NoShowChargePercent,
 
                 // Impuestos
                 p_charges_taxes = settings.ChargesTaxes,

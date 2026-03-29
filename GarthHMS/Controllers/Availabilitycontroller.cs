@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using GarthHMS.Core.DTOs.AvailabilityEngine;
 using GarthHMS.Core.Interfaces.Services;
 using System.Security.Claims;
+using GarthHMS.Application.Services;
 
 namespace GarthHMS.Web.Controllers
 {
@@ -12,13 +13,16 @@ namespace GarthHMS.Web.Controllers
     public class AvailabilityController : Controller
     {
         private readonly IAvailabilityService _availabilityService;
+        private readonly IReservationService _reservationService;
         private readonly ILogger<AvailabilityController> _logger;
 
         public AvailabilityController(
             IAvailabilityService availabilityService,
+            IReservationService reservationService,  
             ILogger<AvailabilityController> logger)
         {
             _availabilityService = availabilityService;
+            _reservationService = reservationService;  
             _logger = logger;
         }
 
@@ -62,16 +66,7 @@ namespace GarthHMS.Web.Controllers
             try
             {
                 var hotelId = GetCurrentHotelId();
-
-                // Buscamos primero en las de hoy, luego en próximas 7 días
-                var today = await _availabilityService.GetTodayReservationsAsync(hotelId);
-                var reservation = today.FirstOrDefault(r => r.ReservationId == id);
-
-                if (reservation == null)
-                {
-                    var upcoming = await _availabilityService.GetUpcomingReservationsAsync(hotelId);
-                    reservation = upcoming.FirstOrDefault(r => r.ReservationId == id);
-                }
+                var reservation = await _reservationService.GetByIdAsync(hotelId, id);
 
                 if (reservation == null)
                     return NotFound();

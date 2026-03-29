@@ -34,6 +34,10 @@ namespace GarthHMS.Core.DTOs.HotelSettings
         // ===== POLÍTICAS =====
         public int CancellationHours { get; set; }
         public string? CancellationPolicyText { get; set; }
+        public string CancellationPolicyType { get; set; } = "window";
+        public int RefundPercentOnCancel { get; set; } = 0;
+        public string? RefundTiers { get; set; }
+        public int NoShowChargePercent { get; set; } = 100;
 
         // ===== IMPUESTOS =====
         public bool ChargesTaxes { get; set; }

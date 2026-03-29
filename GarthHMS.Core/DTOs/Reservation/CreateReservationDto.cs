@@ -134,4 +134,56 @@ namespace GarthHMS.Core.DTOs.Reservation
 
         public List<CreateCompanionDto> Companions { get; set; } = new();
     }
+
+    // ─── Editar Reserva ────────────────────────────────────────────────────────
+    public class UpdateReservationDto
+    {
+        [Required]
+        public Guid ReservationId { get; set; }
+
+        // ─── Idéntico a CreateReservationDto desde aquí ───────────────────────
+
+        [Required]
+        public Guid GuestId { get; set; }
+
+        [Required]
+        public string Source { get; set; } = "direct";
+
+        [Required]
+        public string Status { get; set; } = "pending";
+
+        [Required]
+        public DateTime CheckInDate { get; set; }
+
+        [Required]
+        public DateTime CheckOutDate { get; set; }
+
+        public int NumNights { get; set; }
+        public int TotalAdults { get; set; } = 1;
+        public int TotalChildren { get; set; } = 0;
+        public int TotalBabies { get; set; } = 0;
+        public string? TravelReason { get; set; }
+
+        public decimal Subtotal { get; set; }
+        public decimal DiscountAmount { get; set; } = 0;
+        public decimal DiscountPercent { get; set; } = 0;
+        public string? DiscountReason { get; set; }
+        public decimal TaxesAmount { get; set; } = 0;
+        public decimal Total { get; set; }
+
+        public bool RequiresDeposit { get; set; } = false;
+        public decimal DepositAmount { get; set; } = 0;
+        public string? DepositPaymentMethod { get; set; }
+        public string? DepositReference { get; set; }
+        public string? DepositProofUrl { get; set; }
+        public DateTime? DepositDueDate { get; set; }
+
+        public string? GuestNotes { get; set; }
+        public string? InternalNotes { get; set; }
+
+        public bool RequiresInvoice { get; set; } = false;
+
+        [MinLength(1, ErrorMessage = "Debes agregar al menos una habitación")]
+        public List<CreateReservationRoomDto> Rooms { get; set; } = new();
+    }
 }

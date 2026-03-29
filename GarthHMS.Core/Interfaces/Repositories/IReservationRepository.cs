@@ -37,5 +37,8 @@ namespace GarthHMS.Core.Interfaces.Repositories
 
         /// <summary>Obtiene configuración del hotel para el formulario.</summary>
         Task<ReservationFormConfigDto?> GetFormConfigAsync(Guid hotelId);
+
+        /// <summary>Actualiza una reserva nightly existente.</summary>
+        Task<bool> UpdateNightlyAsync(Guid hotelId, UpdateReservationDto dto, Guid updatedBy);
     }
 }

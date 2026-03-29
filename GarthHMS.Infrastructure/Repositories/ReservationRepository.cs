@@ -74,6 +74,57 @@ namespace GarthHMS.Infrastructure.Repositories
             return (reservationId, folio);
         }
 
+
+        // ────────────────────────────────────────────────────────────────────
+        // ACTUALIZAR RESERVA NIGHTLY
+        // ────────────────────────────────────────────────────────────────────
+
+        public async Task<bool> UpdateNightlyAsync(
+            Guid hotelId, UpdateReservationDto dto, Guid updatedBy)
+        {
+            var roomsJson = SerializeRooms(dto.Rooms);
+
+            var result = await _procedimientos.EjecutarEscalarAsync<bool>(
+                "sp_reservation_update_nightly",
+                new
+                {
+                    p_hotel_id = hotelId,
+                    p_reservation_id = dto.ReservationId,
+                    p_updated_by = updatedBy,
+                    p_source = dto.Source,
+                    p_status = dto.Status,
+                    p_check_in_date = DateOnly.FromDateTime(dto.CheckInDate),
+                    p_check_out_date = DateOnly.FromDateTime(dto.CheckOutDate),
+                    p_num_nights = dto.NumNights,
+                    p_total_adults = dto.TotalAdults,
+                    p_total_children = dto.TotalChildren,
+                    p_total_babies = dto.TotalBabies,
+                    p_travel_reason = dto.TravelReason,
+                    p_subtotal = dto.Subtotal,
+                    p_discount_amount = dto.DiscountAmount,
+                    p_discount_percent = dto.DiscountPercent,
+                    p_discount_reason = dto.DiscountReason,
+                    p_taxes_amount = dto.TaxesAmount,
+                    p_total = dto.Total,
+                    p_requires_deposit = dto.RequiresDeposit,
+                    p_deposit_amount = dto.DepositAmount,
+                    p_deposit_payment_method = dto.DepositPaymentMethod,
+                    p_deposit_reference = dto.DepositReference,
+                    p_deposit_proof_url = dto.DepositProofUrl,
+                    p_deposit_due_date = dto.DepositDueDate.HasValue
+                                                ? (object)DateOnly.FromDateTime(dto.DepositDueDate.Value)
+                                                : DBNull.Value,
+                    p_guest_notes = dto.GuestNotes,
+                    p_internal_notes = dto.InternalNotes,
+                    p_rooms = roomsJson,
+                    p_requires_invoice = dto.RequiresInvoice
+                }
+            );
+
+            return result;
+        }
+
+
         // ────────────────────────────────────────────────────────────────────
         // OBTENER POR ID
         // ────────────────────────────────────────────────────────────────────
@@ -203,8 +254,8 @@ namespace GarthHMS.Infrastructure.Repositories
                 GuestPhone = row.guest_phone?.ToString(),
                 GuestEmail = row.guest_email?.ToString(),
                 GuestIsVip = row.guest_is_vip ?? false,
-                CheckInDate = row.check_in_date,
-                CheckOutDate = row.check_out_date,
+                CheckInDate = ((DateOnly)row.check_in_date).ToDateTime(TimeOnly.MinValue),
+                CheckOutDate = ((DateOnly)row.check_out_date).ToDateTime(TimeOnly.MinValue),
                 NumNights = row.num_nights ?? 0,
                 TotalAdults = row.total_adults ?? 1,
                 TotalChildren = row.total_children ?? 0,
@@ -255,8 +306,8 @@ namespace GarthHMS.Infrastructure.Repositories
             Folio = row.folio?.ToString() ?? "",
             Status = row.status?.ToString() ?? "",
             Source = row.source?.ToString() ?? "",
-            CheckInDate = row.check_in_date,
-            CheckOutDate = row.check_out_date,
+            CheckInDate = ((DateOnly)row.check_in_date).ToDateTime(TimeOnly.MinValue),
+            CheckOutDate = ((DateOnly)row.check_out_date).ToDateTime(TimeOnly.MinValue),
             NumNights = row.num_nights ?? 0,
             TotalAdults = row.total_adults ?? 1,
             TotalChildren = row.total_children ?? 0,

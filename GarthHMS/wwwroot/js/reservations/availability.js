@@ -603,52 +603,59 @@ function buildReservationCard(r) {
 
         <!-- ACCIONES -->
         <div class="card-actions">
-            <button class="btn-action-main ${primaryBtnClass}"
-                    onclick="event.stopPropagation(); handlePrimaryAction('${r.reservationId}', '${r.status}', ${r.isCheckInToday})">
-                ${primaryBtnText}
-            </button>
-            <button class="btn-action-icon"
-                    onclick="event.stopPropagation(); callGuest('${r.guestPhone || ''}', '${r.guestFullName || ''}')"
-                    title="Llamar huésped">
-                <i class="fas fa-phone"></i>
-            </button>
-            <div class="btn-group">
-                <button type="button"
-                        class="btn-action-icon dropdown-toggle-no-caret"
-                        data-bs-toggle="dropdown"
-                        data-bs-boundary="viewport"
-                        onclick="event.stopPropagation()"
-                        title="Más opciones">
-                    <i class="fas fa-ellipsis-v"></i>
+            ${(r.status === 'cancelled' || r.status === 'checked_out') ? `
+                <button class="btn-action-main"
+                        onclick="event.stopPropagation(); viewReservationDetails('${r.reservationId}')">
+                    <i class="fas fa-eye me-1"></i>Ver detalle
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li>
-                        <a class="dropdown-item" href="javascript:void(0)"
-                           onclick="viewReservationDetails('${r.reservationId}')">
-                            <i class="fas fa-eye text-info me-2"></i>Ver detalle completo
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" href="javascript:void(0)"
-                           onclick="editReservation('${r.reservationId}')">
-                            <i class="fas fa-edit text-warning me-2"></i>Editar reserva
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" href="javascript:void(0)"
-                           onclick="copyFolio('${r.folio}')">
-                            <i class="fas fa-copy text-secondary me-2"></i>Copiar folio
-                        </a>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <a class="dropdown-item text-danger" href="javascript:void(0)"
-                           onclick="cancelReservation('${r.reservationId}', '${r.folio}', '${r.guestFullName}')">
-                            <i class="fas fa-times-circle me-2"></i>Cancelar reserva
-                        </a>
-                    </li>
-                </ul>
-            </div>
+            ` : `
+                <button class="btn-action-main ${primaryBtnClass}"
+                        onclick="event.stopPropagation(); handlePrimaryAction('${r.reservationId}', '${r.status}', ${r.isCheckInToday})">
+                    ${primaryBtnText}
+                </button>
+                <button class="btn-action-icon"
+                        onclick="event.stopPropagation(); callGuest('${r.guestPhone || ''}', '${r.guestFullName || ''}')"
+                        title="Llamar huésped">
+                    <i class="fas fa-phone"></i>
+                </button>
+                <div class="btn-group">
+                    <button type="button"
+                            class="btn-action-icon dropdown-toggle-no-caret"
+                            data-bs-toggle="dropdown"
+                            data-bs-boundary="viewport"
+                            onclick="event.stopPropagation()"
+                            title="Más opciones">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" href="javascript:void(0)"
+                               onclick="event.stopPropagation(); viewReservationDetails('${r.reservationId}')">
+                                <i class="fas fa-eye text-info me-2"></i>Ver detalle completo
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="javascript:void(0)"
+                               onclick="event.stopPropagation(); editReservation('${r.reservationId}')">
+                                <i class="fas fa-edit text-warning me-2"></i>Editar reserva
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="javascript:void(0)"
+                               onclick="event.stopPropagation(); copyFolio('${r.folio}')">
+                                <i class="fas fa-copy text-secondary me-2"></i>Copiar folio
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" href="javascript:void(0)"
+                               onclick="event.stopPropagation(); cancelReservation('${r.reservationId}', '${r.folio}', '${r.guestFullName}')">
+                                <i class="fas fa-times-circle me-2"></i>Cancelar reserva
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            `}
         </div>
     </div>`;
 }
@@ -658,18 +665,39 @@ function buildReservationCard(r) {
 // ============================================================================
 
 /** Ver detalle completo de la reserva */
+//async function viewReservationDetails(reservationId) {
+//    try {
+//        const html = await fetchHTML(`/Availability/GetReservationDetails/${reservationId}`);
+//        if (!html) return;
+
+//        Swal.fire({
+//            title: '<i class="fas fa-clipboard-list text-primary me-2"></i>Detalle de Reserva',
+//            html: html,
+//            width: '600px',
+//            showConfirmButton: false,
+//            showCloseButton: true
+//        });
+//    } catch (err) {
+//        console.error('Error al abrir detalle de reserva:', err);
+//        showErrorToast('No se pudo cargar el detalle de la reserva');
+//    }
+//}
 async function viewReservationDetails(reservationId) {
     try {
         const html = await fetchHTML(`/Availability/GetReservationDetails/${reservationId}`);
         if (!html) return;
 
         Swal.fire({
-            title: '<i class="fas fa-clipboard-list text-primary me-2"></i>Detalle de Reserva',
             html: html,
-            width: '600px',
+            width: '650px',
             showConfirmButton: false,
-            showCloseButton: true
+            showCloseButton: true,
+            customClass: {
+                popup: 'rd-modal-clean',
+                closeButton: 'rd-close-btn'
+            }
         });
+
     } catch (err) {
         console.error('Error al abrir detalle de reserva:', err);
         showErrorToast('No se pudo cargar el detalle de la reserva');
@@ -776,13 +804,7 @@ function callGuest(phone, name) {
 
 /** Editar reserva — placeholder Componente 3 */
 function editReservation(reservationId) {
-    Swal.fire({
-        icon: 'info',
-        title: 'Próximamente',
-        text: 'La edición de reservas estará disponible en una próxima actualización.',
-        confirmButtonText: 'Entendido',
-        confirmButtonColor: '#2BA49A'
-    });
+    window.location.href = `/Reservations/Edit/${reservationId}`;
 }
 
 async function copyFolio(folio) {
@@ -796,25 +818,53 @@ async function copyFolio(folio) {
 }
 
 /** Cancelar reserva — placeholder Componente 3 */
-function cancelReservation(reservationId, folio, guestName) {
-    Swal.fire({
-        title: '<i class="fas fa-times-circle text-danger me-2"></i>¿Cancelar reserva?',
+async function cancelReservation(reservationId, folio, guestName) {
+    const { value: reason, isConfirmed } = await Swal.fire({
+        title: '<i class="fas fa-times-circle text-danger me-2"></i>Cancelar reserva',
         html: `
             <p>¿Estás seguro de cancelar la reserva <strong>${folio}</strong>?</p>
-            <p class="text-muted small mt-1">Huésped: ${guestName}</p>
-            <p class="text-danger small mt-2">Esta acción no se puede deshacer y se aplicará la política de cancelación del hotel.</p>`,
-        icon: 'warning',
+            <p class="text-muted small">Huésped: ${guestName}</p>
+            <div class="mt-3 text-start">
+                <label class="form-label small fw-semibold">Motivo de cancelación <span class="text-muted fw-normal">(opcional)</span></label>
+                <textarea id="cancelReasonInput"
+                          class="form-control form-control-sm"
+                          rows="2"
+                          maxlength="300"
+                          placeholder="Ej: Solicitud del huésped, error de fecha…"></textarea>
+            </div>
+            <p class="text-danger small mt-3 mb-0">
+                <i class="fas fa-exclamation-triangle me-1"></i>
+                Esta acción no se puede deshacer.
+            </p>`,
         showCancelButton: true,
         confirmButtonText: 'Sí, cancelar reserva',
         cancelButtonText: 'No, mantener',
         confirmButtonColor: '#E53E3E',
-        cancelButtonColor: '#6c757d'
-    }).then(result => {
-        if (result.isConfirmed) {
-            // Placeholder: cuando Componente 3 esté listo, aquí irá el postJSON
-            showInfoToast('Cancelación de reservas disponible en Componente 3');
+        cancelButtonColor: '#6c757d',
+        preConfirm: () => {
+            return document.getElementById('cancelReasonInput')?.value?.trim() || null;
         }
     });
+
+    if (!isConfirmed) return;
+
+    try {
+        const result = await postJSON(`/Reservations/Cancel/${reservationId}`, { reason });
+
+        if (!result.success) {
+            showErrorToast(result.message || 'No se pudo cancelar la reserva');
+            return;
+        }
+
+        showSuccessToast(`Reserva ${folio} cancelada`);
+
+        // Recargar el tab activo para reflejar el cambio
+        changeTab(AvailabilityModule.currentTab);
+
+    } catch (err) {
+        console.error('Error al cancelar reserva:', err);
+        showErrorToast('Error al conectar con el servidor');
+    }
 }
 
 // ============================================================================

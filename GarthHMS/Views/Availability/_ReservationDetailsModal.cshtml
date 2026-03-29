@@ -1,110 +1,532 @@
 ﻿@* GarthHMS.Web/Views/Availability/_ReservationDetailsModal.cshtml *@
-@model GarthHMS.Core.DTOs.AvailabilityEngine.ReservationListItemDto
+@model GarthHMS.Core.DTOs.Reservation.ReservationDetailDto
+
+@{
+    var isCancelled = Model.Status == "cancelled";
+    var isCheckedOut = Model.Status == "checked_out";
+    var isDraft = Model.Status == "draft";
+    var isReadOnly = isCancelled || isCheckedOut;
+
+    var headerColor = Model.Status switch
+    {
+        "cancelled" => "#A32D2D",
+        "checked_out" => "#444441",
+        "draft" => "#854F0B",
+        "confirmed" => "#2BA49A",
+        "checked_in" => "#185FA5",
+        _ => "#2BA49A"
+    };
+
+    var statusBadgeClass = Model.Status switch
+    {
+        "pending" => "bg-warning text-dark",
+        "confirmed" => "bg-success",
+        "checked_in" => "bg-info",
+        "checked_out" => "bg-secondary",
+        "cancelled" => "bg-danger",
+        "draft" => "bg-warning text-dark",
+        "no_show" => "bg-secondary",
+        _ => "bg-secondary"
+    };
+
+    // Extraer motivo de cancelación de internal_notes
+    string? cancelReason = null;
+    if (isCancelled && !string.IsNullOrEmpty(Model.InternalNotes))
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(
+            Model.InternalNotes, @"\[CANCELADO\] (.+)");
+        if (match.Success)
+            cancelReason = match.Groups[1].Value.Trim();
+    }
+
+    // Iniciales del huésped
+    var initials = "";
+    if (!string.IsNullOrEmpty(Model.GuestFirstName))
+        initials += Model.GuestFirstName[0];
+    if (!string.IsNullOrEmpty(Model.GuestLastName))
+        initials += Model.GuestLastName[0];
+}
+
+<style>
+    .rd-header {
+        margin: -1rem -1rem 0 -1rem;
+        padding: 1rem 1.25rem;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-radius: 6px 6px 0 0;
+    }
+
+    .rd-folio {
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        font-family: 'Courier New', monospace;
+    }
+
+    .rd-cancel-banner {
+        background: #FCEBEB;
+        border-left: 4px solid #E24B4A;
+        padding: 0.75rem 1rem;
+        margin: 0.75rem 0;
+        border-radius: 0 6px 6px 0;
+        font-size: 0.85rem;
+        color: #7F1D1D;
+    }
+
+    .rd-section-title {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-secondary);
+        padding: 0.75rem 0 0.35rem;
+        border-top: 1px solid var(--border-color);
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .rd-guest-row {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        padding: 0.5rem 0;
+    }
+
+    .rd-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .rd-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+        margin: 0.5rem 0;
+    }
+
+    .rd-kpi {
+        background: var(--bg-surface-alt);
+        border-radius: 6px;
+        padding: 0.5rem 0.65rem;
+    }
+
+    .rd-kpi-label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-secondary);
+        margin-bottom: 2px;
+    }
+
+    .rd-kpi-value {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .rd-room-card {
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.65rem 0.85rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-start;
+    }
+
+    .rd-room-num {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+        background: rgba(43,164,154,.12);
+        color: #2BA49A;
+    }
+
+    .rd-fin-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.84rem;
+        padding: 2px 0;
+        color: var(--text-secondary);
+    }
+
+        .rd-fin-row.total {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            border-top: 2px solid var(--border-color);
+            margin-top: 0.35rem;
+            padding-top: 0.5rem;
+        }
+
+    .rd-deposit-box {
+        border-radius: 6px;
+        padding: 0.6rem 0.85rem;
+        margin-top: 0.5rem;
+        font-size: 0.83rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .rd-deposit-paid {
+        background: rgba(56,161,105,.1);
+        color: #276749;
+        border: 1px solid rgba(56,161,105,.25);
+    }
+
+    .rd-deposit-pending {
+        background: rgba(214,158,46,.1);
+        color: #7B5E05;
+        border: 1px solid rgba(214,158,46,.25);
+    }
+
+    .rd-deposit-retained {
+        background: rgba(229,62,62,.08);
+        color: #9B2C2C;
+        border: 1px solid rgba(229,62,62,.2);
+    }
+
+    .rd-note-box {
+        background: var(--bg-surface-alt);
+        border-radius: 6px;
+        padding: 0.6rem 0.85rem;
+        font-size: 0.82rem;
+        color: var(--text-secondary);
+        font-style: italic;
+        margin-top: 0.35rem;
+    }
+
+    .rd-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .rd-header-clean {
+        margin-bottom: 0.75rem;
+    }
+
+    .rd-title-main {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.4rem;
+    }
+
+    .rd-status-bar {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+    }
+
+        .rd-status-bar .badge {
+            font-size: 0.7rem;
+            padding: 0.3rem 0.55rem;
+        }
+
+    .rd-folio {
+        font-family: 'Courier New', monospace;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        color: var(--text-primary);
+    }
+
+    .rd-meta {
+        color: var(--text-secondary);
+        margin-left: auto;
+        font-size: 0.75rem;
+    }
+
+    .rd-vip {
+        background: rgba(245,158,11,.15);
+        color: #b45309;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+    }
+
+
+
+
+</style>
 
 <div class="text-start">
 
-    @* Folio + Estado *@
-    <div class="d-flex align-items-center gap-2 mb-3">
-        <span class="badge fs-6 bg-primary">@Model.Folio</span>
-        @{
-            var badgeClass = Model.Status?.ToLower() switch
-            {
-                "pending" => "bg-warning text-dark",
-                "confirmed" => "bg-success",
-                "checked_in" => "bg-info",
-                "checked_out" => "bg-secondary",
-                "cancelled" => "bg-danger",
-                _ => "bg-secondary"
-            };
-        }
-        <span class="badge @badgeClass">@Model.StatusLabel</span>
-        @if (Model.IsVip)
-        {
-            <span class="badge" style="background:rgba(245,158,11,.2);color:#d97706;">
-                <i class="fas fa-star fa-xs me-1"></i>VIP
+    @* ── HEADER COLOREADO ── *@
+    <div class="rd-header-clean">
+
+        <div class="rd-title-main">
+            @(isDraft ? "Reserva en borrador" : "Detalle de reserva")
+        </div>
+
+        <div class="rd-status-bar">
+
+            <span class="badge @statusBadgeClass">
+                @Model.StatusLabel
             </span>
-        }
-    </div>
 
-    @* Huésped *@
-    <div class="mb-3 p-3 rounded" style="background:var(--bg-surface-alt);">
-        <div class="fw-bold text-primary mb-1">
-            <i class="fas fa-user-circle me-2"></i>@Model.GuestFullName
-        </div>
-        @if (!string.IsNullOrEmpty(Model.GuestPhone))
-        {
-            <div class="small text-muted">
-                <i class="fas fa-phone fa-xs me-1"></i>@Model.GuestPhone
-            </div>
-        }
-    </div>
+            <span class="rd-folio">@Model.Folio</span>
 
-    @* Fechas y habitaciones *@
-    <div class="row g-2 mb-3">
-        <div class="col-6">
-            <div class="small text-muted fw-semibold mb-1">CHECK-IN</div>
-            <div class="fw-bold">@Model.CheckInDate.ToString("dd MMM yyyy")</div>
-        </div>
-        <div class="col-6">
-            <div class="small text-muted fw-semibold mb-1">CHECK-OUT</div>
-            <div class="fw-bold">@Model.CheckOutDate.ToString("dd MMM yyyy")</div>
-        </div>
-        @if (Model.NumNights.HasValue)
-        {
-            <div class="col-6">
-                <div class="small text-muted fw-semibold mb-1">NOCHES</div>
-                <div class="fw-bold">@Model.NumNights</div>
-            </div>
-        }
-        @if (!string.IsNullOrEmpty(Model.RoomsSummary))
-        {
-            <div class="col-6">
-                <div class="small text-muted fw-semibold mb-1">HABITACIÓN(ES)</div>
-                <div class="fw-bold">@Model.RoomsSummary</div>
-            </div>
-        }
-    </div>
-
-    @* Canal *@
-    <div class="mb-3">
-        <div class="small text-muted fw-semibold mb-1">CANAL DE ORIGEN</div>
-        <span class="badge bg-secondary">@Model.SourceLabel</span>
-    </div>
-
-    <hr class="my-3">
-
-    @* Financiero *@
-    <div class="row g-2">
-        <div class="col-6">
-            <div class="small text-muted fw-semibold mb-1">TOTAL</div>
-            <div class="fw-bold fs-5 text-primary">$@Model.Total.ToString("N0") MXN</div>
-        </div>
-        <div class="col-6">
-            <div class="small text-muted fw-semibold mb-1">ANTICIPO</div>
-            @if (Model.HasDeposit)
+            @if (Model.GuestIsVip)
             {
-                <div class="fw-bold text-success">
-                    <i class="fas fa-check-circle fa-xs me-1"></i>$@Model.DepositAmount.ToString("N0")
-                </div>
+                <span class="rd-vip">
+                    <i class="fas fa-star fa-xs me-1"></i>VIP
+                </span>
             }
-            else
+
+            <span class="rd-meta">
+                @Model.SourceLabel
+            </span>
+
+        </div>
+    </div>
+    @* ── BANNER CANCELACIÓN ── *@
+    @if (isCancelled)
+    {
+        <div class="rd-cancel-banner">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Reserva cancelada</strong>
+            @if (!string.IsNullOrEmpty(cancelReason))
             {
-                <div class="text-warning fw-bold">
-                    <i class="fas fa-clock fa-xs me-1"></i>Pendiente
-                </div>
+                <div class="mt-1" style="font-size:0.8rem;">Motivo: @cancelReason</div>
             }
         </div>
-        @if (Model.BalancePending > 0)
+    }
+
+    @* ── HUÉSPED ── *@
+    <div class="rd-section-title">
+        <i class="fas fa-user fa-xs"></i> Huésped
+    </div>
+    <div class="rd-guest-row">
+        <div class="rd-avatar" style="background:@(isCancelled ? "rgba(229,62,62,.12)" : "rgba(43,164,154,.12)");
+                                      color:@(isCancelled ? "#C53030" : "#2BA49A")">
+            @initials.ToUpper()
+        </div>
+        <div>
+            <div style="font-size:1rem;font-weight:700;color:var(--text-primary);">
+                @Model.GuestFullName
+            </div>
+            <div style="font-size:0.82rem;color:var(--text-secondary);">
+                @if (!string.IsNullOrEmpty(Model.GuestPhone))
+                {
+                    <i class="fas fa-phone fa-xs me-1"></i>
+
+                    @Model.GuestPhone
+                }
+                @if (!string.IsNullOrEmpty(Model.GuestEmail))
+                {
+                    <span class="ms-2"><i class="fas fa-envelope fa-xs me-1"></i>@Model.GuestEmail</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* ── ESTANCIA ── *@
+    <div class="rd-section-title">
+        <i class="fas fa-calendar-alt fa-xs"></i> Estancia
+        @if (isReadOnly)
         {
-            <div class="col-12">
-                <div class="small text-muted fw-semibold mb-1">SALDO PENDIENTE</div>
-                <div class="fw-bold text-danger">$@Model.BalancePending.ToString("N0") MXN</div>
+            <span style="font-size:0.65rem;color:var(--text-secondary);font-weight:400;">(no activa)</span>
+        }
+    </div>
+    <div class="rd-kpi-grid" style="@(isReadOnly ? "opacity:.65;" : "")">
+        <div class="rd-kpi">
+            <div class="rd-kpi-label">Check-in</div>
+            <div class="rd-kpi-value">@Model.CheckInDate.ToString("dd MMM")</div>
+        </div>
+        <div class="rd-kpi">
+            <div class="rd-kpi-label">Check-out</div>
+            <div class="rd-kpi-value">@Model.CheckOutDate.ToString("dd MMM")</div>
+        </div>
+        <div class="rd-kpi">
+            <div class="rd-kpi-label">Noches</div>
+            <div class="rd-kpi-value" style="color:#2BA49A">@Model.NumNights</div>
+        </div>
+        <div class="rd-kpi">
+            <div class="rd-kpi-label">Motivo</div>
+            <div class="rd-kpi-value">@(string.IsNullOrEmpty(Model.TravelReasonLabel) ? "—" : Model.TravelReasonLabel)</div>
+        </div>
+    </div>
+
+    @* ── HABITACIONES ── *@
+    @if (Model.Rooms?.Any() == true)
+    {
+        <div class="rd-section-title">
+            <i class="fas fa-bed fa-xs"></i> Habitaciones (@Model.Rooms.Count)
+        </div>
+        @foreach (var room in Model.Rooms)
+        {
+            <div class="rd-room-card" style="@(isReadOnly ? "opacity:.7;" : "")">
+                <div class="rd-room-num">@room.RoomNumber</div>
+                <div style="flex:1;">
+                    <div style="font-size:0.88rem;font-weight:700;color:var(--text-primary);">
+                        @room.RoomTypeName
+                        <span style="font-size:0.75rem;font-weight:400;color:var(--text-secondary);">· @room.RoomTypeCode</span>
+                    </div>
+                    <div style="font-size:0.78rem;color:var(--text-secondary);margin-top:2px;display:flex;gap:0.65rem;flex-wrap:wrap;">
+                        @if (room.Floor.HasValue)
+                        {
+                            <span><i class="fas fa-layer-group fa-xs me-1"></i>Piso @room.Floor</span>
+                        }
+                        <span><i class="fas fa-user fa-xs me-1"></i>@room.NumAdults adulto@(room.NumAdults != 1 ? "s" : "")</span>
+                        @if (room.NumChildren > 0)
+                        {
+                            <span><i class="fas fa-child fa-xs me-1"></i>@room.NumChildren niño@(room.NumChildren != 1 ? "s" : "")</span>
+                        }
+                        @if (room.NumBabies > 0)
+                        {
+                            <span><i class="fas fa-baby fa-xs me-1"></i>@room.NumBabies bebé@(room.NumBabies != 1 ? "s" : "")</span>
+                        }
+                        @if (room.HasPets)
+                        {
+                            <span class="badge" style="background:rgba(43,164,154,.12);color:#2BA49A;font-size:0.65rem;">
+                                <i class="fas fa-paw me-1"></i>@room.NumPets mascota@(room.NumPets != 1 ? "s" : "")
+                            </span>
+                        }
+                        @if (room.ExtraPersonCharge > 0)
+                        {
+                            <span class="badge" style="background:rgba(214,158,46,.12);color:#7B5E05;font-size:0.65rem;">
+                                +$@room.ExtraPersonCharge.ToString("N0") p.extra
+                            </span>
+                        }
+                    </div>
+                </div>
+                <div style="font-size:0.85rem;font-weight:700;color:var(--text-primary);white-space:nowrap;">
+                    $@room.PricePerNight.ToString("N0")<span style="font-size:0.7rem;font-weight:400;color:var(--text-secondary);">/noche</span>
+                </div>
+            </div>
+        }
+    }
+
+    @* ── FINANCIERO ── *@
+    <div class="rd-section-title">
+        <i class="fas fa-dollar-sign fa-xs"></i> Financiero
+    </div>
+    <div style="@(isReadOnly ? "opacity:.8;" : "")">
+        @if (Model.Subtotal != Model.Total)
+        {
+            <div class="rd-fin-row"><span>Subtotal</span><span>$@Model.Subtotal.ToString("N2")</span></div>
+        }
+        @if (Model.DiscountAmount > 0)
+        {
+            <div class="rd-fin-row" style="color:var(--success);">
+                <span><i class="fas fa-tag fa-xs me-1"></i>Descuento</span>
+                <span>-$@Model.DiscountAmount.ToString("N2")</span>
+            </div>
+        }
+        @if (Model.TaxesAmount > 0)
+        {
+            <div class="rd-fin-row"><span>Impuestos</span><span>$@Model.TaxesAmount.ToString("N2")</span></div>
+        }
+        <div class="rd-fin-row total">
+            <span>Total</span>
+            <span style="color:var(--primary);">$@Model.Total.ToString("N2") MXN</span>
+        </div>
+
+        @* Anticipo *@
+        @if (Model.HasDeposit)
+        {
+            <div class="rd-deposit-box rd-deposit-paid">
+                <i class="fas fa-check-circle"></i>
+                <span>
+                    Anticipo recibido <strong>$@Model.DepositAmount.ToString("N2")</strong>
+                    @if (!string.IsNullOrEmpty(Model.DepositPaymentMethod))
+                    {
+                        <span class="ms-1">· @Model.DepositPaymentMethod</span>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.DepositReference))
+                    {
+                        <span class="ms-1">· Ref: @Model.DepositReference</span>
+                    }
+                </span>
+            </div>
+        }
+        else if (!isCancelled)
+        {
+            <div class="rd-deposit-box rd-deposit-pending">
+                <i class="fas fa-clock"></i>
+                <span>
+                    Anticipo pendiente
+                    @if (Model.DepositAmount > 0)
+                    {
+                        <strong> $@Model.DepositAmount.ToString("N2")</strong>
+                    }
+                    @if (Model.DepositDueDate.HasValue)
+                    {
+                        <span class="ms-1">· Vence @Model.DepositDueDate.Value.ToString("dd MMM")</span>
+                    }
+                </span>
+            </div>
+        }
+        else if (isCancelled && Model.DepositAmount > 0)
+        {
+            <div class="rd-deposit-box rd-deposit-retained">
+                <i class="fas fa-times-circle"></i>
+                <span>
+                    Anticipo <strong>$@Model.DepositAmount.ToString("N2")</strong>
+                    — retenido por política del hotel
+                </span>
+            </div>
+        }
+
+        @if (Model.BalancePending > 0 && !isCancelled)
+        {
+            <div class="rd-fin-row" style="margin-top:0.35rem;font-weight:600;">
+                <span>Saldo pendiente</span>
+                <span style="color:var(--danger);">$@Model.BalancePending.ToString("N2")</span>
             </div>
         }
     </div>
 
-    <div class="mt-3 small text-muted fst-italic">
-        <i class="fas fa-info-circle me-1"></i>
-        El detalle completo estará disponible en el módulo de Reservas (Componente 3).
+    @* ── NOTAS ── *@
+    @if (!string.IsNullOrWhiteSpace(Model.GuestNotes))
+    {
+        <div class="rd-section-title">
+            <i class="fas fa-comment fa-xs"></i> Notas del huésped
+        </div>
+        <div class="rd-note-box">@Model.GuestNotes</div>
+    }
+
+    @* ── FOOTER ── *@
+    <div class="rd-footer">
+        <div style="font-size:0.78rem;color:var(--text-secondary);">
+            Creada @Model.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-secondary" onclick="Swal.close()">
+                Cerrar
+            </button>
+            @if (!isReadOnly)
+            {
+                <button class="btn btn-sm btn-primary"
+                        onclick="Swal.close(); showInfoToast('Vista completa disponible próximamente')">
+                    <i class="fas fa-external-link-alt me-1"></i>Ver / Editar completo
+                </button>
+            }
+        </div>
     </div>
+
 </div>

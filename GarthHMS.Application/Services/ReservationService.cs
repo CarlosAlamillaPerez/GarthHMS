@@ -100,6 +100,63 @@ namespace GarthHMS.Application.Services
         }
 
         // ────────────────────────────────────────────────────────────────────
+        // ACTUALIZAR RESERVA NIGHTLY
+        // ────────────────────────────────────────────────────────────────────
+
+        public async Task<ServiceResult<bool>> UpdateNightlyAsync(
+            Guid hotelId, UpdateReservationDto dto, Guid updatedBy)
+        {
+            try
+            {
+                if (hotelId == Guid.Empty)
+                    return ServiceResult<bool>.Failure("Hotel no identificado");
+
+                if (dto.ReservationId == Guid.Empty)
+                    return ServiceResult<bool>.Failure("Reserva no identificada");
+
+                if (dto.GuestId == Guid.Empty)
+                    return ServiceResult<bool>.Failure("Selecciona un huésped para la reserva");
+
+                if (!Array.Exists(ValidStatuses, s => s == dto.Status))
+                    return ServiceResult<bool>.Failure("Estado de reserva inválido");
+
+                if (!Array.Exists(ValidSources, s => s == dto.Source))
+                    return ServiceResult<bool>.Failure("Canal de reserva inválido");
+
+                if (dto.CheckInDate.Date >= dto.CheckOutDate.Date)
+                    return ServiceResult<bool>.Failure("La fecha de check-out debe ser posterior al check-in");
+
+                if (!dto.Rooms.Any())
+                    return ServiceResult<bool>.Failure("Debes agregar al menos una habitación");
+
+                _logger.LogInformation(
+                    "Actualizando reserva {ReservationId} | Hotel: {HotelId} | Usuario: {UserId}",
+                    dto.ReservationId, hotelId, updatedBy);
+
+                var result = await _reservationRepository.UpdateNightlyAsync(hotelId, dto, updatedBy);
+
+                if (!result)
+                    return ServiceResult<bool>.Failure("No se pudo actualizar la reserva. Intenta de nuevo.");
+
+                _logger.LogInformation(
+                    "Reserva actualizada exitosamente {ReservationId}", dto.ReservationId);
+
+                return ServiceResult<bool>.Success(true, "Reserva actualizada exitosamente");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Error al actualizar reserva {ReservationId} | Hotel: {HotelId}",
+                    dto.ReservationId, hotelId);
+
+                return ServiceResult<bool>.Failure(
+                    ex.Message.Contains("No se puede editar")
+                        ? ex.Message
+                        : "Error al actualizar la reserva. Intenta de nuevo.");
+            }
+        }
+
+        // ────────────────────────────────────────────────────────────────────
         // OBTENER POR ID
         // ────────────────────────────────────────────────────────────────────
 

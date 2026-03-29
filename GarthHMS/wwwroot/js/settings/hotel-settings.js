@@ -133,8 +133,12 @@ function populateForm(data) {
         $('#lateCheckoutCharge').val(data.lateCheckoutCharge || 0);
 
         // TAB 3: POLÍTICAS
+        selectPolicyType(data.cancellationPolicyType || 'window');
         $('#cancellationHours').val(data.cancellationHours || 24);
+        $('#refundPercentOnCancel').val(data.refundPercentOnCancel || 0);
+        $('#noShowChargePercent').val(data.noShowChargePercent || 100);
         $('#cancellationPolicyText').val(data.cancellationPolicyText || '');
+        loadTiers(data.refundTiers || null);
         $('#minDepositPercent').val(data.minDepositPercent || 50);
         $('#requireCompanionDetails').prop('checked', data.requireCompanionDetails || false);
         $('#companionsOptionalArea').toggle(data.requireCompanionDetails || false);
@@ -222,6 +226,13 @@ async function handleUpdate(e) {
             formData.LateCheckoutTime = formData.LateCheckoutTime + ':00';
 
         showLoading('Guardando configuración...');
+
+        // Serializar tramos si la política es escalonada
+        if (formData.CancellationPolicyType === 'tiered') {
+            formData.RefundTiers = serializeTiers();
+        } else {
+            formData.RefundTiers = null;
+        }
 
         const result = await postJSON('/HotelSettings/Update', formData);
 
@@ -430,4 +441,100 @@ function showWarningToast(message) {
         timer: 4000,
         timerProgressBar: true
     });
+}
+
+// ============================================================================
+// POLÍTICA DE CANCELACIÓN — TIPO
+// ============================================================================
+
+function selectPolicyType(type) {
+    // Actualizar hidden input
+    $('#cancellationPolicyType').val(type);
+
+    // Resaltar tarjeta seleccionada
+    $('.policy-type-card').removeClass('selected');
+    $(`.policy-type-card[data-type="${type}"]`).addClass('selected');
+
+    // Mostrar/ocultar sección condicional
+    $('#configWindow').toggle(type === 'window');
+    $('#configTiered').toggle(type === 'tiered');
+}
+
+// ============================================================================
+// POLÍTICA DE CANCELACIÓN — TRAMOS (TIERED)
+// ============================================================================
+
+function loadTiers(tiersJson) {
+    const $body = $('#tiersBody');
+    $body.empty();
+
+    let tiers = [];
+    if (tiersJson) {
+        try {
+            tiers = typeof tiersJson === 'string' ? JSON.parse(tiersJson) : tiersJson;
+        } catch (e) {
+            console.error('Error parseando refundTiers:', e);
+        }
+    }
+
+    if (!tiers || tiers.length === 0) {
+        // Tramos por defecto
+        tiers = [
+            { hours_before: 72, refund_percent: 100 },
+            { hours_before: 24, refund_percent: 50 },
+            { hours_before: 0, refund_percent: 0 }
+        ];
+    }
+
+    tiers.forEach((t, i) => addTierRow(t.hours_before, t.refund_percent));
+}
+
+function addTier() {
+    addTierRow('', '');
+}
+
+function addTierRow(hours, percent) {
+    const idx = $('#tiersBody tr').length;
+    const row = `
+        <tr>
+            <td>
+                <div class="input-group input-group-sm">
+                    <input type="number" class="form-control tier-hours"
+                           value="${hours}" min="0" max="720" placeholder="Ej: 48">
+                    <span class="input-group-text">hrs</span>
+                </div>
+            </td>
+            <td>
+                <div class="input-group input-group-sm">
+                    <input type="number" class="form-control tier-percent"
+                           value="${percent}" min="0" max="100" placeholder="0-100">
+                    <span class="input-group-text">%</span>
+                </div>
+            </td>
+            <td class="text-center">
+                <button type="button" class="btn btn-sm btn-outline-danger"
+                        onclick="removeTierRow(this)" title="Eliminar tramo">
+                    <i class="fas fa-trash fa-xs"></i>
+                </button>
+            </td>
+        </tr>`;
+    $('#tiersBody').append(row);
+}
+
+function removeTierRow(btn) {
+    $(btn).closest('tr').remove();
+}
+
+function serializeTiers() {
+    const tiers = [];
+    $('#tiersBody tr').each(function () {
+        const hours = parseInt($(this).find('.tier-hours').val());
+        const percent = parseInt($(this).find('.tier-percent').val());
+        if (!isNaN(hours) && !isNaN(percent)) {
+            tiers.push({ hours_before: hours, refund_percent: percent });
+        }
+    });
+    // Ordenar de mayor a menor horas (más anticipación = más reembolso)
+    tiers.sort((a, b) => b.hours_before - a.hours_before);
+    return tiers.length > 0 ? JSON.stringify(tiers) : null;
 }
