@@ -446,22 +446,41 @@
             <span style="color:var(--primary);">$@Model.Total.ToString("N2") MXN</span>
         </div>
 
-        @* Anticipo *@
-        @if (Model.HasDeposit)
+        @* Pagos registrados *@
+        @if (Model.Payments?.Any() == true)
         {
-            <div class="rd-deposit-box rd-deposit-paid">
-                <i class="fas fa-check-circle"></i>
-                <span>
-                    Anticipo recibido <strong>$@Model.DepositAmount.ToString("N2")</strong>
-                    @if (!string.IsNullOrEmpty(Model.DepositPaymentMethod))
-                    {
-                        <span class="ms-1">· @Model.DepositPaymentMethod</span>
-                    }
-                    @if (!string.IsNullOrEmpty(Model.DepositReference))
-                    {
-                        <span class="ms-1">· Ref: @Model.DepositReference</span>
-                    }
-                </span>
+            <div class="rd-deposit-box rd-deposit-paid" style="flex-direction:column;align-items:flex-start;gap:0.4rem;">
+                <div style="font-size:0.78rem;font-weight:700;color:#276749;margin-bottom:2px;">
+                    <i class="fas fa-check-circle me-1"></i>Pagos registrados
+                </div>
+                @foreach (var p in Model.Payments)
+                {
+                    <div class="d-flex justify-content-between w-100" style="font-size:0.82rem;">
+                        <span>
+                            <span class="badge" style="background:rgba(56,161,105,.15);color:#276749;font-size:0.7rem;">
+                                @p.MethodLabel
+                            </span>
+                            @if (!string.IsNullOrEmpty(p.Reference))
+                            {
+                                <span class="text-muted ms-1" style="font-size:0.75rem;">Ref: @p.Reference</span>
+                            }
+                            <span class="text-muted ms-1" style="font-size:0.72rem;">
+                                · @p.PaymentDate.ToLocalTime().ToString("dd MMM HH:mm")
+                            </span>
+                        </span>
+                        <strong>$@p.Amount.ToString("N2")</strong>
+                    </div>
+                }
+                @if (Model.Payments.Count > 1)
+                {
+                    <div class="d-flex justify-content-between w-100 pt-1"
+                         style="border-top:1px dashed rgba(56,161,105,.3);font-size:0.83rem;">
+                        <span style="color:#276749;">Total pagado</span>
+                        <strong style="color:#276749;">
+                            $@Model.Payments.Sum(p => p.Amount).ToString("N2")
+                        </strong>
+                    </div>
+                }
             </div>
         }
         else if (!isCancelled)

@@ -664,24 +664,6 @@ function buildReservationCard(r) {
 // ACCIONES DE LAS TARJETAS
 // ============================================================================
 
-/** Ver detalle completo de la reserva */
-//async function viewReservationDetails(reservationId) {
-//    try {
-//        const html = await fetchHTML(`/Availability/GetReservationDetails/${reservationId}`);
-//        if (!html) return;
-
-//        Swal.fire({
-//            title: '<i class="fas fa-clipboard-list text-primary me-2"></i>Detalle de Reserva',
-//            html: html,
-//            width: '600px',
-//            showConfirmButton: false,
-//            showCloseButton: true
-//        });
-//    } catch (err) {
-//        console.error('Error al abrir detalle de reserva:', err);
-//        showErrorToast('No se pudo cargar el detalle de la reserva');
-//    }
-//}
 async function viewReservationDetails(reservationId) {
     try {
         const html = await fetchHTML(`/Availability/GetReservationDetails/${reservationId}`);

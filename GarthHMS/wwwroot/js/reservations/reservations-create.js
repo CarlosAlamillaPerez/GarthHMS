@@ -1106,7 +1106,7 @@ function recalculate() {
 
     // Refrescar faltante en splits si está activo el modo recibido
     if (ResCreate.depositState === 'received' && ResCreate.paymentSplits.length > 0) {
-        renderPaymentSplits();
+        updateSplitsTotals(); // Solo totales, no re-render completo
     }
 }
 
@@ -1251,15 +1251,19 @@ async function submitReservation(status) {
                 companions: (r.companions || []).filter(c => c.fullName?.trim())
             })),
 
-            paymentSplits: ResCreate.depositState === 'received'
-                ? ResCreate.paymentSplits
-                    .filter(p => parseFloat(p.amount) > 0)
-                    .map(p => ({
-                        method: p.method,
-                        amount: parseFloat(p.amount),
-                        reference: p.reference || null
-                    }))
-                : []
+            // En edición nunca re-enviamos splits — los pagos existentes se preservan en BD
+            // Solo en creación enviamos splits nuevos
+            paymentSplits: window.IsEditMode
+                ? []
+                : (ResCreate.depositState === 'received'
+                    ? ResCreate.paymentSplits
+                        .filter(p => parseFloat(p.amount) > 0)
+                        .map(p => ({
+                            method: p.method,
+                            amount: parseFloat(p.amount),
+                            reference: p.reference || null
+                        }))
+                    : [])
         };
 
         // Validar splits si hay anticipo recibido
@@ -1578,20 +1582,131 @@ async function preloadEditData(r) {
         // ── Factura ───────────────────────────────────────────────────────
         ResCreate.requiresInvoice = r.requiresInvoice ?? false;
 
-        // ── Anticipo ──────────────────────────────────────────────────────
-        if (r.hasDeposit && r.payments?.length) {
+        // ── Anticipo ──────────────────────────────────────────────────────────
+        if (r.payments?.length > 0) {
+            // Pagos ya registrados — mostrar como solo lectura
             ResCreate.depositState = 'received';
-            selectDepositState?.('received');
-            // Precargar splits desde los pagos existentes
-            ResCreate.paymentSplits = r.payments.map(p => ({
-                method:    p.method    ?? 'cash',
-                amount:    p.amount    ?? 0,
-                reference: p.reference ?? ''
-            }));
-            renderPaymentSplits();
+            onDepositStateChange('received');
+
+            // En edición NO cargamos splits editables — los pagos ya están en BD
+            // Solo mostramos info visual en el contenedor
+            ResCreate.paymentSplits = [];
+            const container = document.getElementById('paymentSplitsContainer');
+            if (container) {
+                const totalPaid = r.payments.reduce((s, p) => s + (p.amount || 0), 0);
+                container.innerHTML = `
+            <div class="alert alert-info py-2 mb-2">
+                <i class="fas fa-lock me-2"></i>
+                <strong>Pagos ya registrados — solo lectura</strong>
+                <small class="d-block mt-1 text-muted">
+                    Para registrar abonos adicionales usa el módulo de Pagos (Componente 5).
+                </small>
+            </div>
+            ${r.payments.map(p => `
+                <div class="d-flex justify-content-between align-items-center py-1 px-2 mb-1 rounded"
+                     style="background:var(--bg-surface-alt);font-size:.85rem;">
+                    <span>
+                        <span class="badge bg-secondary me-1">${p.method === 'cash' ? '💵 Efectivo' : p.method === 'transfer' ? '🏦 Transferencia' : '💳 Tarjeta'}</span>
+                        ${p.reference ? `<small class="text-muted">Ref: ${p.reference}</small>` : ''}
+                    </span>
+                    <strong>$${(p.amount || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN</strong>
+                </div>
+            `).join('')}
+            <div class="d-flex justify-content-end mt-1">
+                <small class="text-muted me-2">Total pagado:</small>
+                <small class="fw-bold text-success">$${totalPaid.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN</small>
+            </div>`;
+
+                // Ocultar botón de agregar método
+                const addBtn = document.querySelector('#depositReceivedDetails button[onclick="addPaymentSplit()"]');
+                if (addBtn) addBtn.style.display = 'none';
+            }
+
         } else if (r.depositAmount > 0 && !r.hasDeposit) {
+            // Anticipo solicitado pero no pagado
             ResCreate.depositState = 'pending';
-            selectDepositState?.('pending');
+            onDepositStateChange('pending');
+        } else {
+            // Sin anticipo
+            ResCreate.depositState = 'none';
+            onDepositStateChange('none');
+        }
+
+        // ── En modo edición: ocultar formulario de anticipo y mostrar solo info ──
+        if (window.IsEditMode) {
+            const depositSection = document.getElementById('depositSection');
+            if (depositSection) {
+                // Calcular info de pago para mostrar
+                const totalPaid = r.payments?.reduce((s, p) => s + (p.amount || 0), 0) ?? 0;
+                const hasPayments = r.payments?.length > 0;
+                const hasPending = r.depositAmount > 0 && !r.hasDeposit;
+                const noDeposit = !hasPayments && !hasPending;
+
+                let infoHTML = '';
+
+                if (hasPayments) {
+                    infoHTML = `
+                <div class="alert alert-success py-2 mb-2 d-flex align-items-center gap-2">
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <strong>Anticipo registrado</strong>
+                        <small class="d-block text-muted">Para abonar más, usa el módulo de Pagos (Componente 5).</small>
+                    </div>
+                </div>
+                ${r.payments.map(p => `
+                    <div class="d-flex justify-content-between align-items-center py-1 px-2 mb-1 rounded"
+                         style="background:var(--bg-surface-alt);font-size:.85rem;">
+                        <span>
+                            <span class="badge bg-secondary me-1">
+                                ${p.method === 'cash' ? '💵 Efectivo' : p.method === 'transfer' ? '🏦 Transferencia' : '💳 Tarjeta'}
+                            </span>
+                            ${p.reference ? `<small class="text-muted">Ref: ${p.reference}</small>` : ''}
+                            <small class="text-muted ms-1">· ${new Date(p.paymentDate).toLocaleDateString('es-MX')}</small>
+                        </span>
+                        <strong>$${(p.amount || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</strong>
+                    </div>
+                `).join('')}
+                <div class="d-flex justify-content-between mt-2 pt-1" style="border-top:1px dashed var(--border-color);">
+                    <small class="text-muted">Total pagado</small>
+                    <small class="fw-bold text-success">$${totalPaid.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN</small>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <small class="text-muted">Saldo pendiente</small>
+                    <small class="fw-bold ${r.balancePending > 0 ? 'text-danger' : 'text-success'}">
+                        $${(r.balancePending || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN
+                    </small>
+                </div>`;
+
+                } else if (hasPending) {
+                    infoHTML = `
+                <div class="alert alert-warning py-2 d-flex align-items-center gap-2">
+                    <i class="fas fa-clock"></i>
+                    <div>
+                        <strong>Anticipo solicitado: $${(r.depositAmount || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN</strong>
+                        ${r.depositDueDate ? `<small class="d-block text-muted">Vence: ${new Date(r.depositDueDate).toLocaleDateString('es-MX')}</small>` : ''}
+                        <small class="d-block text-muted">El huésped aún no ha pagado.</small>
+                    </div>
+                </div>`;
+
+                } else {
+                    infoHTML = `
+                <div class="alert alert-secondary py-2 d-flex align-items-center gap-2">
+                    <i class="fas fa-minus-circle"></i>
+                    <div><strong>Sin anticipo registrado</strong></div>
+                </div>`;
+                }
+
+                // Reemplazar contenido completo de la sección
+                depositSection.innerHTML = `
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <div class="section-icon bg-success text-white"><i class="fas fa-dollar-sign"></i></div>
+                <span class="fw-semibold">Estado del pago</span>
+                <span class="badge bg-secondary ms-1" style="font-size:.7rem;">
+                    <i class="fas fa-lock me-1"></i>Solo lectura
+                </span>
+            </div>
+            ${infoHTML}`;
+            }
         }
 
         // ── Habitaciones ──────────────────────────────────────────────────
@@ -1697,19 +1812,70 @@ function updateSplitField(idx, field, value) {
     if (!ResCreate.paymentSplits[idx]) return;
     ResCreate.paymentSplits[idx][field] = value;
 
-    if (field === 'amount') recalculateSplits();
+    if (field === 'amount') {
+        // Solo actualizar totales — NO re-renderizar todo el DOM
+        updateSplitsTotals();
+        recalculate();
+    } else if (field === 'method') {
+        // Método sí requiere re-render (aparece/desaparece el campo referencia)
+        renderPaymentSplits();
+    }
+    // reference: solo actualiza el estado, sin re-render
 }
 
-function recalculateSplits() {
-    const total = ResCreate.paymentSplits.reduce(
-        (s, p) => s + (parseFloat(p.amount) || 0), 0);
+function updateSplitsTotals() {
+    const splits = ResCreate.paymentSplits.filter(p => parseFloat(p.amount) > 0);
+    const totalPaid = splits.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
+    const totalReserva = ResCreate.finance?.total || 0;
+    const diferencia = totalPaid - totalReserva;
 
-    const el = document.getElementById('splitsTotal');
-    if (el) el.textContent = `$${formatMoney(total)} MXN`;
+    const elTotal = document.getElementById('splitsTotal');
+    const elFaltante = document.getElementById('splitsFaltante');
+    const elFaltanteRow = document.getElementById('splitsFaltanteRow');
+    const elCompletoRow = document.getElementById('splitsCompletoRow');
+    const elAlert = document.getElementById('splitsOverAlert');
 
-    // Sincronizar con finanzas
-    ResCreate.finance.depositAmount = total;
-    recalculate();
+    if (elTotal) elTotal.textContent = `$${formatMoney(totalPaid)} MXN`;
+
+    if (diferencia < 0) {
+        if (elFaltante) elFaltante.textContent = `-$${formatMoney(Math.abs(diferencia))} MXN`;
+        if (elFaltanteRow) { elFaltanteRow.style.display = 'flex'; }
+        if (elCompletoRow) { elCompletoRow.style.display = 'none'; }
+        if (elAlert) elAlert.innerHTML = '';
+
+    } else if (diferencia === 0) {
+        if (elFaltanteRow) { elFaltanteRow.style.display = 'none'; }
+        if (elCompletoRow) { elCompletoRow.style.display = 'flex'; }
+        if (elAlert) elAlert.innerHTML = '';
+
+    } else {
+        if (elFaltanteRow) { elFaltanteRow.style.display = 'none'; }
+        if (elCompletoRow) { elCompletoRow.style.display = 'none'; }
+
+        const hasCash = splits.some(p => p.method === 'cash');
+        const hasNonCash = splits.some(p => p.method !== 'cash');
+        const isMixed = hasCash && hasNonCash;
+        const isCashOnly = hasCash && !hasNonCash;
+
+        let alertHtml = '';
+        if (isCashOnly) {
+            alertHtml = `<div class="alert alert-success py-2 mt-2 mb-0">
+                <i class="fas fa-coins me-1"></i>
+                <strong>Cambio a entregar: $${formatMoney(diferencia)} MXN</strong>
+            </div>`;
+        } else if (!isMixed) {
+            alertHtml = `<div class="alert alert-warning py-2 mt-2 mb-0">
+                <i class="fas fa-exclamation-triangle me-1"></i>
+                <strong>El monto supera lo acordado por $${formatMoney(diferencia)} MXN</strong>
+            </div>`;
+        } else {
+            alertHtml = `<div class="alert alert-danger py-2 mt-2 mb-0">
+                <i class="fas fa-ban me-1"></i>
+                <strong>Pago mixto: no se puede entregar cambio en efectivo</strong>
+            </div>`;
+        }
+        if (elAlert) elAlert.innerHTML = alertHtml;
+    }
 }
 
 function renderPaymentSplits() {
@@ -1738,7 +1904,7 @@ function renderPaymentSplits() {
             </div>
 
             <input type="text" class="form-control form-control-sm"
-                   style="display:${split.method !== 'cash' ? 'block' : 'none'};"
+                   style="display:${split.method !== 'cash' ? 'block' : 'none'};height:1rem; flex:1;"
                    placeholder="Referencia / No. operación"
                    value="${split.reference || ''}"
                    oninput="updateSplitField(${idx}, 'reference', this.value)">
@@ -1753,26 +1919,29 @@ function renderPaymentSplits() {
     `).join('');
 
     // Calcular totales
+    // Totales — usar IDs estables para actualizar sin re-render
     const totalPaid = ResCreate.paymentSplits.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
     const totalReserva = ResCreate.finance?.total || 0;
     const faltante = Math.max(0, totalReserva - totalPaid);
 
     container.insertAdjacentHTML('beforeend', `
-        <div class="d-flex justify-content-end flex-column align-items-end mt-2 gap-1">
-            <div class="d-flex gap-3">
-                <small class="text-muted">Total registrado:</small>
-                <small class="fw-bold text-success">$${formatMoney(totalPaid)} MXN</small>
-            </div>
-            ${faltante > 0 ? `
-            <div class="d-flex gap-3">
-                <small class="text-muted">Faltante para cubrir total:</small>
-                <small class="fw-bold text-danger">-$${formatMoney(faltante)} MXN</small>
-            </div>` : `
-            <div class="d-flex gap-3">
-                <small class="fw-bold text-success">
-                    <i class="fas fa-check-circle me-1"></i>Pago completo
-                </small>
-            </div>`}
+    <div style="display:flex; justify-content:flex-end; flex-direction:column; align-items:flex-end; margin-top:8px; gap:4px;">
+        <div style="display:flex; gap:12px;">
+            <small class="text-muted">Total registrado:</small>
+            <small class="fw-bold text-success" id="splitsTotal">$${formatMoney(totalPaid)} MXN</small>
         </div>
-    `);
+        <div id="splitsFaltanteRow" style="display:${faltante > 0 ? 'flex' : 'none'}; gap:12px;">
+            <small class="text-muted">Faltante para cubrir total:</small>
+            <small class="fw-bold text-danger" id="splitsFaltante">-$${formatMoney(faltante)} MXN</small>
+        </div>
+        <div id="splitsCompletoRow" style="display:${faltante <= 0 ? 'flex' : 'none'}; gap:12px;">
+            <small class="fw-bold text-success">
+                <i class="fas fa-check-circle me-1"></i>Pago completo
+            </small>
+        </div>
+    </div>
+    <div id="splitsOverAlert"></div>
+`);
+
+    updateSplitsTotals();
 }
