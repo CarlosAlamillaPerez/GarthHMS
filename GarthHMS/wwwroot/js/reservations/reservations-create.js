@@ -1583,53 +1583,95 @@ async function preloadEditData(r) {
         ResCreate.requiresInvoice = r.requiresInvoice ?? false;
 
         // ── Anticipo ──────────────────────────────────────────────────────────
-        if (r.payments?.length > 0) {
-            // Pagos ya registrados — mostrar como solo lectura
-            ResCreate.depositState = 'received';
-            onDepositStateChange('received');
+        if (window.IsEditMode) {
+            // En edición — reemplazar toda la sección con info solo lectura
+            const depositSection = document.getElementById('depositSection');
+            if (depositSection) {
+                const totalPaid = r.payments?.reduce((s, p) => s + (p.amount || 0), 0) ?? 0;
+                const hasPayments = r.payments?.length > 0;
+                const hasPending = r.depositAmount > 0 && !r.hasDeposit;
 
-            // En edición NO cargamos splits editables — los pagos ya están en BD
-            // Solo mostramos info visual en el contenedor
-            ResCreate.paymentSplits = [];
-            const container = document.getElementById('paymentSplitsContainer');
-            if (container) {
-                const totalPaid = r.payments.reduce((s, p) => s + (p.amount || 0), 0);
-                container.innerHTML = `
-            <div class="alert alert-info py-2 mb-2">
-                <i class="fas fa-lock me-2"></i>
-                <strong>Pagos ya registrados — solo lectura</strong>
-                <small class="d-block mt-1 text-muted">
-                    Para registrar abonos adicionales usa el módulo de Pagos (Componente 5).
-                </small>
-            </div>
-            ${r.payments.map(p => `
-                <div class="d-flex justify-content-between align-items-center py-1 px-2 mb-1 rounded"
-                     style="background:var(--bg-surface-alt);font-size:.85rem;">
-                    <span>
-                        <span class="badge bg-secondary me-1">${p.method === 'cash' ? '💵 Efectivo' : p.method === 'transfer' ? '🏦 Transferencia' : '💳 Tarjeta'}</span>
-                        ${p.reference ? `<small class="text-muted">Ref: ${p.reference}</small>` : ''}
-                    </span>
-                    <strong>$${(p.amount || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN</strong>
+                let infoHTML = '';
+
+                if (hasPayments) {
+                    infoHTML = `
+                <div class="alert alert-success py-2 mb-2 d-flex align-items-center gap-2">
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <strong>Anticipo registrado</strong>
+                        <small class="d-block text-muted">Para abonar más usa el módulo de Pagos (Componente 5).</small>
+                    </div>
                 </div>
-            `).join('')}
-            <div class="d-flex justify-content-end mt-1">
-                <small class="text-muted me-2">Total pagado:</small>
-                <small class="fw-bold text-success">$${totalPaid.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN</small>
-            </div>`;
+                ${r.payments.map(p => `
+                    <div class="d-flex justify-content-between align-items-center py-1 px-2 mb-1 rounded"
+                         style="background:var(--bg-surface-alt);font-size:.85rem;">
+                        <span>
+                            <span class="badge bg-secondary me-1">
+                                ${p.method === 'cash' ? '💵 Efectivo' : p.method === 'transfer' ? '🏦 Transferencia' : '💳 Tarjeta'}
+                            </span>
+                            ${p.reference ? `<small class="text-muted">Ref: ${p.reference}</small>` : ''}
+                            <small class="text-muted ms-1">· ${new Date(p.paymentDate).toLocaleDateString('es-MX')}</small>
+                        </span>
+                        <strong>$${(p.amount || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</strong>
+                    </div>
+                `).join('')}
+                <div class="d-flex justify-content-between mt-2 pt-1" style="border-top:1px dashed var(--border-color);">
+                    <small class="text-muted">Total pagado</small>
+                    <small class="fw-bold text-success">$${totalPaid.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN</small>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <small class="text-muted">Saldo pendiente</small>
+                    <small class="fw-bold ${r.balancePending > 0 ? 'text-danger' : 'text-success'}">
+                        $${(r.balancePending || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN
+                    </small>
+                </div>`;
 
-                // Ocultar botón de agregar método
-                const addBtn = document.querySelector('#depositReceivedDetails button[onclick="addPaymentSplit()"]');
-                if (addBtn) addBtn.style.display = 'none';
+                } else if (hasPending) {
+                    infoHTML = `
+                <div class="alert alert-warning py-2 d-flex align-items-center gap-2">
+                    <i class="fas fa-clock"></i>
+                    <div>
+                        <strong>Anticipo solicitado: $${(r.depositAmount || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN</strong>
+                        ${r.depositDueDate ? `<small class="d-block text-muted">Vence: ${new Date(r.depositDueDate).toLocaleDateString('es-MX')}</small>` : ''}
+                        <small class="d-block text-muted">El huésped aún no ha pagado.</small>
+                    </div>
+                </div>`;
+                } else {
+                    infoHTML = `
+                <div class="alert alert-secondary py-2 d-flex align-items-center gap-2">
+                    <i class="fas fa-minus-circle"></i>
+                    <div><strong>Sin anticipo registrado</strong></div>
+                </div>`;
+                }
+
+                depositSection.innerHTML = `
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="fw-semibold">Estado del pago</span>
+                <span class="badge bg-secondary ms-1" style="font-size:.7rem;">
+                    <i class="fas fa-lock me-1"></i>Solo lectura
+                </span>
+            </div>
+            ${infoHTML}`;
             }
 
-        } else if (r.depositAmount > 0 && !r.hasDeposit) {
-            // Anticipo solicitado pero no pagado
-            ResCreate.depositState = 'pending';
-            onDepositStateChange('pending');
         } else {
-            // Sin anticipo
-            ResCreate.depositState = 'none';
-            onDepositStateChange('none');
+            // En creación — lógica normal de anticipo
+            if (r.hasDeposit && r.payments?.length) {
+                ResCreate.depositState = 'received';
+                onDepositStateChange('received');
+                ResCreate.paymentSplits = r.payments.map(p => ({
+                    method: p.method ?? 'cash',
+                    amount: p.amount ?? 0,
+                    reference: p.reference ?? ''
+                }));
+                renderPaymentSplits();
+            } else if (r.depositAmount > 0 && !r.hasDeposit) {
+                ResCreate.depositState = 'pending';
+                onDepositStateChange('pending');
+            } else {
+                ResCreate.depositState = 'none';
+                onDepositStateChange('none');
+            }
         }
 
         // ── En modo edición: ocultar formulario de anticipo y mostrar solo info ──
@@ -1699,7 +1741,7 @@ async function preloadEditData(r) {
                 // Reemplazar contenido completo de la sección
                 depositSection.innerHTML = `
             <div class="d-flex align-items-center gap-2 mb-3">
-                <div class="section-icon bg-success text-white"><i class="fas fa-dollar-sign"></i></div>
+                <div class="section-icon text-success"><i class="fa-solid fa-dollar-sign"></i></div>
                 <span class="fw-semibold">Estado del pago</span>
                 <span class="badge bg-secondary ms-1" style="font-size:.7rem;">
                     <i class="fas fa-lock me-1"></i>Solo lectura
