@@ -38,5 +38,21 @@ namespace GarthHMS.Core.Interfaces.Services
         /// <summary>Edita una reserva nightly (draft/pending/confirmed).</summary>
         Task<ServiceResult<bool>> UpdateNightlyAsync(
             Guid hotelId, UpdateReservationDto dto, Guid updatedBy);
+
+        /// <summary>Registra un abono o devolución en una reserva.</summary>
+        Task<ServiceResult<(Guid PaymentId, decimal NewBalance, string NewStatus)>> AddPaymentAsync(
+            Guid hotelId,
+            Guid reservationId,
+            decimal amount,
+            string paymentMethod,
+            string paymentType,
+            string? reference,
+            Guid registeredBy,
+            bool isManagerOrAdmin);
+
+        /// <summary>Lista los pagos de una reserva.</summary>
+        Task<IEnumerable<ReservationPaymentDto>> GetPaymentsAsync(
+            Guid hotelId,
+            Guid reservationId);
     }
 }

@@ -321,6 +321,104 @@ namespace GarthHMS.Web.Controllers
                 return Json(new { success = false, message = "Error al obtener la configuración" });
             }
         }
+
+        // ====================================================================
+        // PARTIAL VIEW — Modal gestión de pagos (Componente 5)
+        // GET /Reservations/GetPaymentModal/{id}
+        // ====================================================================
+
+        [HttpGet("GetPaymentModal/{id}")]
+        public async Task<IActionResult> GetPaymentModal(Guid id)
+        {
+            try
+            {
+                var hotelId = GetCurrentHotelId();
+                var reservation = await _reservationService.GetByIdAsync(hotelId, id);
+
+                if (reservation == null)
+                    return NotFound();
+
+                // Pasar si el usuario puede hacer devoluciones
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+                ViewBag.CanRefund = userRole is "Administrador" or "Gerente";
+
+                return PartialView("_PaymentManagementModal", reservation);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al cargar modal de pagos {ReservationId}", id);
+                return StatusCode(500);
+            }
+        }
+
+        // ====================================================================
+        // API — Registrar pago (Componente 5)
+        // POST /Reservations/AddPayment
+        // ====================================================================
+
+        [HttpPost("AddPayment")]
+        public async Task<IActionResult> AddPayment([FromBody] AddPaymentDto dto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return Json(new { success = false, message = "Datos inválidos" });
+
+                var hotelId = GetCurrentHotelId();
+                var userId = GetCurrentUserId();
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+                var isManagerOrAdmin = userRole is "Administrador" or "Gerente";
+
+                var result = await _reservationService.AddPaymentAsync(
+                    hotelId,
+                    dto.ReservationId,
+                    dto.Amount,
+                    dto.PaymentMethod,
+                    dto.PaymentType,
+                    dto.Reference,
+                    userId,
+                    isManagerOrAdmin);
+
+                if (!result.IsSuccess)
+                    return Json(new { success = false, message = result.Message });
+
+                return Json(new
+                {
+                    success = true,
+                    message = "Pago registrado correctamente",
+                    paymentId = result.Data.PaymentId,
+                    newBalance = result.Data.NewBalance,
+                    newStatus = result.Data.NewStatus
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al registrar pago");
+                return Json(new { success = false, message = "Error al registrar el pago" });
+            }
+        }
+
+        // ====================================================================
+        // API — Obtener pagos de una reserva (Componente 5)
+        // GET /Reservations/GetPayments/{id}
+        // ====================================================================
+
+        [HttpGet("GetPayments/{id}")]
+        public async Task<IActionResult> GetPayments(Guid id)
+        {
+            try
+            {
+                var hotelId = GetCurrentHotelId();
+                var payments = await _reservationService.GetPaymentsAsync(hotelId, id);
+
+                return Json(new { success = true, data = payments });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener pagos {ReservationId}", id);
+                return Json(new { success = false, message = "Error al obtener los pagos" });
+            }
+        }
     }
 
     // ── Request helpers ──────────────────────────────────────────────────────

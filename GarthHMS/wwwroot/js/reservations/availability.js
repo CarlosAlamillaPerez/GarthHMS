@@ -610,7 +610,11 @@ function buildReservationCard(r) {
                 </button>
             ` : `
                 <button class="btn-action-main ${primaryBtnClass}"
-                        onclick="event.stopPropagation(); handlePrimaryAction('${r.reservationId}', '${r.status}', ${r.isCheckInToday})">
+                    onclick="event.stopPropagation(); 
+                    ${r.status === 'pending' && !r.hasDeposit
+                            ? `openPaymentModal('${r.reservationId}')`
+                            : `handlePrimaryAction('${r.reservationId}', '${r.status}', ${r.isCheckInToday})`
+                        }">
                     ${primaryBtnText}
                 </button>
                 <button class="btn-action-icon"
@@ -646,6 +650,14 @@ function buildReservationCard(r) {
                                 <i class="fas fa-copy text-secondary me-2"></i>Copiar folio
                             </a>
                         </li>
+                        ${!['cancelled', 'checked_out', 'no_show'].includes(r.status) ? `
+                            <li>
+                                <a class="dropdown-item" href="javascript:void(0)"
+                                   onclick="event.stopPropagation(); openPaymentModal('${r.reservationId}')">
+                                    <i class="fas fa-dollar-sign me-2 text-success"></i>Gestionar pagos
+                                </a>
+                            </li>
+                        ` : ''}
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <a class="dropdown-item text-danger" href="javascript:void(0)"
@@ -979,5 +991,106 @@ function exitSearchMode(reload = true) {
     // Volver al tab activo
     if (reload) {
         changeTab(AvailabilityModule.currentTab);
+    }
+}
+
+// ============================================================================
+// COMPONENTE 5 — GESTIÓN DE PAGOS
+// ============================================================================
+
+async function openPaymentModal(reservationId) {
+    try {
+        const response = await fetch(`/Reservations/GetPaymentModal/${reservationId}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const html = await response.text();
+
+        await Swal.fire({
+            html,
+            width: 520,
+            padding: '1.25rem',
+            showConfirmButton: false,
+            showCloseButton: true,
+            didOpen: () => {
+                // Disparar change inicial para estado correcto del formulario
+                document.getElementById('pm-method')?.dispatchEvent(new Event('change'));
+                document.getElementById('pm-type')?.dispatchEvent(new Event('change'));
+            }
+        });
+
+    } catch (err) {
+        console.error('Error al abrir modal de pagos:', err);
+        showErrorToast('No se pudo cargar el módulo de pagos');
+    }
+}
+
+async function submitPayment(reservationId) {
+    const type = document.getElementById('pm-type')?.value;
+    const method = document.getElementById('pm-method')?.value;
+    const amountRaw = document.getElementById('pm-amount')?.value;
+    const reference = document.getElementById('pm-reference')?.value?.trim();
+
+    // ── Validaciones frontend ──────────────────────────────────────
+    const amount = parseFloat(amountRaw);
+    if (!amountRaw || isNaN(amount) || amount <= 0) {
+        Swal.showValidationMessage('Ingresa un monto válido mayor a cero');
+        return;
+    }
+
+    const maxInput = document.getElementById('pm-amount')?.getAttribute('max');
+    if (maxInput && type !== 'refund' && amount > parseFloat(maxInput)) {
+        Swal.showValidationMessage(`El monto excede el saldo pendiente ($${parseFloat(maxInput).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN)`);
+        return;
+    }
+
+    if (method !== 'cash' && !reference) {
+        Swal.showValidationMessage('La referencia es obligatoria para transferencia y tarjeta');
+        return;
+    }
+
+    // ── Deshabilitar botón durante el envío ────────────────────────
+    const btn = document.getElementById('pm-submit-btn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin me-1"></i>Registrando…';
+    }
+
+    try {
+        const res = await fetch('/Reservations/AddPayment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                reservationId,
+                amount,
+                paymentMethod: method,
+                paymentType: type,
+                reference: reference || null
+            })
+        });
+
+        const data = await res.json();
+
+        if (!data.success) {
+            Swal.showValidationMessage(data.message || 'Error al registrar el pago');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check me-1"></i>Registrar pago';
+            }
+            return;
+        }
+
+        // ── Éxito ──────────────────────────────────────────────────
+        Swal.close();
+        showSuccessToast('Pago registrado correctamente');
+
+        // Refrescar lista de reservas para reflejar nuevo estado/saldo
+        if (typeof loadActiveTab === 'function') loadActiveTab();
+
+    } catch (err) {
+        console.error('Error al registrar pago:', err);
+        Swal.showValidationMessage('Error de conexión. Intenta nuevamente.');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check me-1"></i>Registrar pago';
+        }
     }
 }

@@ -1,0 +1,321 @@
+﻿@* GarthHMS.Web/Views/Reservations/_PaymentManagementModal.cshtml *@
+@model GarthHMS.Core.DTOs.Reservation.ReservationDetailDto
+
+@{
+    var isCancelled = Model.Status is "cancelled" or "no_show";
+    var isCheckedOut = Model.Status == "checked_out";
+    var canAddPayment = !isCancelled && !isCheckedOut && Model.BalancePending > 0;
+    var canRefund = (bool)(ViewBag.CanRefund ?? false);
+    var totalPaid = Model.Total - Model.BalancePending;
+
+    var statusBadgeClass = Model.Status switch
+    {
+        "pending" => "bg-warning text-dark",
+        "confirmed" => "bg-success",
+        "checked_in" => "bg-info",
+        "checked_out" => "bg-secondary",
+        "cancelled" => "bg-danger",
+        "no_show" => "bg-secondary",
+        _ => "bg-secondary"
+    };
+}
+
+<style>
+    .pm-kpi-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.6rem;
+        margin: 0.85rem 0;
+    }
+    .pm-kpi {
+        border-radius: 8px;
+        padding: 0.65rem 0.85rem;
+        text-align: center;
+    }
+    .pm-kpi-label {
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        margin-bottom: 3px;
+    }
+    .pm-kpi-value {
+        font-size: 1rem;
+        font-weight: 700;
+    }
+    .pm-history-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        margin-bottom: 0.35rem;
+        font-size: 0.83rem;
+        background: var(--bg-surface-alt);
+        border: 1px solid var(--border-color);
+    }
+    .pm-type-badge {
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    .pm-type-deposit { background:rgba(43,164,154,.15);  color:#1a7a72; }
+    .pm-type-balance { background:rgba(49,130,206,.15);  color:#1e5fa0; }
+    .pm-type-full    { background:rgba(56,161,105,.15);  color:#276749; }
+    .pm-type-refund  { background:rgba(229,62,62,.12);   color:#9B2C2C; }
+    .pm-section-title {
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-secondary);
+        padding: 0.65rem 0 0.4rem;
+        border-top: 1px solid var(--border-color);
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .pm-form-row {
+        display: grid;
+        gap: 0.6rem;
+    }
+    .pm-label {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 3px;
+    }
+    .pm-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--border-color);
+    }
+    .pm-balance-hint {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-top: 3px;
+    }
+</style>
+
+<div class="text-start" id="paymentModalContent">
+
+    @* ── HEADER ── *@
+    <div class="d-flex align-items-center justify-content-between mb-1">
+        <div>
+            <span style="font-size:1.1rem;font-weight:700;font-family:'Courier New',monospace;color:var(--primary);">
+                @Model.Folio
+            </span>
+            @if (Model.GuestIsVip)
+            {
+                <span class="badge bg-warning text-dark ms-1" style="font-size:.65rem;">
+                    <i class="fas fa-star"></i> VIP
+                </span>
+            }
+        </div>
+        <span class="badge @statusBadgeClass" style="font-size:.72rem; margin-right: 0.5rem;">@Model.StatusLabel</span>
+    </div>
+    <div style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:0.25rem;">
+        <i class="fas fa-user fa-xs me-1"></i>@Model.GuestFullName
+    </div>
+
+    @* ── KPIs FINANCIEROS ── *@
+    <div class="pm-kpi-row">
+        <div class="pm-kpi" style="background:var(--bg-surface-alt);border:1px solid var(--border-color);">
+            <div class="pm-kpi-label" style="color:var(--text-secondary);">Total reserva</div>
+            <div class="pm-kpi-value" style="color:var(--text-primary);">$@Model.Total.ToString("N2")</div>
+        </div>
+        <div class="pm-kpi" style="background:rgba(56,161,105,.08);border:1px solid rgba(56,161,105,.2);">
+            <div class="pm-kpi-label" style="color:#276749;">Pagado</div>
+            <div class="pm-kpi-value" style="color:#276749;">$@totalPaid.ToString("N2")</div>
+        </div>
+        <div class="pm-kpi @(Model.BalancePending > 0 ? "" : "")"
+             style="background:@(Model.BalancePending > 0 ? "rgba(229,62,62,.08)" : "rgba(56,161,105,.08)");
+                    border:1px solid @(Model.BalancePending > 0 ? "rgba(229,62,62,.2)" : "rgba(56,161,105,.2)");">
+            <div class="pm-kpi-label" style="color:@(Model.BalancePending > 0 ? "#9B2C2C" : "#276749");">
+                Pendiente
+            </div>
+            <div class="pm-kpi-value" style="color:@(Model.BalancePending > 0 ? "var(--danger)" : "#276749");">
+                $@Model.BalancePending.ToString("N2")
+            </div>
+        </div>
+    </div>
+
+    @* ── HISTORIAL DE PAGOS ── *@
+    <div class="pm-section-title">
+        <i class="fas fa-history fa-xs"></i> Historial de pagos
+    </div>
+
+    <div id="pm-history-list">
+        @if (Model.Payments?.Any() == true)
+        {
+            @foreach (var p in Model.Payments)
+            {
+                var typeClass = p.PaymentType switch
+                {
+                    "deposit" => "pm-type-deposit",
+                    "balance" => "pm-type-balance",
+                    "full" => "pm-type-full",
+                    "refund" => "pm-type-refund",
+                    _ => "pm-type-balance"
+                };
+                <div class="pm-history-row">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="pm-type-badge @typeClass">@p.PaymentTypeLabel</span>
+                        <span style="color:var(--text-primary);font-weight:500;">@p.MethodLabel</span>
+                        @if (!string.IsNullOrEmpty(p.Reference))
+                        {
+                            <span class="text-muted" style="font-size:0.75rem;">Ref: @p.Reference</span>
+                        }
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <span style="font-size:0.75rem;color:var(--text-secondary);">
+                            @p.PaymentDate.ToLocalTime().ToString("dd MMM HH:mm")
+                        </span>
+                        <strong style="color:@(p.PaymentType == "refund" ? "var(--danger)" : "var(--text-primary)");">
+                            @(p.PaymentType == "refund" ? "-" : "")$@p.Amount.ToString("N2")
+                        </strong>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="text-center text-muted py-2" style="font-size:0.83rem;" id="pm-no-payments">
+                <i class="fas fa-inbox me-1"></i>Sin pagos registrados aún
+            </div>
+        }
+    </div>
+
+    @* ── FORMULARIO NUEVO PAGO ── *@
+    @if (canAddPayment)
+    {
+        <div class="pm-section-title">
+            <i class="fas fa-plus-circle fa-xs"></i> Registrar nuevo pago
+        </div>
+
+        <div class="pm-form-row">
+
+            @* Fila 1: Tipo + Método *@
+            <div class="d-flex gap-2">
+                <div style="flex:1;">
+                    <div class="pm-label">Tipo de pago</div>
+                    <select id="pm-type" class="form-select form-select-sm">
+                        <option value="balance">Abono</option>
+                        <option value="full">Pago completo</option>
+                        @if (canRefund)
+                        {
+                            <option value="refund">Devolución</option>
+                        }
+                    </select>
+                </div>
+                <div style="flex:1;">
+                    <div class="pm-label">Método</div>
+                    <select id="pm-method" class="form-select form-select-sm">
+                        <option value="cash">💵 Efectivo</option>
+                        <option value="transfer">🏦 Transferencia</option>
+                        <option value="card">💳 Tarjeta</option>
+                    </select>
+                </div>
+            </div>
+
+            @* Fila 2: Monto *@
+            <div id="pm-amount-wrap">
+                <div class="pm-label">Monto</div>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text">$</span>
+                    <input type="number" id="pm-amount" class="form-control"
+                           min="0.01" step="0.01"
+                           max="@Model.BalancePending.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)"
+                           placeholder="0.00" />
+                    <span class="input-group-text">MXN</span>
+                </div>
+                <div class="pm-balance-hint" id="pm-amount-hint">
+                    Máximo: $@Model.BalancePending.ToString("N2") MXN
+                </div>
+            </div>
+
+            @* Fila 3: Referencia (condicional) *@
+            <div id="pm-reference-wrap" style="display:none;">
+                <div class="pm-label">Referencia / Folio de transferencia</div>
+                <input type="text" id="pm-reference" class="form-control form-control-sm"
+                       placeholder="Ej. TRF-20261234" maxlength="100" />
+            </div>
+
+        </div>
+    }
+    else if (!isCancelled && !isCheckedOut)
+    {
+        <div class="alert alert-success py-2 mt-3 mb-0 d-flex align-items-center gap-2"
+             style="font-size:0.83rem;">
+            <i class="fas fa-check-circle"></i>
+            <span><strong>Reserva liquidada.</strong> No hay saldo pendiente.</span>
+        </div>
+    }
+
+    @* ── FOOTER ── *@
+    <div class="pm-footer">
+        <button class="btn btn-sm btn-secondary" onclick="Swal.close()">
+            Cerrar
+        </button>
+        @if (canAddPayment)
+        {
+            <button class="btn btn-sm btn-primary" id="pm-submit-btn"
+                    onclick="submitPayment('@Model.ReservationId')">
+                <i class="fas fa-check me-1"></i>Registrar pago
+            </button>
+        }
+    </div>
+
+</div>
+
+<script>
+    const PM_MAX_BALANCE = @Model.BalancePending.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+
+    function pmUpdateForm() {
+        const type = document.getElementById('pm-type')?.value;
+        const method = document.getElementById('pm-method')?.value;
+
+        const amountWrap = document.getElementById('pm-amount-wrap');
+        const refWrap = document.getElementById('pm-reference-wrap');
+        const amountInput = document.getElementById('pm-amount');
+        const hint = document.getElementById('pm-amount-hint');
+
+        // ── Monto ──────────────────────────────────────────────────
+        if (type === 'full') {
+            // Pago completo: ocultar input, el valor lo ponemos internamente
+            amountWrap.style.display = 'none';
+            amountInput.value = PM_MAX_BALANCE;
+        } else if (type === 'refund') {
+            amountWrap.style.display = 'block';
+            amountInput.removeAttribute('max');
+            amountInput.value = '';
+            hint.textContent = 'Ingresa el monto a devolver';
+        } else {
+            // balance / deposit
+            amountWrap.style.display = 'block';
+            amountInput.setAttribute('max', PM_MAX_BALANCE);
+            amountInput.value = '';
+            hint.textContent = `Máximo: $${PM_MAX_BALANCE.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN`;
+        }
+
+        // ── Referencia ─────────────────────────────────────────────
+        if (method !== 'cash') {
+            refWrap.style.display = 'block';
+        } else {
+            refWrap.style.display = 'none';
+            document.getElementById('pm-reference').value = '';
+        }
+    }
+
+    document.getElementById('pm-type')?.addEventListener('change', pmUpdateForm);
+    document.getElementById('pm-method')?.addEventListener('change', pmUpdateForm);
+
+    // Estado inicial
+    pmUpdateForm();
+</script>

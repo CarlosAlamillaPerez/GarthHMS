@@ -385,5 +385,65 @@ namespace GarthHMS.Infrastructure.Repositories
 
             return System.Text.Json.JsonSerializer.Serialize(list);
         }
+
+        // ────────────────────────────────────────────────────────────────────
+        // AGREGAR PAGO
+        // ────────────────────────────────────────────────────────────────────
+
+        public async Task<(Guid PaymentId, decimal NewBalance, string NewStatus)> AddPaymentAsync(
+            Guid hotelId,
+            Guid reservationId,
+            decimal amount,
+            string paymentMethod,
+            string paymentType,
+            string? reference,
+            Guid registeredBy)
+        {
+            var result = await _procedimientos.EjecutarUnicoAsync<dynamic>(
+                "sp_reservation_add_payment",
+                new
+                {
+                    p_hotel_id = hotelId,
+                    p_reservation_id = reservationId,
+                    p_amount = amount,
+                    p_payment_method = paymentMethod,
+                    p_payment_type = paymentType,
+                    p_reference = reference,
+                    p_registered_by = registeredBy
+                });
+
+            return (
+                (Guid)result.payment_id,
+                (decimal)result.new_balance,
+                (string)result.new_status
+            );
+        }
+
+        // ────────────────────────────────────────────────────────────────────
+        // OBTENER PAGOS
+        // ────────────────────────────────────────────────────────────────────
+
+        public async Task<IEnumerable<ReservationPaymentDto>> GetPaymentsAsync(
+            Guid hotelId,
+            Guid reservationId)
+        {
+            var rows = await _procedimientos.EjecutarListaAsync<dynamic>(
+                "sp_reservation_get_payments",
+                new
+                {
+                    p_hotel_id = hotelId,
+                    p_reservation_id = reservationId
+                });
+
+            return rows.Select(row => new ReservationPaymentDto
+            {
+                PaymentId = row.payment_id,
+                Amount = row.amount ?? 0m,
+                Method = row.payment_method?.ToString() ?? "",
+                PaymentType = row.payment_type?.ToString() ?? "",
+                Reference = row.reference?.ToString(),
+                PaymentDate = row.payment_date ?? DateTime.UtcNow
+            });
+        }
     }
 }

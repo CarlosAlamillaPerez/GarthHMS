@@ -242,5 +242,88 @@ namespace GarthHMS.Application.Services
                 return null;
             }
         }
+
+        // ────────────────────────────────────────────────────────────────────
+        // AGREGAR PAGO
+        // ────────────────────────────────────────────────────────────────────
+
+        public async Task<ServiceResult<(Guid PaymentId, decimal NewBalance, string NewStatus)>> AddPaymentAsync(
+            Guid hotelId,
+            Guid reservationId,
+            decimal amount,
+            string paymentMethod,
+            string paymentType,
+            string? reference,
+            Guid registeredBy,
+            bool isManagerOrAdmin)
+        {
+            try
+            {
+                if (hotelId == Guid.Empty || reservationId == Guid.Empty)
+                    return ServiceResult<(Guid, decimal, string)>.Failure("Datos de reserva inválidos");
+
+                if (amount <= 0)
+                    return ServiceResult<(Guid, decimal, string)>.Failure("El monto debe ser mayor a cero");
+
+                if (!Array.Exists(ValidMethods, m => m == paymentMethod))
+                    return ServiceResult<(Guid, decimal, string)>.Failure("Método de pago inválido");
+
+                var validTypes = new[] { "deposit", "balance", "full", "refund" };
+                if (!Array.Exists(validTypes, t => t == paymentType))
+                    return ServiceResult<(Guid, decimal, string)>.Failure("Tipo de pago inválido");
+
+                // Solo gerente/admin puede registrar devoluciones
+                if (paymentType == "refund" && !isManagerOrAdmin)
+                    return ServiceResult<(Guid, decimal, string)>.Failure("Sin permiso para registrar devoluciones");
+
+                // Referencia obligatoria para transferencia y tarjeta
+                if (paymentMethod is "transfer" or "card" && string.IsNullOrWhiteSpace(reference))
+                    return ServiceResult<(Guid, decimal, string)>.Failure("La referencia es obligatoria para transferencia y tarjeta");
+
+                // Validar que el abono no supere el saldo pendiente
+                if (paymentType != "refund")
+                {
+                    var reservation = await _reservationRepository.GetByIdAsync(hotelId, reservationId);
+                    if (reservation == null)
+                        return ServiceResult<(Guid, decimal, string)>.Failure("Reserva no encontrada");
+
+                    if (reservation.Status is "cancelled" or "no_show")
+                        return ServiceResult<(Guid, decimal, string)>.Failure("No se pueden registrar pagos en una reserva cancelada");
+
+                    if (amount > reservation.BalancePending)
+                        return ServiceResult<(Guid, decimal, string)>.Failure(
+                            $"El monto excede el saldo pendiente (${reservation.BalancePending:N2} MXN)");
+                }
+
+                var result = await _reservationRepository.AddPaymentAsync(
+                    hotelId, reservationId, amount, paymentMethod, paymentType, reference, registeredBy);
+
+                return ServiceResult<(Guid, decimal, string)>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al registrar pago en reserva {ReservationId}", reservationId);
+                return ServiceResult<(Guid, decimal, string)>.Failure("Error al registrar el pago");
+            }
+        }
+
+        // ────────────────────────────────────────────────────────────────────
+        // OBTENER PAGOS
+        // ────────────────────────────────────────────────────────────────────
+
+        public async Task<IEnumerable<ReservationPaymentDto>> GetPaymentsAsync(
+            Guid hotelId,
+            Guid reservationId)
+        {
+            try
+            {
+                return await _reservationRepository.GetPaymentsAsync(hotelId, reservationId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener pagos de reserva {ReservationId}", reservationId);
+                return Enumerable.Empty<ReservationPaymentDto>();
+            }
+        }
     }
 }

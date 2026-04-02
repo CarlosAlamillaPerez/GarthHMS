@@ -199,4 +199,22 @@ namespace GarthHMS.Core.DTOs.Reservation
         public List<CreateReservationRoomDto> Rooms { get; set; } = new();
         public List<PaymentSplitDto> PaymentSplits { get; set; } = new();
     }
+
+    public class AddPaymentDto
+    {
+        [Required]
+        public Guid ReservationId { get; set; }
+
+        [Required]
+        [Range(0.01, 999999.99)]
+        public decimal Amount { get; set; }
+
+        [Required]
+        public string PaymentMethod { get; set; } = "cash";
+
+        [Required]
+        public string PaymentType { get; set; } = "balance";
+
+        public string? Reference { get; set; }
+    }
 }
