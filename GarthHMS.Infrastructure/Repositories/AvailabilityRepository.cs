@@ -148,10 +148,8 @@ namespace GarthHMS.Infrastructure.Repositories
         }
 
         public async Task<IEnumerable<AvailableRoomDto>> GetAvailableRoomsAsync(
-            Guid hotelId,
-            DateTime checkInDate,
-            DateTime checkOutDate,
-            Guid? roomTypeId = null)
+            Guid hotelId, DateTime checkInDate, DateTime checkOutDate,
+            Guid? roomTypeId = null, bool? requiresPets = null)
         {
             var results = await _procedimientos.EjecutarListaAsync<dynamic>(
                 "sp_availability_get_available_rooms",
@@ -160,7 +158,8 @@ namespace GarthHMS.Infrastructure.Repositories
                     p_hotel_id = hotelId,
                     p_check_in_date = DateOnly.FromDateTime(checkInDate),
                     p_check_out_date = DateOnly.FromDateTime(checkOutDate),
-                    p_room_type_id = roomTypeId
+                    p_room_type_id = roomTypeId,
+                    p_requires_pets = requiresPets
                 }
             );
 

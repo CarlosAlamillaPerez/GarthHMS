@@ -268,7 +268,8 @@ namespace GarthHMS.Web.Controllers
         public async Task<IActionResult> GetAvailableRooms(
             string checkIn,
             string checkOut,
-            Guid? roomTypeId = null)
+            Guid? roomTypeId = null,
+            bool? requiresPets = null)
         {
             try
             {
@@ -287,7 +288,7 @@ namespace GarthHMS.Web.Controllers
                     RoomTypeId = roomTypeId
                 };
 
-                var rooms = await _availabilityService.GetAvailableRoomsAsync(query);
+                var rooms = await _availabilityService.GetAvailableRoomsAsync(hotelId, checkIn, checkOut, roomTypeId, requiresPets);
 
                 return Ok(new
                 {

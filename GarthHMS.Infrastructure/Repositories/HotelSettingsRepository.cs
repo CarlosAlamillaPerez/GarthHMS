@@ -65,7 +65,9 @@ namespace GarthHMS.Infrastructure.Repositories
                 Timezone = result.timezone,
                 CreatedAt = result.created_at,
                 UpdatedAt = result.updated_at,
-                UpdatedBy = result.updated_by
+                UpdatedBy = result.updated_by,
+                AutoVerifyCard = (bool)(result.auto_verify_card ?? false),
+                AutoVerifyTransfer = (bool)(result.auto_verify_transfer ?? false),
             };
         }
 
@@ -220,6 +222,19 @@ namespace GarthHMS.Infrastructure.Repositories
             );
 
             return result;
+        }
+
+        public async Task UpdateAutoVerifyAsync(Guid hotelId, bool autoVerifyCard, bool autoVerifyTransfer, Guid updatedBy)
+        {
+            await _procedimientos.EjecutarAsync(
+                "sp_hotel_settings_update_auto_verify",
+                new
+                {
+                    p_hotel_id = hotelId,
+                    p_auto_verify_card = autoVerifyCard,
+                    p_auto_verify_transfer = autoVerifyTransfer,
+                    p_updated_by = updatedBy
+                });
         }
     }
 }

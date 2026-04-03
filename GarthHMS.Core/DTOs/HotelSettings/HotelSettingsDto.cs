@@ -68,5 +68,8 @@ namespace GarthHMS.Core.DTOs.HotelSettings
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public Guid? UpdatedBy { get; set; }
+
+        public bool AutoVerifyCard { get; set; }
+        public bool AutoVerifyTransfer { get; set; }
     }
 }

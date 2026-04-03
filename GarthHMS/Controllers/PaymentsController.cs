@@ -15,13 +15,16 @@ namespace GarthHMS.Web.Controllers
     public class PaymentsController : Controller
     {
         private readonly IPaymentService _paymentService;
+        private readonly IHotelSettingsService _hotelSettingsService;
         private readonly ILogger<PaymentsController> _logger;
 
         public PaymentsController(
             IPaymentService paymentService,
+            IHotelSettingsService hotelSettingsService,
             ILogger<PaymentsController> logger)
         {
             _paymentService = paymentService;
+            _hotelSettingsService = hotelSettingsService;
             _logger = logger;
         }
 
@@ -57,13 +60,6 @@ namespace GarthHMS.Web.Controllers
         [HttpGet("PendingVerification")]
         public IActionResult PendingVerification()
         {
-            // DEBUG TEMPORAL — quitar después
-            var role = User.FindFirst(ClaimTypes.Role)?.Value;
-            _logger.LogWarning(">>> ROL DEL USUARIO ACTUAL: '{Role}'", role);
-
-            if (!IsManagerOrAdmin())
-                return Content($"DEBUG — Rol detectado: '{role}' — IsManagerOrAdmin: false");
-
             return View();
         }
 
@@ -125,6 +121,128 @@ namespace GarthHMS.Web.Controllers
                 return Json(new { success = false, message = "Error al verificar el pago" });
             }
         }
+
+        // ====================================================================
+        // API — Obtener pagos verificados (tab Verificados)
+        // GET /Payments/GetVerified
+        // ====================================================================
+
+        [HttpGet("GetVerified")]
+        public async Task<IActionResult> GetVerified()
+        {
+            try
+            {
+                if (!IsManagerOrAdmin())
+                    return Json(new { success = false, message = "Acceso no autorizado" });
+
+                var hotelId = GetCurrentHotelId();
+                var payments = await _paymentService.GetVerifiedAsync(hotelId);
+                return Json(new { success = true, data = payments });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener pagos verificados");
+                return Json(new { success = false, message = "Error al obtener los pagos" });
+            }
+        }
+
+        // ====================================================================
+        // API — Verificación masiva por método
+        // POST /Payments/VerifyBulk
+        // ====================================================================
+
+        [HttpPost("VerifyBulk")]
+        public async Task<IActionResult> VerifyBulk([FromBody] VerifyBulkRequest request)
+        {
+            try
+            {
+                if (!IsManagerOrAdmin())
+                    return Json(new { success = false, message = "Acceso no autorizado" });
+
+                var hotelId = GetCurrentHotelId();
+                var userId = GetCurrentUserId();
+
+                var result = await _paymentService.VerifyBulkAsync(
+                    hotelId, request.Method, userId, isManagerOrAdmin: true);
+
+                if (!result.IsSuccess)
+                    return Json(new { success = false, message = result.Message });
+
+                return Json(new
+                {
+                    success = true,
+                    message = result.Message,
+                    verifiedCount = result.Data.VerifiedCount,
+                    totalAmount = result.Data.TotalAmount
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en verificación masiva");
+                return Json(new { success = false, message = "Error al verificar los pagos" });
+            }
+        }
+
+        // ====================================================================
+        // API — Guardar configuración de auto-verificación
+        // POST /Payments/UpdateAutoVerify
+        // ====================================================================
+
+        [HttpPost("UpdateAutoVerify")]
+        public async Task<IActionResult> UpdateAutoVerify([FromBody] UpdateAutoVerifyRequest request)
+        {
+            try
+            {
+                if (!IsManagerOrAdmin())
+                    return Json(new { success = false, message = "Acceso no autorizado" });
+
+                var hotelId = GetCurrentHotelId();
+                var userId = GetCurrentUserId();
+
+                var result = await _hotelSettingsService.UpdateAutoVerifyAsync(
+                    hotelId, request.AutoVerifyCard, request.AutoVerifyTransfer, userId);
+
+                if (!result.IsSuccess)
+                    return Json(new { success = false, message = result.Message });
+
+                return Json(new { success = true, message = result.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al guardar auto-verificación");
+                return Json(new { success = false, message = "Error al guardar la configuración" });
+            }
+        }
+
+        // ====================================================================
+        // API — Obtener configuración actual de auto-verificación
+        // GET /Payments/GetAutoVerifySettings
+        // ====================================================================
+
+        [HttpGet("GetAutoVerifySettings")]
+        public async Task<IActionResult> GetAutoVerifySettings()
+        {
+            try
+            {
+                var hotelId = GetCurrentHotelId();
+                var settings = await _hotelSettingsService.GetSettingsAsync(hotelId);
+
+                if (!settings.IsSuccess)
+                    return Json(new { success = false, message = settings.Message });
+
+                return Json(new
+                {
+                    success = true,
+                    autoVerifyCard = settings.Data?.AutoVerifyCard ?? false,
+                    autoVerifyTransfer = settings.Data?.AutoVerifyTransfer ?? false
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener configuración de auto-verificación");
+                return Json(new { success = false, message = "Error al cargar la configuración" });
+            }
+        }
     }
 
     // ── Request helpers ──────────────────────────────────────────────────────
@@ -132,5 +250,16 @@ namespace GarthHMS.Web.Controllers
     public class VerifyPaymentRequest
     {
         public Guid PaymentId { get; set; }
+    }
+
+    public class VerifyBulkRequest
+    {
+        public string Method { get; set; } = "";
+    }
+
+    public class UpdateAutoVerifyRequest
+    {
+        public bool AutoVerifyCard { get; set; }
+        public bool AutoVerifyTransfer { get; set; }
     }
 }

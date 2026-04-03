@@ -25,5 +25,7 @@ namespace GarthHMS.Core.Interfaces.Repositories
         /// Crea la configuración inicial del hotel
         /// </summary>
         Task<Guid> CreateAsync(HotelSettings settings);
+
+        Task UpdateAutoVerifyAsync(Guid hotelId, bool autoVerifyCard, bool autoVerifyTransfer, Guid updatedBy);
     }
 }

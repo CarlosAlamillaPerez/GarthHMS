@@ -346,7 +346,7 @@ namespace GarthHMS.Web.Controllers
 
                 // Pasar si el usuario puede hacer devoluciones
                 var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
-                ViewBag.CanRefund = userRole is "Administrador" or "Gerente";
+                ViewBag.CanRefund = IsManagerOrAdmin();
 
                 return PartialView("_PaymentManagementModal", reservation);
             }

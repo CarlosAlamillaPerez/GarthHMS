@@ -69,5 +69,8 @@ namespace GarthHMS.Core.Entities
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public Guid? UpdatedBy { get; set; }
+
+        public bool AutoVerifyCard { get; set; } = false;
+        public bool AutoVerifyTransfer { get; set; } = false;
     }
 }

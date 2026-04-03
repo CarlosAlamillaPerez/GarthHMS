@@ -77,5 +77,44 @@ namespace GarthHMS.Application.Services
                 return ServiceResult<bool>.Failure("Error al verificar el pago");
             }
         }
+
+        public async Task<IEnumerable<PendingPaymentDto>> GetVerifiedAsync(Guid hotelId)
+        {
+            try
+            {
+                if (hotelId == Guid.Empty) return Array.Empty<PendingPaymentDto>();
+                return await _paymentRepository.GetVerifiedAsync(hotelId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener pagos verificados | Hotel: {HotelId}", hotelId);
+                return Array.Empty<PendingPaymentDto>();
+            }
+        }
+
+        public async Task<ServiceResult<(int VerifiedCount, decimal TotalAmount)>> VerifyBulkAsync(
+            Guid hotelId, string method, Guid verifiedBy, bool isManagerOrAdmin)
+        {
+            try
+            {
+                if (!isManagerOrAdmin)
+                    return ServiceResult<(int, decimal)>.Failure("Solo Gerentes y Administradores pueden verificar pagos");
+
+                if (hotelId == Guid.Empty)
+                    return ServiceResult<(int, decimal)>.Failure("Hotel no identificado");
+
+                var validMethods = new[] { "transfer", "card" };
+                if (!validMethods.Contains(method))
+                    return ServiceResult<(int, decimal)>.Failure("Método de pago inválido");
+
+                var result = await _paymentRepository.VerifyBulkAsync(hotelId, method, verifiedBy);
+                return ServiceResult<(int, decimal)>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en verificación masiva | Hotel: {HotelId} | Método: {Method}", hotelId, method);
+                return ServiceResult<(int, decimal)>.Failure("Error al verificar los pagos");
+            }
+        }
     }
 }

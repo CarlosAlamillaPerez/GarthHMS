@@ -229,7 +229,10 @@ namespace GarthHMS.Application.Services
                 // Audit
                 CreatedAt = settings.CreatedAt,
                 UpdatedAt = settings.UpdatedAt,
-                UpdatedBy = settings.UpdatedBy
+                UpdatedBy = settings.UpdatedBy,
+
+                AutoVerifyCard = settings.AutoVerifyCard,
+                AutoVerifyTransfer = settings.AutoVerifyTransfer
             };
         }
 
@@ -296,6 +299,24 @@ namespace GarthHMS.Application.Services
                 // Audit
                 UpdatedBy = userId
             };
+        }
+
+        public async Task<ServiceResult<bool>> UpdateAutoVerifyAsync(
+    Guid hotelId, bool autoVerifyCard, bool autoVerifyTransfer, Guid updatedBy)
+        {
+            try
+            {
+                if (hotelId == Guid.Empty)
+                    return ServiceResult<bool>.Failure("Hotel no identificado");
+
+                await _repository.UpdateAutoVerifyAsync(hotelId, autoVerifyCard, autoVerifyTransfer, updatedBy);
+                return ServiceResult<bool>.Success(true, "Configuración de verificación actualizada");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al actualizar auto-verificación | Hotel: {HotelId}", hotelId);
+                return ServiceResult<bool>.Failure("Error al guardar la configuración");
+            }
         }
     }
 }

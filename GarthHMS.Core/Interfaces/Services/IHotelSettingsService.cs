@@ -21,5 +21,7 @@ namespace GarthHMS.Core.Interfaces.Services
         /// Verifica si existe configuración para el hotel
         /// </summary>
         Task<bool> ExistsAsync(Guid hotelId);
+
+        Task<ServiceResult<bool>> UpdateAutoVerifyAsync(Guid hotelId, bool autoVerifyCard, bool autoVerifyTransfer, Guid updatedBy);
     }
 }

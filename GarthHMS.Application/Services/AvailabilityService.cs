@@ -89,22 +89,19 @@ namespace GarthHMS.Application.Services
                 roomId, checkInDate, checkOutDate, excludeReservationId);
         }
 
-        public async Task<IEnumerable<AvailableRoomDto>> GetAvailableRoomsAsync(AvailabilityQueryDto query)
+        public async Task<IEnumerable<AvailableRoomDto>> GetAvailableRoomsAsync(AvailabilityQueryDto query, bool? requiresPets = null)
         {
             if (query == null)
                 throw new ArgumentNullException(nameof(query));
 
             ValidateDates(query.CheckInDate, query.CheckOutDate);
 
-            _logger.LogInformation(
-                "Verificando disponibilidad: {CheckIn} → {CheckOut} en hotel {HotelId}",
-                query.CheckInDate.Date, query.CheckOutDate.Date, query.HotelId);
-
             return await _availabilityRepository.GetAvailableRoomsAsync(
                 query.HotelId,
                 query.CheckInDate,
                 query.CheckOutDate,
-                query.RoomTypeId);
+                query.RoomTypeId,
+                p_requires_pets = requiresPets);
         }
 
         // ====================================================================

@@ -24,7 +24,8 @@ namespace GarthHMS.Core.DTOs.Payment
         public string PaymentType { get; set; } = "";
         public string? Reference { get; set; }
         public DateTime PaymentDate { get; set; }
-        public Guid RegisteredBy { get; set; }
+        public DateTime? VerifiedAt { get; set; }
+        public Guid? RegisteredBy { get; set; }
 
         // Reserva financiero
         public decimal BalancePending { get; set; }

@@ -18,5 +18,10 @@ namespace GarthHMS.Core.Interfaces.Services
             Guid paymentId,
             Guid verifiedBy,
             bool isManagerOrAdmin);
+
+        Task<IEnumerable<PendingPaymentDto>> GetVerifiedAsync(Guid hotelId);
+
+        Task<ServiceResult<(int VerifiedCount, decimal TotalAmount)>> VerifyBulkAsync(
+            Guid hotelId, string method, Guid verifiedBy, bool isManagerOrAdmin);
     }
 }

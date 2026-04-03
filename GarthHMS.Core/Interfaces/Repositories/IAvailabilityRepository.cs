@@ -66,10 +66,8 @@ namespace GarthHMS.Core.Interfaces.Repositories
         /// SP: sp_availability_get_available_rooms
         /// </summary>
         Task<IEnumerable<AvailableRoomDto>> GetAvailableRoomsAsync(
-            Guid hotelId,
-            DateTime checkInDate,
-            DateTime checkOutDate,
-            Guid? roomTypeId = null);
+            Guid hotelId, DateTime checkInDate, DateTime checkOutDate,
+            Guid? roomTypeId = null, bool? requiresPets = null);
 
         /// <summary>
         /// Búsqueda global de reservas por folio, nombre de huésped o teléfono

@@ -2,6 +2,58 @@
     ViewData["Title"] = "Verificación de Anticipos";
 }
 
+<style>
+    .reservations-tabs {
+        display: flex;
+        gap: 0.1rem;
+        margin-bottom: 1rem;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .tab-btn {
+        background: transparent;
+        border: none;
+        padding: 0.6rem 1.1rem;
+        cursor: pointer;
+        font-size: 0.88rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        border-bottom: 3px solid transparent;
+        margin-bottom: -2px;
+        transition: color 0.15s ease, border-color 0.15s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        white-space: nowrap;
+    }
+
+        .tab-btn:hover {
+            color: var(--primary);
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            font-weight: 700;
+        }
+
+    .tab-count {
+        background: var(--bg-surface-alt);
+        color: var(--text-secondary);
+        padding: 0.1rem 0.45rem;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        min-width: 20px;
+        text-align: center;
+    }
+
+    .tab-btn.active .tab-count {
+        background: var(--primary);
+        color: #fff;
+    }
+</style>
+
 <div class="page-header">
     <div class="row align-items-center">
         <div class="col">
@@ -10,23 +62,19 @@
             </h1>
             <p class="text-muted">Confirma las transferencias y pagos con tarjeta recibidos en el banco</p>
         </div>
-        <div class="col-auto">
-            <button type="button" class="btn btn-outline-primary" onclick="loadPendingPayments()">
-                <i class="fas fa-sync-alt"></i> Recargar
-            </button>
-        </div>
     </div>
 </div>
 
 <!-- ============================================================ -->
-<!-- KPIs                                                         -->
+<!-- KPI CARDS                                                    -->
 <!-- ============================================================ -->
 <div class="row g-3 mb-4">
     <div class="col-md-4">
-        <div class="card h-100">
+        <div class="card h-100"
+             style="border-left:4px solid var(--info);background:rgba(66,153,225,0.06);">
             <div class="card-body d-flex align-items-center gap-3">
                 <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                     style="width:48px;height:48px;background:rgba(66,153,225,0.12);">
+                     style="width:48px;height:48px;background:rgba(66,153,225,0.15);">
                     <i class="fas fa-clock" style="color:var(--info);font-size:1.3rem;"></i>
                 </div>
                 <div>
@@ -37,10 +85,11 @@
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card h-100">
+        <div class="card h-100"
+             style="border-left:4px solid var(--success);background:rgba(56,161,105,0.06);">
             <div class="card-body d-flex align-items-center gap-3">
                 <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                     style="width:48px;height:48px;background:rgba(56,161,105,0.12);">
+                     style="width:48px;height:48px;background:rgba(56,161,105,0.15);">
                     <i class="fas fa-dollar-sign" style="color:var(--success);font-size:1.3rem;"></i>
                 </div>
                 <div>
@@ -51,10 +100,11 @@
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card h-100">
+        <div class="card h-100"
+             style="border-left:4px solid var(--warning);background:rgba(214,158,46,0.06);">
             <div class="card-body d-flex align-items-center gap-3">
                 <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                     style="width:48px;height:48px;background:rgba(214,158,46,0.12);">
+                     style="width:48px;height:48px;background:rgba(214,158,46,0.15);">
                     <i class="fas fa-exclamation-triangle" style="color:var(--warning);font-size:1.3rem;"></i>
                 </div>
                 <div>
@@ -67,47 +117,196 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- TABLA                                                        -->
+<!-- PANEL AUTO-VERIFICACIÓN                                      -->
+<!-- ============================================================ -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center"
+         style="cursor:pointer;" onclick="toggleAutoVerifyPanel()">
+        <span class="fw-semibold">
+            <i class="fas fa-cog me-2" style="color:var(--primary);"></i>
+            Configuración de Verificación Automática
+        </span>
+        <i class="fas fa-chevron-down" id="autoVerifyChevron"
+           style="transition:transform 0.2s;color:var(--text-muted);"></i>
+    </div>
+    <div id="autoVerifyPanel" style="display:none;">
+        <div class="card-body">
+            <div class="row g-4">
+
+                <!-- Tarjeta -->
+                <div class="col-md-6">
+                    <div class="p-3 rounded h-100"
+                         style="background:rgba(81,98,181,0.05);border:1px solid rgba(81,98,181,0.2);">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <div class="fw-semibold mb-1" style="color:var(--tertiary);">
+                                    <i class="fas fa-credit-card me-2"></i>Tarjeta
+                                </div>
+                                <div class="text-muted small">
+                                    Verifica automáticamente pagos con tarjeta al registrarlos.
+                                    Ideal si usas terminal física con comprobante impreso.
+                                </div>
+                            </div>
+                            <div class="form-check form-switch ms-3 mt-1 flex-shrink-0">
+                                <input class="form-check-input" type="checkbox"
+                                       id="autoVerifyCard" role="switch"
+                                       style="width:2.5rem;height:1.3rem;cursor:pointer;">
+                            </div>
+                        </div>
+                        <div class="alert alert-info py-2 mb-0 small">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Riesgo bajo — los cargos quedan registrados en la terminal.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transferencia -->
+                <div class="col-md-6">
+                    <div class="p-3 rounded h-100"
+                         style="background:rgba(214,158,46,0.05);border:1px solid rgba(214,158,46,0.3);">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <div class="fw-semibold mb-1" style="color:var(--warning);">
+                                    <i class="fas fa-building-columns me-2"></i>Transferencia
+                                </div>
+                                <div class="text-muted small">
+                                    Verifica automáticamente transferencias sin revisar el banco.
+                                </div>
+                            </div>
+                            <div class="form-check form-switch ms-3 mt-1 flex-shrink-0">
+                                <input class="form-check-input" type="checkbox"
+                                       id="autoVerifyTransfer" role="switch"
+                                       style="width:2.5rem;height:1.3rem;cursor:pointer;">
+                            </div>
+                        </div>
+                        <div class="alert alert-warning py-2 mb-0 small">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            <strong>Riesgo alto</strong> — podrías confirmar pagos que aún no llegaron al banco.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="text-end mt-3">
+                <button class="btn btn-primary btn-sm" onclick="saveAutoVerifySettings()">
+                    <i class="fas fa-save me-1"></i>Guardar configuración
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TABS + TABLAS                                                -->
 <!-- ============================================================ -->
 <div class="card">
     <div class="card-body">
-        <div id="toolbar"></div>
-        <table id="pendingPaymentsTable"
-               class="table table-hover text-center"
-               data-toggle="table"
-               data-icons-prefix="bi"
-               data-icons="{
-                'columns': 'bi-layout-three-columns',
-                'search': 'bi-search',
-                'clearSearch': 'bi-x-circle',
-                'sortable': 'bi-arrow-down-up',
-                'paginationSwitchDown': 'bi-caret-down',
-                'paginationSwitchUp': 'bi-caret-up'
-              }"
-               data-toolbar="#toolbar"
-               data-search="true"
-               data-show-refresh="true"
-               data-show-columns="true"
-               data-show-export="true"
-               data-pagination="true"
-               data-page-size="15"
-               data-page-list="[15,25,50,100]"
-               data-sort-name="paymentDate"
-               data-sort-order="asc">
-            <thead>
-                <tr>
-                    <th data-field="folio" data-sortable="true">Folio</th>
-                    <th data-field="guestFullName" data-sortable="true">Huésped</th>
-                    <th data-field="checkInDate" data-sortable="true" data-formatter="pv_checkInFormatter">Check-in</th>
-                    <th data-field="methodLabel" data-sortable="true" data-formatter="pv_methodFormatter">Método</th>
-                    <th data-field="paymentTypeLabel" data-sortable="true">Tipo</th>
-                    <th data-field="amount" data-sortable="true" data-formatter="pv_amountFormatter">Monto</th>
-                    <th data-field="reference" data-sortable="true" data-formatter="pv_referenceFormatter">Referencia</th>
-                    <th data-field="paymentDate" data-sortable="true" data-formatter="pv_dateFormatter">Fecha pago</th>
-                    <th data-field="actions" data-formatter="pv_actionsFormatter">Acciones</th>
-                </tr>
-            </thead>
-        </table>
+
+        <!-- Tabs -->
+        <div class="reservations-tabs mb-3">
+            <button class="tab-btn active" data-tab="pending" onclick="changeTab('pending')">
+                <i class="fas fa-clock fa-xs"></i>
+                Sin Verificar
+                <span class="tab-count" id="countPending">0</span>
+            </button>
+            <button class="tab-btn" data-tab="verified" onclick="changeTab('verified')">
+                <i class="fas fa-check-circle fa-xs"></i>
+                Verificados
+                <span class="tab-count" id="countVerified">0</span>
+            </button>
+        </div>
+
+        <!-- Tab: Sin Verificar -->
+        <div id="tabPending">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="text-muted small" id="pendingSubtitle">Cargando…</div>
+                <button class="btn btn-outline-primary btn-sm" onclick="openBulkVerifyModal()">
+                    <i class="fas fa-check-double me-1"></i>Verificar en masa
+                </button>
+            </div>
+            <div id="toolbar-pending"></div>
+            <table id="pendingPaymentsTable"
+                   class="table table-hover text-center"
+                   data-toggle="table"
+                   data-icons-prefix="bi"
+                   data-icons="{
+                    'columns': 'bi-layout-three-columns',
+                    'search': 'bi-search',
+                    'clearSearch': 'bi-x-circle',
+                    'sortable': 'bi-arrow-down-up',
+                    'paginationSwitchDown': 'bi-caret-down',
+                    'paginationSwitchUp': 'bi-caret-up'
+                  }"
+                   data-toolbar="#toolbar-pending"
+                   data-search="true"
+                   data-show-refresh="true"
+                   data-show-columns="true"
+                   data-show-export="true"
+                   data-pagination="true"
+                   data-page-size="15"
+                   data-page-list="[15,25,50,100]"
+                   data-sort-name="paymentDate"
+                   data-sort-order="asc">
+                <thead>
+                    <tr>
+                        <th data-field="folio" data-sortable="true">Folio</th>
+                        <th data-field="guestFullName" data-sortable="true">Huésped</th>
+                        <th data-field="checkInDate" data-sortable="true" data-formatter="pv_checkInFormatter">Check-in</th>
+                        <th data-field="methodLabel" data-sortable="true" data-formatter="pv_methodFormatter">Método</th>
+                        <th data-field="paymentTypeLabel" data-sortable="true">Tipo</th>
+                        <th data-field="amount" data-sortable="true" data-formatter="pv_amountFormatter">Monto</th>
+                        <th data-field="reference" data-sortable="true" data-formatter="pv_referenceFormatter">Referencia</th>
+                        <th data-field="paymentDate" data-sortable="true" data-formatter="pv_dateFormatter">Fecha pago</th>
+                        <th data-field="actions" data-formatter="pv_actionsFormatter">Acciones</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+
+        <!-- Tab: Verificados -->
+        <div id="tabVerified" style="display:none;">
+            <div class="mb-3">
+                <div class="text-muted small" id="verifiedSubtitle">Cargando…</div>
+            </div>
+            <div id="toolbar-verified"></div>
+            <table id="verifiedPaymentsTable"
+                   class="table table-hover text-center"
+                   data-toggle="table"
+                   data-icons-prefix="bi"
+                   data-icons="{
+                    'columns': 'bi-layout-three-columns',
+                    'search': 'bi-search',
+                    'clearSearch': 'bi-x-circle',
+                    'sortable': 'bi-arrow-down-up',
+                    'paginationSwitchDown': 'bi-caret-down',
+                    'paginationSwitchUp': 'bi-caret-up'
+                  }"
+                   data-toolbar="#toolbar-verified"
+                   data-search="true"
+                   data-show-refresh="true"
+                   data-show-columns="true"
+                   data-show-export="true"
+                   data-pagination="true"
+                   data-page-size="15"
+                   data-page-list="[15,25,50,100]"
+                   data-sort-name="verifiedAt"
+                   data-sort-order="desc">
+                <thead>
+                    <tr>
+                        <th data-field="folio" data-sortable="true">Folio</th>
+                        <th data-field="guestFullName" data-sortable="true">Huésped</th>
+                        <th data-field="checkInDate" data-sortable="true" data-formatter="pv_checkInFormatter">Check-in</th>
+                        <th data-field="methodLabel" data-sortable="true" data-formatter="pv_methodFormatter">Método</th>
+                        <th data-field="paymentTypeLabel" data-sortable="true">Tipo</th>
+                        <th data-field="amount" data-sortable="true" data-formatter="pv_amountFormatter">Monto</th>
+                        <th data-field="reference" data-sortable="true" data-formatter="pv_referenceFormatter">Referencia</th>
+                        <th data-field="paymentDate" data-sortable="true" data-formatter="pv_dateFormatter">Fecha pago</th>
+                        <th data-field="verifiedAt" data-sortable="true" data-formatter="pv_dateFormatter">Verificado</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+
     </div>
 </div>
 
