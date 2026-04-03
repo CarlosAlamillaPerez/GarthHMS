@@ -532,6 +532,9 @@ function buildReservationCard(r) {
     if (r.status === 'pending' && !r.hasDeposit) {
         primaryBtnText = '<i class="fas fa-check-circle me-1"></i>Validar Anticipo';
         primaryBtnClass = 'warning';
+    } else if (r.hasUnverifiedPayments) {
+        primaryBtnText = '<i class="fas fa-search-dollar me-1"></i>Verificar pago';
+        primaryBtnClass = 'warning';
     } else if (r.status === 'confirmed' && isCheckinToday) {
         primaryBtnText = '<i class="fas fa-key me-1"></i>Check-in';
     } else if (r.status === 'checked_in') {
@@ -544,15 +547,30 @@ function buildReservationCard(r) {
         : '—';
 
     // Pago
-    const paymentHTML = r.hasDeposit
-        ? `<span class="payment-tag paid">
-               <i class="fas fa-check-circle fa-xs"></i>
-               Anticipo $${(r.depositAmount || 0).toLocaleString('es-MX')}
-           </span>`
-        : `<span class="payment-tag pending">
-               <i class="fas fa-clock fa-xs"></i>
-               Anticipo pendiente
-           </span>`;
+    let paymentHTML;
+    const totalPaid = (r.total || 0) - (r.balancePending || 0);
+
+    if (r.balancePending <= 0) {
+        paymentHTML = `<span class="payment-tag paid">
+        <i class="fas fa-check-circle fa-xs"></i>
+        Pagado completo
+    </span>`;
+    } else if (r.hasUnverifiedPayments) {
+        paymentHTML = `<span class="payment-tag" style="background:rgba(214,158,46,.12);color:#7B5E05;border:1px solid rgba(214,158,46,.3);">
+        <i class="fas fa-hourglass-half fa-xs"></i>
+        Pago por verificar
+    </span>`;
+    } else if (r.hasDeposit && totalPaid > 0) {
+        paymentHTML = `<span class="payment-tag paid">
+        <i class="fas fa-check-circle fa-xs"></i>
+        Pagado $${totalPaid.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+    </span>`;
+    } else {
+        paymentHTML = `<span class="payment-tag pending">
+        <i class="fas fa-clock fa-xs"></i>
+        Anticipo pendiente
+    </span>`;
+    }
 
     // VIP badge
     const vipHTML = r.isVip
@@ -611,10 +629,10 @@ function buildReservationCard(r) {
             ` : `
                 <button class="btn-action-main ${primaryBtnClass}"
                     onclick="event.stopPropagation(); 
-                    ${r.status === 'pending' && !r.hasDeposit
-                            ? `openPaymentModal('${r.reservationId}')`
-                            : `handlePrimaryAction('${r.reservationId}', '${r.status}', ${r.isCheckInToday})`
-                        }">
+                    ${(r.status === 'pending' && !r.hasDeposit) || r.hasUnverifiedPayments
+                        ? `openPaymentModal('${r.reservationId}')`
+                        : `handlePrimaryAction('${r.reservationId}', '${r.status}', ${r.isCheckInToday})`
+                    }
                     ${primaryBtnText}
                 </button>
                 <button class="btn-action-icon"
@@ -1011,15 +1029,63 @@ async function openPaymentModal(reservationId) {
             showConfirmButton: false,
             showCloseButton: true,
             didOpen: () => {
-                // Disparar change inicial para estado correcto del formulario
-                document.getElementById('pm-method')?.dispatchEvent(new Event('change'));
-                document.getElementById('pm-type')?.dispatchEvent(new Event('change'));
+                // Inicializar estado del formulario una vez que el DOM está listo
+                pmUpdateForm();
             }
         });
 
     } catch (err) {
         console.error('Error al abrir modal de pagos:', err);
         showErrorToast('No se pudo cargar el módulo de pagos');
+    }
+}
+
+function pmUpdateForm() {
+    const typeEl = document.getElementById('pm-type');
+    const methodEl = document.getElementById('pm-method');
+    if (!typeEl || !methodEl) return;
+
+    const type = typeEl.value;
+    const method = methodEl.value;
+
+    const amountWrap = document.getElementById('pm-amount-wrap');
+    const amountInput = document.getElementById('pm-amount');
+    const refWrap = document.getElementById('pm-reference-wrap');
+    const refInput = document.getElementById('pm-reference');
+    const hint = document.getElementById('pm-amount-hint');
+
+    // Leer el máximo desde el atributo max del input (ya lo pone Razor)
+    const maxBalance = parseFloat(amountInput?.getAttribute('max') || '0');
+
+    // ── Monto ──────────────────────────────────────────────────────
+    if (type === 'full') {
+        amountWrap.style.display = 'none';
+        if (amountInput) amountInput.value = maxBalance.toFixed(2);
+
+    } else if (type === 'refund') {
+        amountWrap.style.display = 'block';
+        if (amountInput) {
+            amountInput.removeAttribute('max');
+            amountInput.value = '';
+        }
+        if (hint) hint.textContent = 'Ingresa el monto a devolver';
+
+    } else {
+        // balance / deposit
+        amountWrap.style.display = 'block';
+        if (amountInput) {
+            amountInput.setAttribute('max', maxBalance);
+            amountInput.value = '';
+        }
+        if (hint) hint.textContent = `Máximo: $${maxBalance.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN`;
+    }
+
+    // ── Referencia ─────────────────────────────────────────────────
+    if (method !== 'cash') {
+        refWrap.style.display = 'block';
+    } else {
+        refWrap.style.display = 'none';
+        if (refInput) refInput.value = '';
     }
 }
 
@@ -1080,10 +1146,10 @@ async function submitPayment(reservationId) {
 
         // ── Éxito ──────────────────────────────────────────────────
         Swal.close();
+        // Refrescar lista de reservas para reflejar nuevo estado/saldo
+        changeTab(AvailabilityModule.currentTab);
         showSuccessToast('Pago registrado correctamente');
 
-        // Refrescar lista de reservas para reflejar nuevo estado/saldo
-        if (typeof loadActiveTab === 'function') loadActiveTab();
 
     } catch (err) {
         console.error('Error al registrar pago:', err);

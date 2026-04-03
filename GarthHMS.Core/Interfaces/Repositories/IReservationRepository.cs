@@ -42,7 +42,7 @@ namespace GarthHMS.Core.Interfaces.Repositories
         Task<bool> UpdateNightlyAsync(Guid hotelId, UpdateReservationDto dto, Guid updatedBy);
 
         /// <summary>Registra un pago y recalcula balance. Retorna (paymentId, newBalance, newStatus).</summary>
-        Task<(Guid PaymentId, decimal NewBalance, string NewStatus)> AddPaymentAsync(
+        Task<(Guid PaymentId, decimal NewBalance, string NewStatus, bool HasUnverified)> AddPaymentAsync(
             Guid hotelId,
             Guid reservationId,
             decimal amount,
@@ -55,5 +55,6 @@ namespace GarthHMS.Core.Interfaces.Repositories
         Task<IEnumerable<ReservationPaymentDto>> GetPaymentsAsync(
             Guid hotelId,
             Guid reservationId);
+
     }
 }

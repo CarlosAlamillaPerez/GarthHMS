@@ -27,6 +27,7 @@ namespace GarthHMS.Core.DTOs.AvailabilityEngine
         public decimal DepositAmount { get; set; }
         public DateTime? DepositPaidAt { get; set; }
         public decimal BalancePending { get; set; }
+        public bool HasUnverifiedPayments { get; set; }
 
         // Huésped
         public Guid GuestId { get; set; }
@@ -45,7 +46,7 @@ namespace GarthHMS.Core.DTOs.AvailabilityEngine
         /// <summary>
         /// True si el anticipo fue pagado
         /// </summary>
-        public bool HasDeposit => DepositPaidAt.HasValue && DepositAmount > 0;
+        public bool HasDeposit => DepositPaidAt.HasValue;
 
         /// <summary>
         /// True si el check-in es hoy

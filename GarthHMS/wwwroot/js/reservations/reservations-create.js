@@ -1119,10 +1119,27 @@ function updatePriceDisplay() {
         setText('priceTaxIsh', `$${formatMoney(f.taxIsh)}`);
     }
     setText('priceTotal', `$${formatMoney(f.total)}`);
-    setText('depositPctAmount', `$${formatMoney(f.depositAmount)}`);  // received
-    setText('depositPctAmountP', `$${formatMoney(f.depositAmount)}`);  // pending
-    setText('depositBalance', `$${formatMoney(f.balance)}`);        // received
-    setText('depositBalanceP', `$${formatMoney(f.balance)}`);        // pending
+    setText('depositPctAmount', `$${formatMoney(f.depositAmount)}`);
+    setText('depositPctAmountP', `$${formatMoney(f.depositAmount)}`);
+    setText('depositBalance', `$${formatMoney(f.balance)}`);
+    setText('depositBalanceP', `$${formatMoney(f.balance)}`);
+
+    // ── Actualizar panel de solo lectura en modo edición ──────────
+    if (window.IsEditMode) {
+        const totalPaid = ResCreate.editTotalPaid ?? 0; 
+        const newBalance = f.total - totalPaid;
+
+        const elTotal = document.getElementById('edit-readonly-total');
+        const elPaid = document.getElementById('edit-readonly-paid');
+        const elBalance = document.getElementById('edit-readonly-balance');
+
+        if (elTotal) elTotal.textContent = `$${formatMoney(f.total)} MXN`;
+        if (elPaid) elPaid.textContent = `$${formatMoney(totalPaid)} MXN`;
+        if (elBalance) {
+            elBalance.textContent = `$${formatMoney(newBalance)} MXN`;
+            elBalance.style.color = newBalance > 0 ? 'var(--danger)' : 'var(--success)';
+        }
+    }
 }
 
 function onDiscountChange() {
@@ -1267,7 +1284,7 @@ async function submitReservation(status) {
         };
 
         // Validar splits si hay anticipo recibido
-        if (ResCreate.depositState === 'received') {
+        if (ResCreate.depositState === 'received' && !window.IsEditMode) {
             const splits = ResCreate.paymentSplits.filter(p => parseFloat(p.amount) > 0);
 
             if (splits.length === 0) {
@@ -1599,7 +1616,7 @@ async function preloadEditData(r) {
                     <i class="fas fa-check-circle"></i>
                     <div>
                         <strong>Anticipo registrado</strong>
-                        <small class="d-block text-muted">Para abonar más usa el módulo de Pagos (Componente 5).</small>
+                        <small class="d-block text-muted">Para abonar más, usa el módulo de Pagos.</small>
                     </div>
                 </div>
                 ${r.payments.map(p => `
@@ -1617,11 +1634,19 @@ async function preloadEditData(r) {
                 `).join('')}
                 <div class="d-flex justify-content-between mt-2 pt-1" style="border-top:1px dashed var(--border-color);">
                     <small class="text-muted">Total pagado</small>
-                    <small class="fw-bold text-success">$${totalPaid.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN</small>
+                    <small id="edit-readonly-paid" class="fw-bold text-success">
+                        $${totalPaid.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN
+                    </small>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <small class="text-muted">Total reserva</small>
+                    <small id="edit-readonly-total" class="fw-bold text-muted">
+                        $${(r.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN
+                    </small>
                 </div>
                 <div class="d-flex justify-content-between">
                     <small class="text-muted">Saldo pendiente</small>
-                    <small class="fw-bold ${r.balancePending > 0 ? 'text-danger' : 'text-success'}">
+                    <small id="edit-readonly-balance" class="fw-bold ${r.balancePending > 0 ? 'text-danger' : 'text-success'}">
                         $${(r.balancePending || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN
                     </small>
                 </div>`;
@@ -1680,6 +1705,7 @@ async function preloadEditData(r) {
             if (depositSection) {
                 // Calcular info de pago para mostrar
                 const totalPaid = r.payments?.reduce((s, p) => s + (p.amount || 0), 0) ?? 0;
+                ResCreate.editTotalPaid = totalPaid; 
                 const hasPayments = r.payments?.length > 0;
                 const hasPending = r.depositAmount > 0 && !r.hasDeposit;
                 const noDeposit = !hasPayments && !hasPending;
@@ -1692,7 +1718,7 @@ async function preloadEditData(r) {
                     <i class="fas fa-check-circle"></i>
                     <div>
                         <strong>Anticipo registrado</strong>
-                        <small class="d-block text-muted">Para abonar más, usa el módulo de Pagos (Componente 5).</small>
+                        <small class="d-block text-muted">Para abonar más, usa el módulo de Pagos.</small>
                     </div>
                 </div>
                 ${r.payments.map(p => `

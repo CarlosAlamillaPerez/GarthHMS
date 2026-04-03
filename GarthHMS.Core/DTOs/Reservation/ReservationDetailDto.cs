@@ -43,6 +43,7 @@ namespace GarthHMS.Core.DTOs.Reservation
         public DateTime? DepositDueDate { get; set; }
         public Guid? DepositValidatedBy { get; set; }
         public decimal BalancePending { get; set; }
+        public bool HasUnverifiedPayments { get; set; }
 
         public string? GuestNotes { get; set; }
         public string? InternalNotes { get; set; }
@@ -164,6 +165,7 @@ namespace GarthHMS.Core.DTOs.Reservation
         public string PaymentType { get; set; } = "deposit";
         public DateTime PaymentDate { get; set; }
         public Guid RegisteredBy { get; set; }
+        public bool IsVerified { get; set; }
 
         public string MethodLabel => Method switch
         {

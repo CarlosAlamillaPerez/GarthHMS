@@ -388,7 +388,8 @@ namespace GarthHMS.Web.Controllers
                     message = "Pago registrado correctamente",
                     paymentId = result.Data.PaymentId,
                     newBalance = result.Data.NewBalance,
-                    newStatus = result.Data.NewStatus
+                    newStatus = result.Data.NewStatus,
+                    hasUnverified = result.Data.HasUnverified
                 });
             }
             catch (Exception ex)

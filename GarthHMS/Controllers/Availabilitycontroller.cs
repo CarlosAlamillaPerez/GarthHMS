@@ -346,6 +346,7 @@ namespace GarthHMS.Web.Controllers
                 depositPaidAt = r.DepositPaidAt?.ToString("yyyy-MM-dd"),
                 balancePending = r.BalancePending,
                 hasDeposit = r.HasDeposit,
+                hasUnverifiedPayments = r.HasUnverifiedPayments,
                 isCheckInToday = r.IsCheckInToday,
                 guestId = r.GuestId,
                 guestFullName = r.GuestFullName,

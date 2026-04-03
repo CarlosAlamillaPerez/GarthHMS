@@ -165,12 +165,24 @@
                     _ => "pm-type-balance"
                 };
                 <div class="pm-history-row">
-                    <div class="d-flex align-items-center gap-2">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
                         <span class="pm-type-badge @typeClass">@p.PaymentTypeLabel</span>
                         <span style="color:var(--text-primary);font-weight:500;">@p.MethodLabel</span>
-                        @if (!string.IsNullOrEmpty(p.Reference))
+                        @* ── Indicador de verificación ── *@
+                        @if (p.Method is "transfer" or "card")
                         {
-                            <span class="text-muted" style="font-size:0.75rem;">Ref: @p.Reference</span>
+                            if (p.IsVerified)
+                            {
+                                <span style="font-size:0.68rem;color:#276749;">
+                                    <i class="fas fa-shield-alt"></i> Verificado
+                                </span>
+                            }
+                            else
+                            {
+                                <span style="font-size:0.68rem;color:#92610A;">
+                                    <i class="fas fa-hourglass-half"></i> Sin verificar
+                                </span>
+                            }
                         }
                     </div>
                     <div class="d-flex align-items-center gap-3">
@@ -205,7 +217,7 @@
             <div class="d-flex gap-2">
                 <div style="flex:1;">
                     <div class="pm-label">Tipo de pago</div>
-                    <select id="pm-type" class="form-select form-select-sm">
+                    <select id="pm-type" class="form-select form-select-sm" onchange="pmUpdateForm()">
                         <option value="balance">Abono</option>
                         <option value="full">Pago completo</option>
                         @if (canRefund)
@@ -216,7 +228,7 @@
                 </div>
                 <div style="flex:1;">
                     <div class="pm-label">Método</div>
-                    <select id="pm-method" class="form-select form-select-sm">
+                    <select id="pm-method" class="form-select form-select-sm" onchange="pmUpdateForm()">
                         <option value="cash">💵 Efectivo</option>
                         <option value="transfer">🏦 Transferencia</option>
                         <option value="card">💳 Tarjeta</option>
@@ -274,48 +286,3 @@
 
 </div>
 
-<script>
-    const PM_MAX_BALANCE = @Model.BalancePending.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
-
-    function pmUpdateForm() {
-        const type = document.getElementById('pm-type')?.value;
-        const method = document.getElementById('pm-method')?.value;
-
-        const amountWrap = document.getElementById('pm-amount-wrap');
-        const refWrap = document.getElementById('pm-reference-wrap');
-        const amountInput = document.getElementById('pm-amount');
-        const hint = document.getElementById('pm-amount-hint');
-
-        // ── Monto ──────────────────────────────────────────────────
-        if (type === 'full') {
-            // Pago completo: ocultar input, el valor lo ponemos internamente
-            amountWrap.style.display = 'none';
-            amountInput.value = PM_MAX_BALANCE;
-        } else if (type === 'refund') {
-            amountWrap.style.display = 'block';
-            amountInput.removeAttribute('max');
-            amountInput.value = '';
-            hint.textContent = 'Ingresa el monto a devolver';
-        } else {
-            // balance / deposit
-            amountWrap.style.display = 'block';
-            amountInput.setAttribute('max', PM_MAX_BALANCE);
-            amountInput.value = '';
-            hint.textContent = `Máximo: $${PM_MAX_BALANCE.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN`;
-        }
-
-        // ── Referencia ─────────────────────────────────────────────
-        if (method !== 'cash') {
-            refWrap.style.display = 'block';
-        } else {
-            refWrap.style.display = 'none';
-            document.getElementById('pm-reference').value = '';
-        }
-    }
-
-    document.getElementById('pm-type')?.addEventListener('change', pmUpdateForm);
-    document.getElementById('pm-method')?.addEventListener('change', pmUpdateForm);
-
-    // Estado inicial
-    pmUpdateForm();
-</script>

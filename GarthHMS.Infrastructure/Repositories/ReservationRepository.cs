@@ -277,6 +277,7 @@ namespace GarthHMS.Infrastructure.Repositories
                 DepositDueDate = row.deposit_due_date,
                 DepositValidatedBy = row.deposit_validated_by,
                 BalancePending = row.balance_pending ?? 0m,
+                HasUnverifiedPayments = row.has_unverified_payments ?? false,
                 GuestNotes = row.guest_notes?.ToString(),
                 InternalNotes = row.internal_notes?.ToString(),
                 CreatedAt = row.created_at ?? DateTime.UtcNow,
@@ -390,7 +391,7 @@ namespace GarthHMS.Infrastructure.Repositories
         // AGREGAR PAGO
         // ────────────────────────────────────────────────────────────────────
 
-        public async Task<(Guid PaymentId, decimal NewBalance, string NewStatus)> AddPaymentAsync(
+        public async Task<(Guid PaymentId, decimal NewBalance, string NewStatus, bool HasUnverified)> AddPaymentAsync(
             Guid hotelId,
             Guid reservationId,
             decimal amount,
@@ -415,7 +416,8 @@ namespace GarthHMS.Infrastructure.Repositories
             return (
                 (Guid)result.payment_id,
                 (decimal)result.new_balance,
-                (string)result.new_status
+                (string)result.new_status,
+                (bool)(result.has_unverified ?? false)
             );
         }
 

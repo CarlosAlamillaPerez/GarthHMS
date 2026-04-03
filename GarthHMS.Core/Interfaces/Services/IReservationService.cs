@@ -40,7 +40,7 @@ namespace GarthHMS.Core.Interfaces.Services
             Guid hotelId, UpdateReservationDto dto, Guid updatedBy);
 
         /// <summary>Registra un abono o devolución en una reserva.</summary>
-        Task<ServiceResult<(Guid PaymentId, decimal NewBalance, string NewStatus)>> AddPaymentAsync(
+        Task<ServiceResult<(Guid PaymentId, decimal NewBalance, string NewStatus, bool HasUnverified)>> AddPaymentAsync(
             Guid hotelId,
             Guid reservationId,
             decimal amount,

@@ -467,6 +467,24 @@
                             <span class="text-muted ms-1" style="font-size:0.72rem;">
                                 · @p.PaymentDate.ToLocalTime().ToString("dd MMM HH:mm")
                             </span>
+                            @* ── Indicador de verificación (solo transfer/card) ── *@
+                            @if (p.Method is "transfer" or "card")
+                            {
+                                if (p.IsVerified)
+                                {
+                                    <span class="ms-1" style="font-size:0.68rem;color:#276749;"
+                                          title="Pago verificado">
+                                        <i class="fas fa-shield-alt"></i> Verificado
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="ms-1" style="font-size:0.68rem;color:#92610A;"
+                                          title="Pendiente de verificación por gerente">
+                                        <i class="fas fa-hourglass-half"></i> Sin verificar
+                                    </span>
+                                }
+                            }
                         </span>
                         <strong>$@p.Amount.ToString("N2")</strong>
                     </div>
