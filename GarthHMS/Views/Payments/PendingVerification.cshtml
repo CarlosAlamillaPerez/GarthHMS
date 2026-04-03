@@ -1,0 +1,116 @@
+﻿@{
+    ViewData["Title"] = "Verificación de Anticipos";
+}
+
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1 class="page-title">
+                <i class="fas fa-check-double"></i> Verificación de Anticipos
+            </h1>
+            <p class="text-muted">Confirma las transferencias y pagos con tarjeta recibidos en el banco</p>
+        </div>
+        <div class="col-auto">
+            <button type="button" class="btn btn-outline-primary" onclick="loadPendingPayments()">
+                <i class="fas fa-sync-alt"></i> Recargar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- KPIs                                                         -->
+<!-- ============================================================ -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:48px;height:48px;background:rgba(66,153,225,0.12);">
+                    <i class="fas fa-clock" style="color:var(--info);font-size:1.3rem;"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Pagos por verificar</div>
+                    <div id="kpi-count" class="fw-bold fs-4 lh-1">—</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:48px;height:48px;background:rgba(56,161,105,0.12);">
+                    <i class="fas fa-dollar-sign" style="color:var(--success);font-size:1.3rem;"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Monto total pendiente</div>
+                    <div id="kpi-amount" class="fw-bold fs-4 lh-1">—</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:48px;height:48px;background:rgba(214,158,46,0.12);">
+                    <i class="fas fa-exclamation-triangle" style="color:var(--warning);font-size:1.3rem;"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Pago más antiguo</div>
+                    <div id="kpi-oldest" class="fw-bold fs-5 lh-1">—</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TABLA                                                        -->
+<!-- ============================================================ -->
+<div class="card">
+    <div class="card-body">
+        <div id="toolbar"></div>
+        <table id="pendingPaymentsTable"
+               class="table table-hover text-center"
+               data-toggle="table"
+               data-icons-prefix="bi"
+               data-icons="{
+                'columns': 'bi-layout-three-columns',
+                'search': 'bi-search',
+                'clearSearch': 'bi-x-circle',
+                'sortable': 'bi-arrow-down-up',
+                'paginationSwitchDown': 'bi-caret-down',
+                'paginationSwitchUp': 'bi-caret-up'
+              }"
+               data-toolbar="#toolbar"
+               data-search="true"
+               data-show-refresh="true"
+               data-show-columns="true"
+               data-show-export="true"
+               data-pagination="true"
+               data-page-size="15"
+               data-page-list="[15,25,50,100]"
+               data-sort-name="paymentDate"
+               data-sort-order="asc">
+            <thead>
+                <tr>
+                    <th data-field="folio" data-sortable="true">Folio</th>
+                    <th data-field="guestFullName" data-sortable="true">Huésped</th>
+                    <th data-field="checkInDate" data-sortable="true" data-formatter="pv_checkInFormatter">Check-in</th>
+                    <th data-field="methodLabel" data-sortable="true" data-formatter="pv_methodFormatter">Método</th>
+                    <th data-field="paymentTypeLabel" data-sortable="true">Tipo</th>
+                    <th data-field="amount" data-sortable="true" data-formatter="pv_amountFormatter">Monto</th>
+                    <th data-field="reference" data-sortable="true" data-formatter="pv_referenceFormatter">Referencia</th>
+                    <th data-field="paymentDate" data-sortable="true" data-formatter="pv_dateFormatter">Fecha pago</th>
+                    <th data-field="actions" data-formatter="pv_actionsFormatter">Acciones</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/reservations/payments-verification.js" asp-append-version="true"></script>
+}

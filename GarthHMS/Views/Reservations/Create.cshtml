@@ -1,20 +1,32 @@
 ﻿@* GarthHMS.Web/Views/Reservations/Index.cshtml *@
 @{
-    <h4 class="mb-0 fw-bold">
-        @if (ViewBag.IsEdit == true)
-        {
-            var res = ViewBag.Reservation as GarthHMS.Core.DTOs.Reservation.ReservationDetailDto;
-            <i class="fas fa-edit text-warning me-2"></i>
 
-            @($"Editando {res?.Folio}")
-        }
-        else
-        {
-            <i class="fas fa-calendar-plus text-primary me-2"></i>
+    <div class="page-header d-flex align-items-center justify-content-between">
 
-            @("Nueva Reserva")
-        }
-    </h4>
+        <!-- Lado izquierdo: botón + título -->
+        <div class="d-flex align-items-center gap-2">
+
+            <a href="/Availability" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+
+            <h4 class="mb-0 fw-bold">
+                @if (ViewBag.IsEdit == true)
+                {
+                    var res = ViewBag.Reservation as GarthHMS.Core.DTOs.Reservation.ReservationDetailDto;
+                    <i class="fas fa-edit text-warning me-2"></i>
+                    @($"Editando {res?.Folio}")
+                }
+                else
+                {
+                    <i class="fas fa-calendar-plus text-primary me-2"></i>
+                    @("Nueva Reserva")
+                }
+            </h4>
+
+        </div>
+
+    </div>
     Layout = "~/Views/Shared/_Layout.cshtml";
 
     var config = ViewBag.Config as GarthHMS.Core.DTOs.Reservation.ReservationFormConfigDto
@@ -383,20 +395,6 @@
     }
     
 </style>
-
-<div class="page-header">
-    <div class="d-flex align-items-center gap-2">
-        <a href="/Availability" class="btn btn-sm btn-outline-secondary">
-            <i class="fas fa-arrow-left"></i>
-        </a>
-        <div>
-            <div class="text-muted small">Reservaciones</div>
-            <h4 class="mb-0 fw-bold">
-                <i class="fas fa-calendar-plus text-primary me-2"></i>Nueva Reserva
-            </h4>
-        </div>
-    </div>
-</div>
 
 <div class="main-content" style="max-width: 920px; margin: 0 auto; padding-bottom: 120px;">
 

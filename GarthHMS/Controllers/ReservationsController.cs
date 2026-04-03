@@ -29,6 +29,12 @@ namespace GarthHMS.Web.Controllers
         // HELPERS
         // ====================================================================
 
+        private bool IsManagerOrAdmin()
+        {
+            if (User.FindFirst(ClaimTypes.Role)?.Value == "SuperAdmin") return true;
+            return User.FindFirst("IsManagerRole")?.Value == "True";
+        }
+
         private Guid GetCurrentHotelId()
         {
             var claim = User.FindFirst("HotelId")?.Value;
@@ -367,7 +373,7 @@ namespace GarthHMS.Web.Controllers
                 var hotelId = GetCurrentHotelId();
                 var userId = GetCurrentUserId();
                 var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
-                var isManagerOrAdmin = userRole is "Administrador" or "Gerente";
+                var isManagerOrAdmin = IsManagerOrAdmin();
 
                 var result = await _reservationService.AddPaymentAsync(
                     hotelId,

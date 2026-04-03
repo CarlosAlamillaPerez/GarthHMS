@@ -24,7 +24,7 @@ namespace GarthHMS.Application.Services
         {
             try
             {
-                var user = await _userRepository.GetByEmailAsync(loginDto.Email);
+                var user = await _userRepository.GetForLoginAsync(loginDto.Email);
 
                 if (user == null)
                 {
@@ -58,19 +58,21 @@ namespace GarthHMS.Application.Services
                     Email = user.Email,
                     Phone = user.Phone,
                     AvatarUrl = user.PhotoUrl,
-                    UserRole = Core.Enums.UserRole.SuperAdmin,
-                    UserRoleText = "SuperAdmin",
+                    UserRoleText = user.UserRoleText,   // nombre real del rol
+                    IsManagerRole = user.IsManagerRole,  // flag real de la BD
                     IsActive = user.IsActive,
-                    MaxDiscountPercent = 100
+                    MaxDiscountPercent = user.MaxDiscountPercent
                 };
 
-                _logger.LogInformation("User logged in: {Email}", loginDto.Email);
+                _logger.LogInformation("User logged in: {Email} | Role: {Role} | IsManager: {IsManager}",
+                    loginDto.Email, userDto.UserRoleText, userDto.IsManagerRole);
+
                 return (true, userDto, null);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during login: {Email}", loginDto.Email);
-                return (false, null, "Error al iniciar sesión. Intente nuevamente");
+                return (false, null, "Error al iniciar sesión.");
             }
         }
 

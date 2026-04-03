@@ -385,44 +385,54 @@ function chooseGuestFromModal(guest) {
 function setSelectedGuest(guest) {
     ResCreate.guest = guest;
 
-    if (ResCreate.requiresInvoice) {
-        const info = document.getElementById('invoiceBillingInfo');
-        const text = document.getElementById('invoiceBillingText');
-        const g = ResCreate.guest;
-        if (text) {
-            if (g?.billingRfc) {
-                text.innerHTML = `<strong>RFC:</strong> ${g.billingRfc} &nbsp;|&nbsp;
-                              <strong>Razón social:</strong> ${g.billingBusinessName || '—'} &nbsp;|&nbsp;
-                              <strong>Email fiscal:</strong> ${g.billingEmail || '—'}`;
-            } else {
-                text.innerHTML = `El huésped no tiene datos fiscales registrados. 
-                              Se podrán capturar durante el check-in.`;
-            }
-            if (info) info.style.display = 'block';
-        }
-    }
-
-    document.getElementById('selectedGuestId').value = guest.guestId;
+    // Actualizar campos con null checks
+    const selectedGuestId = document.getElementById('selectedGuestId');
+    const guestInitials = document.getElementById('guestInitials');
+    const guestSelectedName = document.getElementById('guestSelectedName');
+    const guestSelectedPhone = document.getElementById('guestSelectedPhone');
+    const guestSelectedEmail = document.getElementById('guestSelectedEmail');
+    const guestVipBadge = document.getElementById('guestVipBadge');
+    const guestSelectedCard = document.getElementById('guestSelectedCard');
+    const guestSearchArea = document.getElementById('guestSearchArea');
 
     const fullName = `${guest.firstName} ${guest.lastName}`.trim();
     const initial = (guest.firstName || '?')[0].toUpperCase();
 
-    document.getElementById('guestInitials').textContent = initial;
-    document.getElementById('guestSelectedName').textContent = fullName;
-    document.getElementById('guestSelectedPhone').textContent = guest.phone || '';
-    document.getElementById('guestSelectedEmail').textContent = guest.email || '';
-    document.getElementById('guestVipBadge').style.display = guest.isVip ? 'inline-block' : 'none';
+    if (selectedGuestId) selectedGuestId.value = guest.guestId;
+    if (guestInitials) guestInitials.textContent = initial;
+    if (guestSelectedName) guestSelectedName.textContent = fullName;
+    if (guestSelectedPhone) guestSelectedPhone.textContent = guest.phone || '';
+    if (guestSelectedEmail) guestSelectedEmail.textContent = guest.email || '';
+    if (guestVipBadge) guestVipBadge.style.display = guest.isVip ? 'inline-block' : 'none';
+    if (guestSelectedCard) guestSelectedCard.style.display = 'flex';
+    if (guestSearchArea) guestSearchArea.style.display = 'none';
 
-    document.getElementById('guestSelectedCard').style.display = 'flex';
-    document.getElementById('guestSearchArea').style.display = 'none';
+    // Refrescar info de factura si estaba activa
+    if (ResCreate.requiresInvoice) {
+        const info = document.getElementById('invoiceBillingInfo');
+        const text = document.getElementById('invoiceBillingText');
+        if (text) {
+            text.innerHTML = guest.billingRfc
+                ? `<strong>RFC:</strong> ${guest.billingRfc} &nbsp;|&nbsp;
+                   <strong>Razón social:</strong> ${guest.billingBusinessName || '—'} &nbsp;|&nbsp;
+                   <strong>Email fiscal:</strong> ${guest.billingEmail || '—'}`
+                : `El huésped no tiene datos fiscales registrados. Se podrán capturar durante el check-in.`;
+        }
+        if (info) info.style.display = 'block';
+    }
 }
 
 function clearGuest() {
     ResCreate.guest = null;
-    document.getElementById('selectedGuestId').value = '';
-    document.getElementById('guestSelectedCard').style.display = 'none';
-    document.getElementById('guestSearchArea').style.display = 'block';
-    document.getElementById('guestQuickSearch').value = '';
+    const selectedGuestId = document.getElementById('selectedGuestId');
+    const guestSelectedCard = document.getElementById('guestSelectedCard');
+    const guestSearchArea = document.getElementById('guestSearchArea');
+    const guestQuickSearch = document.getElementById('guestQuickSearch');
+
+    if (selectedGuestId) selectedGuestId.value = '';
+    if (guestSelectedCard) guestSelectedCard.style.display = 'none';
+    if (guestSearchArea) guestSearchArea.style.display = 'block';
+    if (guestQuickSearch) guestQuickSearch.value = '';
 }
 
 // Abre el modal de creación de huésped (mismo partial del GuestsController)
@@ -1168,23 +1178,6 @@ function updatePriceDisplay() {
             elBalance.style.color = newBalance > 0 ? 'var(--danger)' : 'var(--success)';
         }
     }
-
-    // ── En edición: deshabilitar búsqueda de huésped ──────────────────
-    if (window.IsEditMode) {
-        const searchArea = document.getElementById('guestSearchArea');
-        if (searchArea) searchArea.style.display = 'none';
-
-        // Agregar indicador visual de solo lectura
-        const guestCard = document.getElementById('selectedGuestCard');
-        if (guestCard) {
-            const lockBadge = document.createElement('span');
-            lockBadge.className = 'badge bg-secondary ms-2';
-            lockBadge.style.fontSize = '.65rem';
-            lockBadge.innerHTML = '<i class="fas fa-lock me-1"></i>No editable';
-            guestCard.querySelector('.guest-name, [class*="guest"]')
-                ?.appendChild(lockBadge);
-        }
-    }
 }
 
 function onDiscountChange() {
@@ -1776,6 +1769,22 @@ async function preloadEditData(r) {
 
         // ── Anticipo ──────────────────────────────────────────────────────────
         if (window.IsEditMode) {
+
+            // Ocultar botón "Cambiar"
+            const cambiarBtn = document.querySelector('#guestSelectedCard button');
+            if (cambiarBtn) cambiarBtn.style.display = 'none';
+
+            // Agregar badge de solo lectura junto al nombre
+            const nameEl = document.getElementById('guestSelectedName');
+            if (nameEl && !document.getElementById('guestLockBadge')) {
+                const badge = document.createElement('span');
+                badge.id = 'guestLockBadge';
+                badge.className = 'badge bg-secondary ms-2';
+                badge.style.fontSize = '.65rem';
+                badge.innerHTML = '<i class="fas fa-lock me-1"></i>No editable';
+                nameEl.parentElement.appendChild(badge);
+            }
+
             // En edición — reemplazar toda la sección con info solo lectura
             const depositSection = document.getElementById('depositSection');
             if (depositSection) {
@@ -1941,7 +1950,7 @@ async function preloadEditData(r) {
             } else {
                 console.warn('❌ No se encontró botón para:', sourceVal);
             }
-        }, 150);
+        }, 50);
 
         // ── Toast ─────────────────────────────────────────────────────────
         showInfoToast(`Editando reserva ${r.folio}`);

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using GarthHMS.Core.DTOs;
 using GarthHMS.Core.Entities;
 
 namespace GarthHMS.Core.Interfaces.Repositories
@@ -19,5 +19,6 @@ namespace GarthHMS.Core.Interfaces.Repositories
         Task DeleteAsync(Guid id);
         Task<bool> EmailExistsAsync(string email, Guid? excludeUserId = null);
         Task UpdateLastLoginAsync(Guid userId);
+        Task<UserLoginData?> GetForLoginAsync(string email);
     }
 }

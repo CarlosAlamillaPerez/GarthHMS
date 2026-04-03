@@ -61,6 +61,7 @@ namespace GarthHMS.Web.Controllers
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Name, user.FullName),
                 new Claim(ClaimTypes.Role, user.UserRoleText),
+                new Claim("IsManagerRole", user.IsManagerRole.ToString()),
                 new Claim("MaxDiscount", user.MaxDiscountPercent.ToString())
             };
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using GarthHMS.Core.DTOs;
 using GarthHMS.Core.Entities;
 using GarthHMS.Core.Interfaces.Repositories;
 using GarthHMS.Infrastructure.Data;
@@ -106,6 +107,32 @@ namespace GarthHMS.Infrastructure.Repositories
             {
                 p_user_id = userId
             });
+        }
+
+        public async Task<UserLoginData?> GetForLoginAsync(string email)
+        {
+            var result = await _procedimientos.EjecutarUnicoAsync<dynamic>(
+                "sp_user_get_for_login",
+                new { p_email = email });
+
+            if (result == null) return null;
+
+            return new UserLoginData
+            {
+                UserId = (Guid)result.user_id,
+                HotelId = result.hotel_id != null ? (Guid)result.hotel_id : Guid.Empty,
+                RoleId = result.role_id != null ? (Guid)result.role_id : Guid.Empty,
+                UserRoleText = result.role_name?.ToString() ?? "Sin rol",
+                IsManagerRole = (bool)(result.is_manager_role ?? false),
+                MaxDiscountPercent = result.max_discount_percent != null ? (int)result.max_discount_percent : 0,
+                Email = result.email?.ToString() ?? "",
+                PasswordHash = result.password_hash?.ToString() ?? "",
+                FirstName = result.first_name?.ToString() ?? "",
+                LastName = result.last_name?.ToString() ?? "",
+                Phone = result.phone?.ToString(),
+                PhotoUrl = result.photo_url?.ToString(),
+                IsActive = (bool)(result.is_active ?? false)
+            };
         }
     }
 }

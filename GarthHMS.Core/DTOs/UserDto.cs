@@ -22,5 +22,8 @@ namespace GarthHMS.Core.DTOs
         public string UserRoleText { get; set; } = string.Empty;
         public bool IsActive { get; set; }
         public decimal MaxDiscountPercent { get; set; }
+
+        public string UserRoleName { get; set; } = "";   // nombre real del rol
+        public bool IsManagerRole { get; set; } = false;  // flag de la BD
     }
 }
