@@ -28,6 +28,7 @@ namespace GarthHMS.Core.DTOs.AvailabilityEngine
         public DateTime? DepositPaidAt { get; set; }
         public decimal BalancePending { get; set; }
         public bool HasUnverifiedPayments { get; set; }
+        public bool RequiresInvoice { get; set; }
 
         // Huésped
         public Guid GuestId { get; set; }

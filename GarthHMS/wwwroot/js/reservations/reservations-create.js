@@ -48,6 +48,7 @@ $(document).ready(function () {
     if (window.IsEditMode && window.EditReservation) {
         preloadEditData(window.EditReservation);
     }
+    updateSubmitButton();
 });
 
 // ─── Botones de canal (radio) ────────────────────────────────────────────────
@@ -112,6 +113,15 @@ function initDates() {
 
     document.getElementById('checkInDate').min = getMinCheckInDate();
     document.getElementById('checkOutDate').min = localToday;
+}
+
+// ─── Formato corto de fecha para modales ─────────────────────────────────────
+function formatShortDateLocal(dateStr) {
+    if (!dateStr) return '—';
+    const [y, m, d] = dateStr.split('-');
+    const months = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+        'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    return `${parseInt(d)} ${months[parseInt(m)]}`;
 }
 
 function onDatesChange() {
@@ -374,6 +384,24 @@ function chooseGuestFromModal(guest) {
 
 function setSelectedGuest(guest) {
     ResCreate.guest = guest;
+
+    if (ResCreate.requiresInvoice) {
+        const info = document.getElementById('invoiceBillingInfo');
+        const text = document.getElementById('invoiceBillingText');
+        const g = ResCreate.guest;
+        if (text) {
+            if (g?.billingRfc) {
+                text.innerHTML = `<strong>RFC:</strong> ${g.billingRfc} &nbsp;|&nbsp;
+                              <strong>Razón social:</strong> ${g.billingBusinessName || '—'} &nbsp;|&nbsp;
+                              <strong>Email fiscal:</strong> ${g.billingEmail || '—'}`;
+            } else {
+                text.innerHTML = `El huésped no tiene datos fiscales registrados. 
+                              Se podrán capturar durante el check-in.`;
+            }
+            if (info) info.style.display = 'block';
+        }
+    }
+
     document.getElementById('selectedGuestId').value = guest.guestId;
 
     const fullName = `${guest.firstName} ${guest.lastName}`.trim();
@@ -1314,14 +1342,143 @@ async function submitReservation(status) {
                 ? `· Anticipo: <strong>$${formatMoney(f.depositAmount)}</strong>`
                 : '· Sin anticipo registrado'}`;
 
+        // ── Construir resumen del modal ───────────────────────────────────────
+        const isEditMode = window.IsEditMode === true;
+        const isDraft = status === 'draft';
+        const existingPayments = window.EditReservation?.payments ?? [];
+
+        // Pagos del formulario (creación)
+        const formSplits = !isEditMode && ResCreate.depositState === 'received'
+            ? ResCreate.paymentSplits.filter(p => parseFloat(p.amount) > 0)
+            : [];
+
+        // Todos los pagos a mostrar
+        const allPayments = [
+            ...existingPayments.map(p => ({
+                label: p.method === 'cash' ? '💵 Efectivo'
+                    : p.method === 'transfer' ? '🏦 Transferencia'
+                        : '💳 Tarjeta',
+                amount: p.amount,
+                tag: p.paymentType === 'deposit' ? 'Anticipo'
+                    : p.paymentType === 'refund' ? 'Devolución' : 'Abono'
+            })),
+            ...formSplits.map(p => ({
+                label: p.method === 'cash' ? '💵 Efectivo'
+                    : p.method === 'transfer' ? '🏦 Transferencia'
+                        : '💳 Tarjeta',
+                amount: parseFloat(p.amount),
+                tag: 'Anticipo'
+            }))
+        ];
+
+        const totalPagado = allPayments
+            .filter(p => p.tag !== 'Devolución')
+            .reduce((s, p) => s + p.amount, 0);
+        const saldoPendiente = f.total - totalPagado;
+
+        // Habitaciones
+        const roomsLine = ResCreate.rooms.map(r =>
+            `${r.roomNumber} <span style="color:var(--text-secondary);font-size:.8rem;">${r.roomTypeName ?? ''}</span>`
+        ).join(' · ');
+
+        // Pagos HTML
+        const paymentsHTML = allPayments.length > 0
+            ? allPayments.map(p => `
+        <div style="display:flex;justify-content:space-between;font-size:.85rem;padding:3px 0;">
+            <span>${p.label} <span style="font-size:.7rem;background:rgba(43,164,154,.12);
+                color:#1a7a72;padding:1px 6px;border-radius:8px;">${p.tag}</span></span>
+            <strong>$${formatMoney(p.amount)}</strong>
+        </div>`).join('')
+            : `<div style="font-size:.85rem;color:var(--text-secondary);">Sin pagos registrados</div>`;
+
+        const modalTitle = isDraft ? '💾 Guardar borrador'
+            : isEditMode ? '✏️ Guardar cambios'
+                : '<i class="fa-solid fa-calendar-check" style="color: #28a745;"></i> Confirmar reserva';
+
+        const confirmBtnText = isDraft ? 'Guardar borrador'
+            : isEditMode ? 'Guardar cambios'
+                : 'Sí, confirmar';
+
+        const confirmBtnColor = isDraft ? 'var(--primary)' : 'var(--success)';
+
         const confirmResult = await Swal.fire({
-            title: status === 'draft' ? '💾 Guardar borrador' : '✅ Confirmar reserva',
-            html: confirmMsg,
-            icon: status === 'draft' ? 'info' : 'question',
+            title: modalTitle,
+            width: 500,
+            html: `
+        <div style="text-align:left;font-size:.9rem;">
+
+            <div style="margin-bottom:1rem;font-size:.85rem;color:var(--text-secondary);display:flex;gap:.6rem;">
+                <!-- Ícono centrado -->
+                <div style="display:flex;align-items:center;">
+                    <i class="fas fa-user fa-2x" style="color:var(--primary);"></i>
+                </div>
+
+                <!-- Contenido -->
+                <div style="flex:1;">
+
+                    <!-- Fechas -->
+                    <div style="display:flex;align-items:center;gap:.4rem;">
+                        <i class="fas fa-calendar-check me-1"></i>
+                        <span>
+                            16 Abr → 25 Abr · <strong>9 noches</strong>
+                        </span>
+                    </div>
+
+                    <!-- Habitaciones -->
+                    <div style="margin-top:.3rem;display:flex;align-items:flex-start;gap:.4rem;">
+                        <i class="fas fa-bed" style="margin-top:2px;"></i>
+                        <div style="white-space:normal;line-height:1.4;">
+                            ${roomsLine || '—'}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div style="background:var(--bg-surface-alt);border-radius:8px;padding:.75rem;margin-bottom:.75rem;">
+                <div style="display:flex;justify-content:space-between;font-size:.82rem;padding:2px 0;color:var(--text-secondary);">
+                    <span>Subtotal</span><span>$${formatMoney(f.basePrice)}</span>
+                </div>
+                ${f.discountAmount > 0 ? `
+                <div style="display:flex;justify-content:space-between;font-size:.82rem;padding:2px 0;color:var(--success);">
+                    <span>Descuento</span><span>-$${formatMoney(f.discountAmount)}</span>
+                </div>` : ''}
+                ${window.HotelConfig?.chargesTaxes ? `
+                <div style="display:flex;justify-content:space-between;font-size:.82rem;padding:2px 0;color:var(--text-secondary);">
+                    <span>IVA (${window.HotelConfig.taxIvaPercent}%)</span><span>$${formatMoney(f.taxIva)}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:.82rem;padding:2px 0;color:var(--text-secondary);">
+                    <span>ISH (${window.HotelConfig.taxIshPercent}%)</span><span>$${formatMoney(f.taxIsh)}</span>
+                </div>` : ''}
+                <div style="display:flex;justify-content:space-between;font-size:1rem;font-weight:700;
+                            border-top:1px solid var(--border-color);margin-top:.4rem;padding-top:.4rem;">
+                    <span>Total</span>
+                    <span style="color:var(--primary);">$${formatMoney(f.total)} MXN</span>
+                </div>
+            </div>
+
+            <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;
+                        letter-spacing:.06em;color:var(--text-secondary);margin-bottom:.4rem;">
+                <i class="fas fa-credit-card me-1"></i>Pagos
+            </div>
+            <div style="background:var(--bg-surface-alt);border-radius:8px;padding:.6rem .75rem;margin-bottom:.5rem;">
+                ${paymentsHTML}
+                ${allPayments.length > 0 ? `
+                <div style="display:flex;justify-content:space-between;font-size:.85rem;
+                            border-top:1px dashed var(--border-color);margin-top:.4rem;padding-top:.4rem;">
+                    <span style="color:var(--text-secondary);">Saldo pendiente</span>
+                    <strong style="color:${saldoPendiente > 0 ? 'var(--danger)' : 'var(--success)'};">
+                        $${formatMoney(saldoPendiente)} MXN
+                    </strong>
+                </div>` : ''}
+            </div>
+
+        </div>`,
             showCancelButton: true,
-            confirmButtonText: status === 'draft' ? 'Guardar borrador' : 'Sí, confirmar',
+            confirmButtonText: confirmBtnText,
             cancelButtonText: 'Revisar',
-            confirmButtonColor: status === 'draft' ? 'var(--primary)' : 'var(--success)',
+            confirmButtonColor: confirmBtnColor,
+            cancelButtonColor: '#718096'
         });
 
         if (!confirmResult.isConfirmed) return;
@@ -1346,7 +1503,7 @@ async function submitReservation(status) {
 
         await Swal.fire({
             icon: 'success',
-            title: isEdit ? '✅ Reserva actualizada' : (status === 'draft' ? '💾 Borrador guardado' : '🎉 Reserva confirmada'),
+            title: isEdit ? '<i class="fa-solid fa-circle-check" style="color: #28a745;"></i> Reserva actualizada' : (status === 'draft' ? '💾 Borrador guardado' : 'Reserva confirmada'),
             html: isEdit
                 ? `<p>La reserva <strong style="color:var(--primary)">${window.EditReservation?.folio}</strong> fue actualizada correctamente.</p>`
                 : `<div style="font-size:1.1rem;margin:1rem 0;">
@@ -1499,6 +1656,7 @@ function onDepositStateChange(state) {
     }
 
     recalculate();
+    updateSubmitButton();
 }
 
 function onDepositTypeChange() {
@@ -1605,6 +1763,7 @@ async function preloadEditData(r) {
             const depositSection = document.getElementById('depositSection');
             if (depositSection) {
                 const totalPaid = r.payments?.reduce((s, p) => s + (p.amount || 0), 0) ?? 0;
+                ResCreate.editTotalPaid = totalPaid;
                 const hasPayments = r.payments?.length > 0;
                 const hasPending = r.depositAmount > 0 && !r.hasDeposit;
 
@@ -1670,13 +1829,15 @@ async function preloadEditData(r) {
                 }
 
                 depositSection.innerHTML = `
-            <div class="d-flex align-items-center gap-2 mb-3">
-                <span class="fw-semibold">Estado del pago</span>
-                <span class="badge bg-secondary ms-1" style="font-size:.7rem;">
-                    <i class="fas fa-lock me-1"></i>Solo lectura
-                </span>
-            </div>
-            ${infoHTML}`;
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="fw-semibold">Estado del pago</span>
+                    <span class="badge bg-secondary ms-1" style="font-size:.7rem;">
+                        <i class="fas fa-lock me-1"></i>Solo lectura
+                    </span>
+                </div>
+                ${infoHTML}`;
+                updatePriceDisplay();
+                updateSubmitButton();
             }
 
         } else {
@@ -1696,84 +1857,6 @@ async function preloadEditData(r) {
             } else {
                 ResCreate.depositState = 'none';
                 onDepositStateChange('none');
-            }
-        }
-
-        // ── En modo edición: ocultar formulario de anticipo y mostrar solo info ──
-        if (window.IsEditMode) {
-            const depositSection = document.getElementById('depositSection');
-            if (depositSection) {
-                // Calcular info de pago para mostrar
-                const totalPaid = r.payments?.reduce((s, p) => s + (p.amount || 0), 0) ?? 0;
-                ResCreate.editTotalPaid = totalPaid; 
-                const hasPayments = r.payments?.length > 0;
-                const hasPending = r.depositAmount > 0 && !r.hasDeposit;
-                const noDeposit = !hasPayments && !hasPending;
-
-                let infoHTML = '';
-
-                if (hasPayments) {
-                    infoHTML = `
-                <div class="alert alert-success py-2 mb-2 d-flex align-items-center gap-2">
-                    <i class="fas fa-check-circle"></i>
-                    <div>
-                        <strong>Anticipo registrado</strong>
-                        <small class="d-block text-muted">Para abonar más, usa el módulo de Pagos.</small>
-                    </div>
-                </div>
-                ${r.payments.map(p => `
-                    <div class="d-flex justify-content-between align-items-center py-1 px-2 mb-1 rounded"
-                         style="background:var(--bg-surface-alt);font-size:.85rem;">
-                        <span>
-                            <span class="badge bg-secondary me-1">
-                                ${p.method === 'cash' ? '💵 Efectivo' : p.method === 'transfer' ? '🏦 Transferencia' : '💳 Tarjeta'}
-                            </span>
-                            ${p.reference ? `<small class="text-muted">Ref: ${p.reference}</small>` : ''}
-                            <small class="text-muted ms-1">· ${new Date(p.paymentDate).toLocaleDateString('es-MX')}</small>
-                        </span>
-                        <strong>$${(p.amount || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</strong>
-                    </div>
-                `).join('')}
-                <div class="d-flex justify-content-between mt-2 pt-1" style="border-top:1px dashed var(--border-color);">
-                    <small class="text-muted">Total pagado</small>
-                    <small class="fw-bold text-success">$${totalPaid.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN</small>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <small class="text-muted">Saldo pendiente</small>
-                    <small class="fw-bold ${r.balancePending > 0 ? 'text-danger' : 'text-success'}">
-                        $${(r.balancePending || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN
-                    </small>
-                </div>`;
-
-                } else if (hasPending) {
-                    infoHTML = `
-                <div class="alert alert-warning py-2 d-flex align-items-center gap-2">
-                    <i class="fas fa-clock"></i>
-                    <div>
-                        <strong>Anticipo solicitado: $${(r.depositAmount || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN</strong>
-                        ${r.depositDueDate ? `<small class="d-block text-muted">Vence: ${new Date(r.depositDueDate).toLocaleDateString('es-MX')}</small>` : ''}
-                        <small class="d-block text-muted">El huésped aún no ha pagado.</small>
-                    </div>
-                </div>`;
-
-                } else {
-                    infoHTML = `
-                <div class="alert alert-secondary py-2 d-flex align-items-center gap-2">
-                    <i class="fas fa-minus-circle"></i>
-                    <div><strong>Sin anticipo registrado</strong></div>
-                </div>`;
-                }
-
-                // Reemplazar contenido completo de la sección
-                depositSection.innerHTML = `
-            <div class="d-flex align-items-center gap-2 mb-3">
-                <div class="section-icon text-success"><i class="fa-solid fa-dollar-sign"></i></div>
-                <span class="fw-semibold">Estado del pago</span>
-                <span class="badge bg-secondary ms-1" style="font-size:.7rem;">
-                    <i class="fas fa-lock me-1"></i>Solo lectura
-                </span>
-            </div>
-            ${infoHTML}`;
             }
         }
 
@@ -1884,6 +1967,7 @@ function updateSplitField(idx, field, value) {
         // Solo actualizar totales — NO re-renderizar todo el DOM
         updateSplitsTotals();
         recalculate();
+        updateSubmitButton();
     } else if (field === 'method') {
         // Método sí requiere re-render (aparece/desaparece el campo referencia)
         renderPaymentSplits();
@@ -2012,4 +2096,57 @@ function renderPaymentSplits() {
 `);
 
     updateSplitsTotals();
+}
+
+// ─── BOTÓN PRINCIPAL DINÁMICO ─────────────────────────────────────────────────
+
+function updateSubmitButton() {
+    const btn = document.getElementById('mainSubmitBtn');
+    if (!btn) return;
+
+    const isEdit = window.IsEditMode === true;
+
+    if (isEdit) {
+        const hasPaidBefore = (ResCreate.editTotalPaid ?? 0) > 0;
+        if (hasPaidBefore) {
+            btn.className = 'btn btn-success px-4';
+            btn.innerHTML = '<i class="fas fa-save me-1"></i>Guardar cambios';
+            btn.dataset.action = 'confirm';
+        } else {
+            btn.className = 'btn btn-outline-primary px-4';
+            btn.innerHTML = '<i class="fas fa-save me-1"></i>Guardar borrador';
+            btn.dataset.action = 'draft';
+        }
+        return;
+    }
+
+    // Modo creación
+    const state = ResCreate.depositState;
+    const hasPaidSplits = state === 'received' &&
+        ResCreate.paymentSplits.some(p => parseFloat(p.amount) > 0);
+    const isPlatform = state === 'platform';
+
+    if (hasPaidSplits || isPlatform) {
+        btn.className = 'btn btn-success px-4';
+        btn.innerHTML = '<i class="fa-solid fa-calendar-check me-1"></i>Confirmar reserva';
+        btn.dataset.action = 'confirm';
+    } else {
+        btn.className = 'btn btn-outline-primary px-4';
+        btn.innerHTML = '<i class="fas fa-save me-1"></i>Guardar borrador';
+        btn.dataset.action = 'draft';
+    }
+}
+
+function handleMainSubmit() {
+    const btn = document.getElementById('mainSubmitBtn');
+    const action = btn?.dataset.action ?? 'draft';
+    const isEdit = window.IsEditMode === true;
+
+    if (isEdit) {
+        // En edición siempre preservamos el status actual de la reserva
+        const currentStatus = window.EditReservation?.status ?? 'draft';
+        submitReservation(currentStatus);
+    } else {
+        submitReservation(action === 'confirm' ? 'confirmed' : 'draft');
+    }
 }

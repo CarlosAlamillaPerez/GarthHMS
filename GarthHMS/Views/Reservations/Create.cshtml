@@ -429,33 +429,38 @@
                 </button>
             </div>
 
-            @* ── Acciones de búsqueda ── *@
-            <div id="guestSearchArea">
-                <div class="row g-2">
-                    <div class="col-md-8">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text"
-                                   id="guestQuickSearch"
-                                   class="form-control"
-                                   placeholder="Buscar huésped por nombre, teléfono o email..."
-                                   oninput="onGuestQuickSearch(this.value)" />
+            @* ── Buscador — solo en CREAR ── *@
+            @if (ViewBag.IsEdit != true)
+            {
+                @* ── Acciones de búsqueda ── *@
+                <div id="guestSearchArea">
+                    <div class="row g-2">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text"
+                                       id="guestQuickSearch"
+                                       class="form-control"
+                                       placeholder="Buscar huésped por nombre, teléfono o email..."
+                                       oninput="onGuestQuickSearch(this.value)" />
+                            </div>
+                        </div>
+                        <div class="col-md-4 d-flex gap-2">
+                            <button type="button" class="btn btn-primary flex-fill" onclick="openGuestSearchModal()">
+                                <i class="fas fa-search"></i> Buscar huésped
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="openCreateGuestModal()" title="Crear nuevo huésped">
+                                <i class="fas fa-user-plus"></i>
+                            </button>
                         </div>
                     </div>
-                    <div class="col-md-4 d-flex gap-2">
-                        <button type="button" class="btn btn-primary flex-fill" onclick="openGuestSearchModal()">
-                            <i class="fas fa-search"></i> Buscar huésped
-                        </button>
-                        <button type="button" class="btn btn-outline-primary" onclick="openCreateGuestModal()" title="Crear nuevo huésped">
-                            <i class="fas fa-user-plus"></i>
-                        </button>
+
+                    @* Quick results dropdown *@
+                    <div id="guestQuickResults" class="border rounded mt-1" style="display:none; max-height:200px; overflow-y:auto; background: var(--bg-card);">
                     </div>
                 </div>
+            }
 
-                @* Quick results dropdown *@
-                <div id="guestQuickResults" class="border rounded mt-1" style="display:none; max-height:200px; overflow-y:auto; background: var(--bg-card);">
-                </div>
-            </div>
 
             @* Campo oculto con el GuestId seleccionado *@
             <input type="hidden" id="selectedGuestId" />
@@ -944,17 +949,15 @@
             </div>
         </div>
 
-        @* ── Barra de acciones sticky (dentro de la última sección) ── *@
+        @* ── Barra de acciones sticky ── *@
         <div class="res-actions-bar">
             <a href="/Availability" class="btn btn-outline-secondary">
                 <i class="fas fa-times me-1"></i>Cancelar
             </a>
             <div class="d-flex gap-2">
-                <button type="button" class="btn btn-outline-primary" onclick="submitReservation('draft')">
+                <button type="button" id="mainSubmitBtn" class="btn btn-success px-4"
+                        onclick="handleMainSubmit()">
                     <i class="fas fa-save me-1"></i>Guardar borrador
-                </button>
-                <button type="button" class="btn btn-success px-4" onclick="submitReservation('pending')">
-                    <i class="fas fa-check me-1"></i>Confirmar reserva
                 </button>
             </div>
         </div>

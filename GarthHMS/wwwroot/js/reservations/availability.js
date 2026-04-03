@@ -513,7 +513,6 @@ function renderReservationList(reservations) {
 // ============================================================================
 
 function buildReservationCard(r) {
-    // Badge de estado
     const statusClasses = {
         'pending': 'status-pending',
         'confirmed': 'status-confirmed',
@@ -523,64 +522,158 @@ function buildReservationCard(r) {
         'no_show': 'status-no_show'
     };
     const statusClass = statusClasses[(r.status || '').toLowerCase()] || 'status-pending';
-
-    // Botón primario: depende del estado y de si es check-in hoy
     const isCheckinToday = r.checkInDate === todayStr();
-    let primaryBtnText = 'Ver detalles';
-    let primaryBtnClass = '';
+    const stat = (r.status || '').toLowerCase();
 
-    if (r.status === 'pending' && !r.hasDeposit) {
-        primaryBtnText = '<i class="fas fa-check-circle me-1"></i>Validar Anticipo';
-        primaryBtnClass = 'warning';
-    } else if (r.hasUnverifiedPayments) {
-        primaryBtnText = '<i class="fas fa-search-dollar me-1"></i>Verificar pago';
-        primaryBtnClass = 'warning';
-    } else if (r.status === 'confirmed' && isCheckinToday) {
-        primaryBtnText = '<i class="fas fa-key me-1"></i>Check-in';
-    } else if (r.status === 'checked_in') {
-        primaryBtnText = '<i class="fas fa-sign-out-alt me-1"></i>Check-out';
-    }
-
-    // Noches
-    const nightsText = r.numNights
-        ? `${r.numNights} noche${r.numNights !== 1 ? 's' : ''}`
-        : '—';
-
-    // Pago
+    // ── Badge de pago ──────────────────────────────────────────────────────
     let paymentHTML;
     const totalPaid = (r.total || 0) - (r.balancePending || 0);
 
     if (r.balancePending <= 0) {
         paymentHTML = `<span class="payment-tag paid">
-        <i class="fas fa-check-circle fa-xs"></i>
-        Pagado completo
-    </span>`;
+            <i class="fas fa-check-circle fa-xs"></i>Pagado completo
+        </span>`;
     } else if (r.hasUnverifiedPayments) {
         paymentHTML = `<span class="payment-tag" style="background:rgba(214,158,46,.12);color:#7B5E05;border:1px solid rgba(214,158,46,.3);">
-        <i class="fas fa-hourglass-half fa-xs"></i>
-        Pago por verificar
-    </span>`;
+            <i class="fas fa-hourglass-half fa-xs"></i>Pago por verificar
+        </span>`;
     } else if (r.hasDeposit && totalPaid > 0) {
         paymentHTML = `<span class="payment-tag paid">
-        <i class="fas fa-check-circle fa-xs"></i>
-        Pagado $${totalPaid.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-    </span>`;
+            <i class="fas fa-check-circle fa-xs"></i>
+            Pagado $${totalPaid.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+        </span>`;
     } else {
         paymentHTML = `<span class="payment-tag pending">
-        <i class="fas fa-clock fa-xs"></i>
-        Anticipo pendiente
-    </span>`;
+            <i class="fas fa-clock fa-xs"></i>Anticipo pendiente
+        </span>`;
     }
 
-    // VIP badge
+    // ── VIP ───────────────────────────────────────────────────────────────
     const vipHTML = r.isVip
         ? `<span class="vip-badge"><i class="fas fa-star fa-xs"></i>VIP</span>`
         : '';
 
+    // ── Noches ────────────────────────────────────────────────────────────
+    const nightsText = r.numNights
+        ? `${r.numNights} noche${r.numNights !== 1 ? 's' : ''}`
+        : '—';
+
+    // ── Botones según estado ──────────────────────────────────────────────
+    const isReadOnly = stat === 'cancelled' || stat === 'checked_out' || stat === 'no_show';
+    const showInvoiceBtn = stat === 'checked_in'
+        && r.requiresInvoice
+        && r.balancePending <= 0;
+
+    let actionsHTML = '';
+
+    if (isReadOnly) {
+        // Solo ver detalle
+        actionsHTML = `
+            <button class="btn-action-main"
+                    onclick="event.stopPropagation(); viewReservationDetails('${r.reservationId}')">
+                <i class="fas fa-eye me-1"></i>Ver detalle
+            </button>`;
+
+    } else if (stat === 'checked_in') {
+        // Dos botones grandes + factura opcional + 3 puntos
+        actionsHTML = `
+            <button class="btn-action-main"
+                    onclick="event.stopPropagation(); handleExtras('${r.reservationId}')">
+                <i class="fas fa-plus-circle me-1"></i>Agregar extras
+            </button>
+            <button class="btn-action-main danger"
+                    onclick="event.stopPropagation(); handleCheckout('${r.reservationId}', '${r.folio}')">
+                <i class="fas fa-sign-out-alt me-1"></i>Check-out
+            </button>`;
+
+    } else if (stat === 'pending' && !r.hasDeposit) {
+        actionsHTML = `
+            <button class="btn-action-main warning"
+                    onclick="event.stopPropagation(); openPaymentModal('${r.reservationId}')">
+                <i class="fas fa-dollar-sign me-1"></i>Registrar pago
+            </button>`;
+
+    } else if (r.hasUnverifiedPayments) {
+        actionsHTML = `
+            <button class="btn-action-main warning"
+                    onclick="event.stopPropagation(); openPaymentModal('${r.reservationId}')">
+                <i class="fas fa-search-dollar me-1"></i>Gestionar pagos
+            </button>`;
+
+    } else if (stat === 'confirmed' && isCheckinToday) {
+        actionsHTML = `
+            <button class="btn-action-main success"
+                    onclick="event.stopPropagation(); handleCheckin('${r.reservationId}', '${r.folio}')">
+                <i class="fas fa-key me-1"></i>Check-in
+            </button>`;
+
+    } else {
+        // confirmed pero no es hoy, o cualquier otro estado activo
+        actionsHTML = `
+            <button class="btn-action-main"
+                    onclick="event.stopPropagation(); viewReservationDetails('${r.reservationId}')">
+                <i class="fas fa-eye me-1"></i>Ver detalle
+            </button>`;
+    }
+
+    // Botón factura (solo checked_in con factura requerida y liquidado)
+    const invoiceBtnHTML = showInvoiceBtn ? `
+        <button class="btn-action-icon" style="color:#B45309;"
+                onclick="event.stopPropagation(); handleInvoice('${r.reservationId}', '${r.folio}')"
+                title="Requiere factura">
+            <i class="fas fa-file-invoice"></i>
+        </button>` : '';
+
+    // Dropdown 3 puntos (solo si no es readonly)
+    const dropdownHTML = !isReadOnly ? `
+        <div class="btn-group">
+            <button type="button"
+                    class="btn-action-icon dropdown-toggle-no-caret"
+                    data-bs-toggle="dropdown"
+                    data-bs-boundary="viewport"
+                    onclick="event.stopPropagation()"
+                    title="Más opciones">
+                <i class="fas fa-ellipsis-v"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <a class="dropdown-item" href="javascript:void(0)"
+                       onclick="event.stopPropagation(); viewReservationDetails('${r.reservationId}')">
+                        <i class="fas fa-eye text-info me-2"></i>Ver detalle completo
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="javascript:void(0)"
+                       onclick="event.stopPropagation(); editReservation('${r.reservationId}')">
+                        <i class="fas fa-edit text-warning me-2"></i>Editar reserva
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="javascript:void(0)"
+                       onclick="event.stopPropagation(); copyFolio('${r.folio}')">
+                        <i class="fas fa-copy text-secondary me-2"></i>Copiar folio
+                    </a>
+                </li>
+                ${!['cancelled', 'checked_out', 'no_show'].includes(stat) ? `
+                <li>
+                    <a class="dropdown-item" href="javascript:void(0)"
+                       onclick="event.stopPropagation(); openPaymentModal('${r.reservationId}')">
+                        <i class="fas fa-dollar-sign me-2 text-success"></i>Gestionar pagos
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item text-danger" href="javascript:void(0)"
+                       onclick="event.stopPropagation(); cancelReservation('${r.reservationId}', '${r.folio}', '${r.guestFullName}')">
+                        <i class="fas fa-times-circle me-2"></i>Cancelar reserva
+                    </a>
+                </li>` : ''}
+            </ul>
+        </div>` : '';
+
     return `
     <div class="reservation-card" onclick="viewReservationDetails('${r.reservationId}')">
 
-        <!-- CABECERA: estado + folio + canal -->
         <div class="card-top-row">
             <div class="card-status-group">
                 <span class="status-badge ${statusClass}">${r.statusLabel || r.status}</span>
@@ -590,13 +683,11 @@ function buildReservationCard(r) {
             <span class="channel-badge">${r.sourceLabel || r.source || 'Directo'}</span>
         </div>
 
-        <!-- NOMBRE DEL HUÉSPED -->
         <div class="guest-name-row">
             <i class="fas fa-user-circle text-primary" style="font-size:1rem;opacity:.7"></i>
             ${r.guestFullName || 'Huésped'}
         </div>
 
-        <!-- DETALLES -->
         <div class="reservation-info-list">
             <div class="info-item">
                 <i class="fas fa-calendar-check"></i>
@@ -616,77 +707,14 @@ function buildReservationCard(r) {
             </div>
         </div>
 
-        <!-- ESTADO DE PAGO -->
         ${paymentHTML}
 
-        <!-- ACCIONES -->
         <div class="card-actions">
-            ${(r.status === 'cancelled' || r.status === 'checked_out') ? `
-                <button class="btn-action-main"
-                        onclick="event.stopPropagation(); viewReservationDetails('${r.reservationId}')">
-                    <i class="fas fa-eye me-1"></i>Ver detalle
-                </button>
-            ` : `
-                <button class="btn-action-main ${primaryBtnClass}"
-                    onclick="event.stopPropagation(); 
-                    ${(r.status === 'pending' && !r.hasDeposit) || r.hasUnverifiedPayments
-                        ? `openPaymentModal('${r.reservationId}')`
-                        : `handlePrimaryAction('${r.reservationId}', '${r.status}', ${r.isCheckInToday})`
-                    }
-                    ${primaryBtnText}
-                </button>
-                <button class="btn-action-icon"
-                        onclick="event.stopPropagation(); callGuest('${r.guestPhone || ''}', '${r.guestFullName || ''}')"
-                        title="Llamar huésped">
-                    <i class="fas fa-phone"></i>
-                </button>
-                <div class="btn-group">
-                    <button type="button"
-                            class="btn-action-icon dropdown-toggle-no-caret"
-                            data-bs-toggle="dropdown"
-                            data-bs-boundary="viewport"
-                            onclick="event.stopPropagation()"
-                            title="Más opciones">
-                        <i class="fas fa-ellipsis-v"></i>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li>
-                            <a class="dropdown-item" href="javascript:void(0)"
-                               onclick="event.stopPropagation(); viewReservationDetails('${r.reservationId}')">
-                                <i class="fas fa-eye text-info me-2"></i>Ver detalle completo
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="javascript:void(0)"
-                               onclick="event.stopPropagation(); editReservation('${r.reservationId}')">
-                                <i class="fas fa-edit text-warning me-2"></i>Editar reserva
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="javascript:void(0)"
-                               onclick="event.stopPropagation(); copyFolio('${r.folio}')">
-                                <i class="fas fa-copy text-secondary me-2"></i>Copiar folio
-                            </a>
-                        </li>
-                        ${!['cancelled', 'checked_out', 'no_show'].includes(r.status) ? `
-                            <li>
-                                <a class="dropdown-item" href="javascript:void(0)"
-                                   onclick="event.stopPropagation(); openPaymentModal('${r.reservationId}')">
-                                    <i class="fas fa-dollar-sign me-2 text-success"></i>Gestionar pagos
-                                </a>
-                            </li>
-                        ` : ''}
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item text-danger" href="javascript:void(0)"
-                               onclick="event.stopPropagation(); cancelReservation('${r.reservationId}', '${r.folio}', '${r.guestFullName}')">
-                                <i class="fas fa-times-circle me-2"></i>Cancelar reserva
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            `}
+            ${actionsHTML}
+            ${invoiceBtnHTML}
+            ${dropdownHTML}
         </div>
+
     </div>`;
 }
 
@@ -1159,4 +1187,44 @@ async function submitPayment(reservationId) {
             btn.innerHTML = '<i class="fas fa-check me-1"></i>Registrar pago';
         }
     }
+}
+
+function handleCheckin(reservationId, folio) {
+    Swal.fire({
+        title: '<i class="fas fa-key text-success me-2"></i>Check-in',
+        html: `<p>El proceso de check-in para <strong>${folio}</strong> estará disponible en el <strong>Módulo de Check-in</strong>.</p>`,
+        icon: 'info',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#2BA49A'
+    });
+}
+
+function handleCheckout(reservationId, folio) {
+    Swal.fire({
+        title: '<i class="fas fa-sign-out-alt text-danger me-2"></i>Check-out',
+        html: `<p>El proceso de check-out para <strong>${folio}</strong> estará disponible en el <strong>Módulo de Check-out</strong>.</p>`,
+        icon: 'info',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#2BA49A'
+    });
+}
+
+function handleExtras(reservationId) {
+    Swal.fire({
+        title: '<i class="fas fa-plus-circle text-primary me-2"></i>Agregar extras',
+        html: `<p>La gestión de cargos extra durante la estadía estará disponible en el <strong>Módulo de Estadía</strong>.</p>`,
+        icon: 'info',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#2BA49A'
+    });
+}
+
+function handleInvoice(reservationId, folio) {
+    Swal.fire({
+        title: '<i class="fas fa-file-invoice" style="color:#B45309"></i> Factura requerida',
+        html: `<p>El huésped de <strong>${folio}</strong> solicitó factura. El módulo de facturación estará disponible próximamente.</p>`,
+        icon: 'info',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#2BA49A'
+    });
 }

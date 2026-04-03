@@ -219,6 +219,7 @@ namespace GarthHMS.Infrastructure.Repositories
                     DepositPaidAt = row.deposit_paid_at != null ? (DateTime?)row.deposit_paid_at : null,
                     BalancePending = row.balance_pending != null ? (decimal)row.balance_pending : 0,
                     HasUnverifiedPayments = row.has_unverified_payments ?? false,
+                    RequiresInvoice = row.requires_invoice ?? false,
                     GuestId = (Guid)row.guest_id,
                     GuestFirstName = (string)row.guest_first_name,
                     GuestLastName = (string)row.guest_last_name,

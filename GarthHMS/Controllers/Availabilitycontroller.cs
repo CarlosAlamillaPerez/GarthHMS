@@ -347,6 +347,7 @@ namespace GarthHMS.Web.Controllers
                 balancePending = r.BalancePending,
                 hasDeposit = r.HasDeposit,
                 hasUnverifiedPayments = r.HasUnverifiedPayments,
+                requiresInvoice = r.RequiresInvoice,
                 isCheckInToday = r.IsCheckInToday,
                 guestId = r.GuestId,
                 guestFullName = r.GuestFullName,
