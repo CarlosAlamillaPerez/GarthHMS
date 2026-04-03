@@ -1168,6 +1168,23 @@ function updatePriceDisplay() {
             elBalance.style.color = newBalance > 0 ? 'var(--danger)' : 'var(--success)';
         }
     }
+
+    // ── En edición: deshabilitar búsqueda de huésped ──────────────────
+    if (window.IsEditMode) {
+        const searchArea = document.getElementById('guestSearchArea');
+        if (searchArea) searchArea.style.display = 'none';
+
+        // Agregar indicador visual de solo lectura
+        const guestCard = document.getElementById('selectedGuestCard');
+        if (guestCard) {
+            const lockBadge = document.createElement('span');
+            lockBadge.className = 'badge bg-secondary ms-2';
+            lockBadge.style.fontSize = '.65rem';
+            lockBadge.innerHTML = '<i class="fas fa-lock me-1"></i>No editable';
+            guestCard.querySelector('.guest-name, [class*="guest"]')
+                ?.appendChild(lockBadge);
+        }
+    }
 }
 
 function onDiscountChange() {
