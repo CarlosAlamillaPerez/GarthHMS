@@ -113,6 +113,7 @@ namespace GarthHMS.Core.DTOs.Reservation
         public decimal ExtraPersonCharge { get; set; }
         public decimal Subtotal { get; set; }
         public string Status { get; set; } = string.Empty;
+        public string? VehicleDescription { get; set; }
     }
 
     public class ReservationListDto

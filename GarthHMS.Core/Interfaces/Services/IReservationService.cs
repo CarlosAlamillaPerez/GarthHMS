@@ -51,8 +51,15 @@ namespace GarthHMS.Core.Interfaces.Services
             bool isManagerOrAdmin);
 
         /// <summary>Lista los pagos de una reserva.</summary>
-        Task<IEnumerable<ReservationPaymentDto>> GetPaymentsAsync(
-            Guid hotelId,
-            Guid reservationId);
+        Task<IEnumerable<ReservationPaymentDto>> GetPaymentsAsync(Guid hotelId,Guid reservationId);
+
+        /// <summary>Realiza el check-in de una reserva.</summary>
+        Task<ServiceResult<bool>> CheckInAsync(Guid hotelId,CheckInDto dto,Guid checkedInBy);
+
+        Task<ServiceResult<bool>> UpdateVehicleAsync(Guid hotelId, Guid reservationRoomId,string? vehiclePlate, string? vehicleDescription);
+
+        Task<ServiceResult<bool>> CheckOutAsync(Guid hotelId, Guid reservationId, Guid checkedOutBy);
+
+
     }
 }

@@ -19,9 +19,7 @@ namespace GarthHMS.Application.Services
         private static readonly string[] ValidSources = { "direct", "walkin", "whatsapp", "booking", "airbnb", "expedia", "other" };
         private static readonly string[] ValidMethods = { "cash", "transfer", "card" };
 
-        public ReservationService(
-            IReservationRepository reservationRepository,
-            ILogger<ReservationService> logger)
+        public ReservationService(IReservationRepository reservationRepository,ILogger<ReservationService> logger)
         {
             _reservationRepository = reservationRepository;
             _logger = logger;
@@ -31,10 +29,7 @@ namespace GarthHMS.Application.Services
         // CREAR RESERVA NIGHTLY
         // ────────────────────────────────────────────────────────────────────
 
-        public async Task<ServiceResult<(Guid ReservationId, string Folio)>> CreateNightlyAsync(
-            Guid hotelId,
-            CreateReservationDto dto,
-            Guid createdBy)
+        public async Task<ServiceResult<(Guid ReservationId, string Folio)>> CreateNightlyAsync(Guid hotelId,CreateReservationDto dto,Guid createdBy)
         {
             try
             {
@@ -83,6 +78,25 @@ namespace GarthHMS.Application.Services
                     !Array.Exists(ValidMethods, m => m == dto.DepositPaymentMethod))
                     return ServiceResult<(Guid, string)>.Failure("Método de pago inválido");
 
+                // Doble validación: mascotas vs habitaciones no pet-friendly
+                var roomsConMascotas = dto.Rooms.Where(r => r.HasPets).ToList();
+                if (roomsConMascotas.Any())
+                {
+                    // Verificar que TODAS las habitaciones con mascotas sean pet-friendly
+                    // La info viene en el DTO solo si el frontend la envía — si no está, pasa igual
+                    // Esta validación es una red de seguridad, el frontend es la primera barrera
+                    var roomsInvalidas = roomsConMascotas
+                        .Where(r => r.AllowsPets == false)
+                        .ToList();
+
+                    if (roomsInvalidas.Any())
+                    {
+                        var nums = string.Join(", ", roomsInvalidas.Select(r => $"Hab. {r.RoomNumber ?? r.RoomId.ToString()}"));
+                        return ServiceResult<(Guid, string)>.Failure(
+                            $"Las siguientes habitaciones no admiten mascotas: {nums}");
+                    }
+                }
+
                 var (reservationId, folio) = await _reservationRepository.CreateNightlyAsync(
                     hotelId, dto, createdBy);
 
@@ -103,8 +117,7 @@ namespace GarthHMS.Application.Services
         // ACTUALIZAR RESERVA NIGHTLY
         // ────────────────────────────────────────────────────────────────────
 
-        public async Task<ServiceResult<bool>> UpdateNightlyAsync(
-            Guid hotelId, UpdateReservationDto dto, Guid updatedBy)
+        public async Task<ServiceResult<bool>> UpdateNightlyAsync(Guid hotelId, UpdateReservationDto dto, Guid updatedBy)
         {
             try
             {
@@ -177,15 +190,7 @@ namespace GarthHMS.Application.Services
         // LISTAR
         // ────────────────────────────────────────────────────────────────────
 
-        public async Task<(IEnumerable<ReservationListDto> Items, long TotalCount)> GetListAsync(
-            Guid hotelId,
-            string? search = null,
-            string? status = null,
-            string? source = null,
-            DateTime? dateFrom = null,
-            DateTime? dateTo = null,
-            int pageNumber = 1,
-            int pageSize = 20)
+        public async Task<(IEnumerable<ReservationListDto> Items, long TotalCount)> GetListAsync(Guid hotelId,string? search = null,string? status = null,string? source = null,DateTime? dateFrom = null,DateTime? dateTo = null,int pageNumber = 1,int pageSize = 20)
         {
             try
             {
@@ -247,15 +252,7 @@ namespace GarthHMS.Application.Services
         // AGREGAR PAGO
         // ────────────────────────────────────────────────────────────────────
 
-        public async Task<ServiceResult<(Guid PaymentId, decimal NewBalance, string NewStatus, bool HasUnverified)>> AddPaymentAsync(
-            Guid hotelId,
-            Guid reservationId,
-            decimal amount,
-            string paymentMethod,
-            string paymentType,
-            string? reference,
-            Guid registeredBy,
-            bool isManagerOrAdmin)
+        public async Task<ServiceResult<(Guid PaymentId, decimal NewBalance, string NewStatus, bool HasUnverified)>> AddPaymentAsync(Guid hotelId,Guid reservationId,decimal amount,string paymentMethod,string paymentType,string? reference,Guid registeredBy,bool isManagerOrAdmin)
         {
             try
             {
@@ -309,9 +306,7 @@ namespace GarthHMS.Application.Services
         // OBTENER PAGOS
         // ────────────────────────────────────────────────────────────────────
 
-        public async Task<IEnumerable<ReservationPaymentDto>> GetPaymentsAsync(
-            Guid hotelId,
-            Guid reservationId)
+        public async Task<IEnumerable<ReservationPaymentDto>> GetPaymentsAsync(Guid hotelId,Guid reservationId)
         {
             try
             {
@@ -323,5 +318,133 @@ namespace GarthHMS.Application.Services
                 return Enumerable.Empty<ReservationPaymentDto>();
             }
         }
+
+        public async Task<ServiceResult<bool>> CheckInAsync(Guid hotelId,CheckInDto dto,Guid checkedInBy)
+        {
+            try
+            {
+                if (hotelId == Guid.Empty)
+                    return ServiceResult<bool>.Failure("Hotel no identificado");
+
+                if (dto.ReservationId == Guid.Empty)
+                    return ServiceResult<bool>.Failure("Reserva no identificada");
+
+                // Validar email si viene
+                if (!string.IsNullOrWhiteSpace(dto.GuestEmail))
+                {
+                    var emailRegex = new System.Text.RegularExpressions.Regex(
+                        @"^[^@\s]+@[^@\s]+\.[^@\s]+$");
+                    if (!emailRegex.IsMatch(dto.GuestEmail))
+                        return ServiceResult<bool>.Failure("El formato del correo electrónico no es válido");
+                }
+
+                // Serializar placas
+                string? vehiclePlatesJson = null;
+                if (dto.VehiclePlates?.Count > 0)
+                {
+                    var plates = dto.VehiclePlates
+                        .Where(v => !string.IsNullOrWhiteSpace(v.Plate))
+                        .Select(v => new { roomId = v.RoomId, plate = v.Plate?.Trim() });
+                    vehiclePlatesJson = System.Text.Json.JsonSerializer.Serialize(plates);
+                }
+
+                // Serializar acompañantes
+                string? companionsJson = null;
+                if (dto.Companions?.Count > 0)
+                {
+                    var groups = dto.Companions
+                        .Where(g => g.Companions?.Any(c =>
+                            !string.IsNullOrWhiteSpace(c.FullName)) == true)
+                        .Select(g => new
+                        {
+                            reservationRoomId = g.ReservationRoomId,
+                            companions = g.Companions
+                                .Where(c => !string.IsNullOrWhiteSpace(c.FullName))
+                                .Select(c => new
+                                {
+                                    fullName = c.FullName?.Trim(),
+                                    age = c.Age?.Trim(),
+                                    phone = c.Phone?.Trim(),
+                                    relationship = c.Relationship?.Trim()
+                                })
+                        });
+                    companionsJson = System.Text.Json.JsonSerializer.Serialize(groups);
+                }
+
+                var (success, message) = await _reservationRepository.CheckInAsync(
+                    hotelId,
+                    dto.ReservationId,
+                    checkedInBy,
+                    dto.GuestEmail?.Trim(),
+                    vehiclePlatesJson,
+                    companionsJson);
+
+                return success
+                    ? ServiceResult<bool>.Success(true, message)
+                    : ServiceResult<bool>.Failure(message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al realizar check-in {ReservationId}", dto.ReservationId);
+                return ServiceResult<bool>.Failure("Error al realizar el check-in");
+            }
+        }
+
+        public async Task<ServiceResult<bool>> UpdateVehicleAsync(Guid hotelId, Guid reservationRoomId,string? vehiclePlate, string? vehicleDescription)
+        {
+            try
+            {
+                if (hotelId == Guid.Empty)
+                    return ServiceResult<bool>.Failure("Hotel no identificado");
+
+                if (!string.IsNullOrWhiteSpace(vehiclePlate) && vehiclePlate.Length > 15)
+                    return ServiceResult<bool>.Failure("Las placas no pueden exceder 15 caracteres");
+
+                if (!string.IsNullOrWhiteSpace(vehicleDescription) && vehicleDescription.Length > 100)
+                    return ServiceResult<bool>.Failure("La descripción no puede exceder 100 caracteres");
+
+                var ok = await _reservationRepository.UpdateVehicleAsync(
+                    hotelId, reservationRoomId, vehiclePlate, vehicleDescription);
+
+                return ok
+                    ? ServiceResult<bool>.Success(true)
+                    : ServiceResult<bool>.Failure("No se encontró la habitación");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al actualizar vehículo {ReservationRoomId}", reservationRoomId);
+                return ServiceResult<bool>.Failure("Error al guardar el vehículo");
+            }
+        }
+
+        public async Task<ServiceResult<bool>> CheckOutAsync(Guid hotelId, Guid reservationId, Guid checkedOutBy)
+        {
+            try
+            {
+                if (hotelId == Guid.Empty)
+                    return ServiceResult<bool>.Failure("Hotel no identificado");
+
+                if (reservationId == Guid.Empty)
+                    return ServiceResult<bool>.Failure("Reserva no identificada");
+
+                var (success, message) = await _reservationRepository.CheckOutAsync(
+                    hotelId, reservationId, checkedOutBy);
+
+                if (!success)
+                    return ServiceResult<bool>.Failure(message);
+
+                _logger.LogInformation("Check-out realizado: {ReservationId} por {UserId}",
+                    reservationId, checkedOutBy);
+
+                return ServiceResult<bool>.Success(true, message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al realizar check-out {ReservationId}", reservationId);
+                return ServiceResult<bool>.Failure("Error al realizar el check-out. Intenta de nuevo.");
+            }
+        }
+
+
     }
 }

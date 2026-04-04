@@ -210,8 +210,40 @@ function changeGuests(field, delta) {
 
 // ─── Mascotas ────────────────────────────────────────────────────────────────
 function togglePets(checked) {
+    if (checked && ResCreate.rooms.length > 0) {
+        const conflicting = ResCreate.rooms.filter(r => r.allowsPets === false);
+
+        if (conflicting.length > 0) {
+            document.getElementById('hasPets').checked = false;
+
+            const nums = conflicting.map(r => `Hab. ${r.roomNumber}`).join(', ');
+            const plural = conflicting.length > 1;
+            showPetsConflictAlert(
+                `<strong>No es posible indicar mascotas.</strong> ` +
+                `${nums} no admite${plural ? 'n' : ''} mascotas. ` +
+                `Para llevar mascotas, elimina esa habitación y selecciona una pet-friendly ` +
+                `<i class="fas fa-paw"></i>.`
+            );
+            return;
+        }
+    }
+
+    hidePetsConflictAlert();
     document.getElementById('petsCountArea').style.display = checked ? 'flex' : 'none';
     if (!checked) document.getElementById('petsCount').value = 1;
+}
+
+function showPetsConflictAlert(html) {
+    const wrapper = document.getElementById('petsConflictWrapper');
+    const msg = document.getElementById('petsConflictMsg');
+    if (!wrapper || !msg) return;
+    msg.innerHTML = html;
+    wrapper.style.display = '';
+}
+
+function hidePetsConflictAlert() {
+    const wrapper = document.getElementById('petsConflictWrapper');
+    if (wrapper) wrapper.style.display = 'none';
 }
 
 function changePets(delta) {
@@ -713,9 +745,11 @@ window.chooseRoom = function (typeId, roomId) {
         maxCapacity: type.maxCapacity,
         extraPersonCharge: type.extraPersonCharge,
         baseCapacity: type.baseCapacity,
+        allowsPets: room.allowsPets ?? type.allowsPets ?? false, 
+        petCharge: room.petCharge ?? type.petCharge ?? 0,      
         numAdults: 1, numChildren: 0, numBabies: 0,
         hasPets: false, numPets: 0, petChargeApplied: 0,
-        vehiclePlate: null, extraPersonCharge: type.extraPersonCharge, subtotal: 0
+        vehiclePlate: null, subtotal: 0
     };
 
     // Mostrar Step 3
@@ -887,6 +921,12 @@ function removeRoom(index) {
             renderRoomsTable();
             updateGuestTotals();
             recalculate();
+
+            const hasPets = document.getElementById('hasPets')?.checked ?? false;
+            if (hasPets) {
+                const stillConflicting = ResCreate.rooms.filter(r => r.allowsPets === false);
+                if (stillConflicting.length === 0) hidePetsConflictAlert();
+            }
         }
     });
 }

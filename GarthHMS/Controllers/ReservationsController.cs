@@ -2,7 +2,9 @@
 using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using GarthHMS.Application.Services;
 using GarthHMS.Core.DTOs.Reservation;
+using GarthHMS.Core.DTOs.Reservations;
 using GarthHMS.Core.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,13 +17,16 @@ namespace GarthHMS.Web.Controllers
     public class ReservationsController : Controller
     {
         private readonly IReservationService _reservationService;
+        private readonly IHotelSettingsService _hotelSettingsService;
         private readonly ILogger<ReservationsController> _logger;
 
         public ReservationsController(
             IReservationService reservationService,
+            IHotelSettingsService hotelSettingsService,
             ILogger<ReservationsController> logger)
         {
             _reservationService = reservationService;
+            _hotelSettingsService = hotelSettingsService;
             _logger = logger;
         }
 
@@ -426,6 +431,134 @@ namespace GarthHMS.Web.Controllers
                 return Json(new { success = false, message = "Error al obtener los pagos" });
             }
         }
+
+        // ====================================================================
+        // PÁGINA CHECK-IN (Full Page)
+        // GET /Reservations/CheckIn/{id}
+        // ====================================================================
+
+        [HttpGet("CheckIn/{id}")]
+        public async Task<IActionResult> CheckIn(Guid id)
+        {
+            try
+            {
+                var hotelId = GetCurrentHotelId();
+                var config = await _reservationService.GetFormConfigAsync(hotelId);
+                var settings = await _hotelSettingsService.GetSettingsAsync(hotelId);
+                var reservation = await _reservationService.GetByIdAsync(hotelId, id);
+
+                if (reservation == null)
+                    return RedirectToAction("Index", "Availability");
+
+                if (reservation.Status == "checked_in")
+                {
+                    TempData["Warning"] = $"La reserva {reservation.Folio} ya tiene check-in realizado.";
+                    return RedirectToAction("Index", "Availability");
+                }
+
+                if (reservation.Status is "cancelled" or "no_show" or "checked_out")
+                {
+                    TempData["Warning"] = $"No se puede hacer check-in a una reserva con estado '{reservation.Status}'.";
+                    return RedirectToAction("Index", "Availability");
+                }
+
+                ViewBag.Config = config ?? new ReservationFormConfigDto();
+                ViewBag.Settings = settings.IsSuccess ? settings.Data : null;
+
+                return View("CheckIn", reservation);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al cargar página de check-in {ReservationId}", id);
+                return RedirectToAction("Index", "Availability");
+            }
+        }
+
+        // ====================================================================
+        // API — EJECUTAR CHECK-IN
+        // POST /Reservations/CheckIn
+        // ====================================================================
+
+        [HttpPost("CheckIn")]
+        public async Task<IActionResult> CheckIn([FromBody] CheckInDto dto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return Json(new { success = false, message = "Datos inválidos" });
+
+                var hotelId = GetCurrentHotelId();
+                var userId = GetCurrentUserId();
+
+                var result = await _reservationService.CheckInAsync(hotelId, dto, userId);
+
+                if (!result.IsSuccess)
+                    return Json(new { success = false, message = result.Message });
+
+                return Json(new { success = true, message = result.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al ejecutar check-in {ReservationId}", dto?.ReservationId);
+                return Json(new { success = false, message = "Error al realizar el check-in" });
+            }
+        }
+
+        // ====================================================================
+        // API — Actualizar vehículo de una habitación
+        // POST /Reservations/UpdateVehicle
+        // ====================================================================
+
+        [HttpPost("UpdateVehicle")]
+        public async Task<IActionResult> UpdateVehicle([FromBody] UpdateVehicleRequest request)
+        {
+            try
+            {
+                var hotelId = GetCurrentHotelId();
+                var result = await _reservationService.UpdateVehicleAsync(
+                    hotelId,
+                    request.ReservationRoomId,
+                    request.VehiclePlate,
+                    request.VehicleDescription);
+
+                if (!result.IsSuccess)
+                    return Json(new { success = false, message = result.Message });
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al actualizar vehículo");
+                return Json(new { success = false, message = "Error al guardar" });
+            }
+        }
+
+        [HttpGet("GetCheckOutModal/{id}")]
+        public async Task<IActionResult> GetCheckOutModal(Guid id)
+        {
+            var hotelId = GetCurrentHotelId();
+            var reservation = await _reservationService.GetByIdAsync(hotelId, id);
+
+            if (reservation == null)
+                return NotFound();
+
+            return PartialView("_CheckOutModal", reservation);
+        }
+
+        [HttpPost("CheckOut")]
+        public async Task<IActionResult> CheckOut([FromBody] CheckOutRequestDto dto)
+        {
+            var hotelId = GetCurrentHotelId();
+            var userId = GetCurrentUserId();
+            var result = await _reservationService.CheckOutAsync(hotelId, dto.ReservationId, userId);
+
+            if (!result.IsSuccess)
+                return BadRequest(new { success = false, message = result.Message });
+
+            return Ok(new { success = true, message = result.Message ?? "Check-out realizado correctamente" });
+        }
+
+
     }
 
     // ── Request helpers ──────────────────────────────────────────────────────
@@ -433,5 +566,12 @@ namespace GarthHMS.Web.Controllers
     public class CancelReservationRequest
     {
         public string? Reason { get; set; }
+    }
+
+    public class UpdateVehicleRequest
+    {
+        public Guid ReservationRoomId { get; set; }
+        public string? VehiclePlate { get; set; }
+        public string? VehicleDescription { get; set; }
     }
 }

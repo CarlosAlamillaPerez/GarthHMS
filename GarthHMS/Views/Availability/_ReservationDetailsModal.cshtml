@@ -421,6 +421,93 @@
         }
     }
 
+    @* ── VEHÍCULOS ── *@
+    @{
+        var showVehicles = Model.Status is "confirmed" or "checked_in" or "pending";
+    }
+    @if (showVehicles)
+    {
+        <div class="rd-section-title">
+            <i class="fas fa-car fa-xs"></i> Vehículos
+        </div>
+
+        @* Habitaciones con datos *@
+        @foreach (var room in Model.Rooms ?? new())
+        {
+            <div class="rd-vehicle-row" data-rrid="@room.ReservationRoomId">
+                <div class="rd-vehicle-static d-flex align-items-center gap-2 py-2"
+                     style="border-bottom:1px solid var(--border-color);font-size:0.84rem;">
+                    <div class="rd-room-num flex-shrink-0"
+                         style="font-size:0.75rem;min-width:32px;height:32px;
+                            display:flex;align-items:center;justify-content:center;">
+                        @room.RoomNumber
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                        @if (!string.IsNullOrWhiteSpace(room.VehiclePlate) ||
+                       !string.IsNullOrWhiteSpace(room.VehicleDescription))
+                        {
+                            <code style="font-size:0.82rem;background:var(--bg-surface-alt);
+                                     padding:0.2rem 0.5rem;border-radius:4px;
+                                     color:var(--text-primary);font-weight:600;">
+                                @room.VehiclePlate
+                            </code>
+                            @if (!string.IsNullOrWhiteSpace(room.VehicleDescription))
+                            {
+                                <span class="text-muted ms-2" style="font-size:0.78rem;">
+                                    @room.VehicleDescription
+                                </span>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted fst-italic" style="font-size:0.78rem;">
+                                Sin vehículo
+                            </span>
+                        }
+                    </div>
+                    <button type="button"
+                            class="btn btn-link btn-sm p-0 rd-vehicle-edit-btn"
+                            style="color:var(--text-muted);"
+                            title="@(!string.IsNullOrWhiteSpace(room.VehiclePlate) ? "Editar vehículo" : "Agregar vehículo")"
+                            onclick="rdEditVehicle(this)">
+                        <i class="fas fa-pencil-alt fa-xs"></i>
+                    </button>
+                </div>
+
+                <div class="rd-vehicle-edit" style="display:none;padding:0.5rem 0;
+                 border-bottom:1px solid var(--border-color);">
+                    <div class="d-flex gap-2 align-items-center">
+                        <input type="text"
+                               class="form-control form-control-sm rd-plate-input"
+                               placeholder="Placas"
+                               value="@room.VehiclePlate"
+                               maxlength="15"
+                               style="max-width:130px;" />
+                        <input type="text"
+                               class="form-control form-control-sm rd-desc-input"
+                               placeholder="Descripción (ej: Carro rojo)"
+                               value="@room.VehicleDescription"
+                               maxlength="100" />
+                        <button type="button"
+                                class="btn btn-sm btn-link p-1 rd-vehicle-save-btn"
+                                style="color:var(--success);flex-shrink:0;"
+                                title="Guardar"
+                                onclick="rdSaveVehicle(this)">
+                            <i class="fas fa-save"></i>
+                        </button>
+                        <button type="button"
+                                class="btn btn-sm btn-link p-1"
+                                style="color:var(--text-muted);flex-shrink:0;"
+                                title="Cancelar"
+                                onclick="rdCancelVehicle(this)">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+
     @* ── FINANCIERO ── *@
     <div class="rd-section-title">
         <i class="fas fa-dollar-sign fa-xs"></i> Financiero

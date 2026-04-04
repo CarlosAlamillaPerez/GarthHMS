@@ -82,6 +82,7 @@ namespace GarthHMS.Core.DTOs.Reservation
         public List<CreateReservationRoomDto> Rooms { get; set; } = new();
         public List<PaymentSplitDto> PaymentSplits { get; set; } = new();
         public List<CreateCompanionDto> Companions { get; set; } = new();
+                
     }
 
     public class CreateCompanionDto
@@ -132,6 +133,8 @@ namespace GarthHMS.Core.DTOs.Reservation
 
         [Range(0, 9999999.99)]
         public decimal Subtotal { get; set; }
+
+        public bool? AllowsPets { get; set; }
 
         public List<CreateCompanionDto> Companions { get; set; } = new();
     }

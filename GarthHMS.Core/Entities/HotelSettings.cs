@@ -72,5 +72,6 @@ namespace GarthHMS.Core.Entities
 
         public bool AutoVerifyCard { get; set; } = false;
         public bool AutoVerifyTransfer { get; set; } = false;
+        public bool BlockCheckinIfBalance { get; set; } = false;
     }
 }

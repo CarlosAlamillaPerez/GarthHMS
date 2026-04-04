@@ -447,5 +447,63 @@ namespace GarthHMS.Infrastructure.Repositories
                 PaymentDate = row.payment_date ?? DateTime.UtcNow
             });
         }
+
+        public async Task<(bool Success, string Message)> CheckInAsync(Guid hotelId,Guid reservationId,Guid checkedInBy,string? guestEmail,string? vehiclePlatesJson,string? companionsJson)
+        {
+            var result = await _procedimientos.EjecutarUnicoAsync<dynamic>(
+                "sp_reservation_checkin",
+                new
+                {
+                    p_hotel_id = hotelId,
+                    p_reservation_id = reservationId,
+                    p_checked_in_by = checkedInBy,
+                    p_guest_email = guestEmail,
+                    p_vehicle_plates = vehiclePlatesJson,
+                    p_companions = companionsJson
+                });
+
+            if (result == null)
+                return (false, "Error al ejecutar el check-in");
+
+            return (
+                (bool)(result.success ?? false),
+                result.message?.ToString() ?? ""
+            );
+        }
+
+        public async Task<bool> UpdateVehicleAsync(Guid hotelId, Guid reservationRoomId,string? vehiclePlate, string? vehicleDescription)
+        {
+            var result = await _procedimientos.EjecutarEscalarAsync<bool>(
+                "sp_reservation_room_update_vehicle",
+                new
+                {
+                    p_hotel_id = hotelId,
+                    p_reservation_room_id = reservationRoomId,
+                    p_vehicle_plate = vehiclePlate,
+                    p_vehicle_description = vehicleDescription
+                });
+            return result;
+        }
+
+        public async Task<(bool Success, string Message)> CheckOutAsync(Guid hotelId, Guid reservationId, Guid checkedOutBy)
+        {
+            var result = await _procedimientos.EjecutarUnicoAsync<dynamic>(
+                "sp_reservation_checkout",
+                new
+                {
+                    p_hotel_id = hotelId,
+                    p_reservation_id = reservationId,
+                    p_checked_out_by = checkedOutBy
+                }
+            );
+
+            if (result == null)
+                return (false, "El stored procedure no retornó resultado");
+
+            bool success = result.success is bool b ? b : (bool)result.success;
+            string message = result.message?.ToString() ?? string.Empty;
+
+            return (success, message);
+        }
     }
 }

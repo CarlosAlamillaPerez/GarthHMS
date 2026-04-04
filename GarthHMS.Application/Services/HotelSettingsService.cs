@@ -232,7 +232,8 @@ namespace GarthHMS.Application.Services
                 UpdatedBy = settings.UpdatedBy,
 
                 AutoVerifyCard = settings.AutoVerifyCard,
-                AutoVerifyTransfer = settings.AutoVerifyTransfer
+                AutoVerifyTransfer = settings.AutoVerifyTransfer,
+                BlockCheckinIfBalance = settings.BlockCheckinIfBalance
             };
         }
 

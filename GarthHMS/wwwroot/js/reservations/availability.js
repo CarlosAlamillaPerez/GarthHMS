@@ -1190,13 +1190,7 @@ async function submitPayment(reservationId) {
 }
 
 function handleCheckin(reservationId, folio) {
-    Swal.fire({
-        title: '<i class="fas fa-key text-success me-2"></i>Check-in',
-        html: `<p>El proceso de check-in para <strong>${folio}</strong> estará disponible en el <strong>Módulo de Check-in</strong>.</p>`,
-        icon: 'info',
-        confirmButtonText: 'Entendido',
-        confirmButtonColor: '#2BA49A'
-    });
+    window.location.href = `/Reservations/CheckIn/${reservationId}`;
 }
 
 function handleCheckout(reservationId, folio) {
@@ -1227,4 +1221,181 @@ function handleInvoice(reservationId, folio) {
         confirmButtonText: 'Entendido',
         confirmButtonColor: '#2BA49A'
     });
+}
+
+// ============================================================================
+// DETALLE DE RESERVA — Edición inline de vehículos
+// ============================================================================
+
+function rdEditVehicle(btn) {
+    const row = btn.closest('.rd-vehicle-row');
+    row.querySelector('.rd-vehicle-static').style.display = 'none';
+    row.querySelector('.rd-vehicle-edit').style.display = '';
+    row.querySelector('.rd-plate-input')?.focus();
+}
+
+function rdCancelVehicle(btn) {
+    const row = btn.closest('.rd-vehicle-row');
+    row.querySelector('.rd-vehicle-static').style.display = '';
+    row.querySelector('.rd-vehicle-edit').style.display = 'none';
+}
+
+async function rdSaveVehicle(btn) {
+    const row = btn.closest('.rd-vehicle-row');
+    const reservationRoomId = row.dataset.rrid;
+    const plate = row.querySelector('.rd-plate-input')?.value.trim() || null;
+    const description = row.querySelector('.rd-desc-input')?.value.trim() || null;
+
+    // Feedback visual — spinner en el botón
+    const icon = btn.querySelector('i');
+    icon.className = 'fas fa-circle-notch fa-spin';
+    btn.disabled = true;
+
+    try {
+        const res = await fetch('/Reservations/UpdateVehicle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reservationRoomId, vehiclePlate: plate, vehicleDescription: description })
+        });
+        const data = await res.json();
+
+        if (!data.success) {
+            console.error('Error al guardar vehículo:', data.message);
+            icon.className = 'fas fa-exclamation-triangle';
+            btn.style.color = 'var(--danger)';
+            btn.disabled = false;
+            return;
+        }
+
+        // Actualizar vista estática con los nuevos valores
+        const staticDiv = row.querySelector('.rd-vehicle-static');
+        const codeEl = staticDiv.querySelector('code');
+        let descEl = staticDiv.querySelector('.text-muted.ms-2');
+
+        if (codeEl) codeEl.textContent = plate || '—';
+
+        if (description) {
+            if (descEl) {
+                descEl.textContent = description;
+            } else {
+                const newDesc = document.createElement('span');
+                newDesc.className = 'text-muted ms-2';
+                newDesc.style.fontSize = '0.78rem';
+                newDesc.textContent = description;
+                codeEl?.after(newDesc);
+            }
+        } else if (descEl) {
+            descEl.remove();
+        }
+
+        // Volver a modo estático con check verde temporal
+        row.querySelector('.rd-vehicle-edit').style.display = 'none';
+        staticDiv.style.display = '';
+
+        // Check verde que desaparece en 2 segundos
+        icon.className = 'fas fa-check';
+        btn.style.color = 'var(--success)';
+        setTimeout(() => {
+            icon.className = 'fas fa-pencil-alt fa-xs';
+            btn.style.color = 'var(--text-muted)';
+            btn.disabled = false;
+        }, 2000);
+
+    } catch (err) {
+        console.error('Error de conexión al guardar vehículo:', err);
+        icon.className = 'fas fa-exclamation-triangle';
+        btn.style.color = 'var(--danger)';
+        btn.disabled = false;
+    }
+}
+
+// ─── CHECK-OUT ───────────────────────────────────────────────────────────────
+
+async function handleCheckout(reservationId) {
+    try {
+        const html = await fetchHTML(`/Reservations/GetCheckOutModal/${reservationId}`);
+
+        Swal.fire({
+            html,
+            width: 680,
+            showConfirmButton: false,
+            showCloseButton: true,
+            customClass: { popup: 'swal-popup-garth' }
+        });
+
+    } catch (error) {
+        console.error('Error al abrir modal de check-out:', error);
+        showErrorToast('No se pudo cargar el formulario de check-out');
+    }
+}
+
+async function submitCheckout(reservationId, hasPendingBalance) {
+    // Si tiene saldo, pedir confirmación extra
+    if (hasPendingBalance) {
+        const confirm = await Swal.fire({
+            icon: 'warning',
+            title: '¿Confirmar con saldo pendiente?',
+            html: 'Se realizará el check-out <strong>sin liquidar el saldo</strong>.<br>Se notificará al Administrador de esta situación.',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, hacer Check-Out',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#E53E3E',
+            cancelButtonColor: '#6c757d'
+        });
+
+        if (!confirm.isConfirmed) return;
+    }
+
+    try {
+        Swal.fire({ title: 'Procesando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+        const result = await postJSON('/Reservations/CheckOut', { reservationId });
+
+        if (result.success) {
+            await Swal.fire({
+                icon: 'success',
+                title: '¡Check-Out Realizado!',
+                text: 'La habitación ha sido liberada y marcada para limpieza.',
+                timer: 2500,
+                showConfirmButton: false
+            });
+            await loadReservations(); // recarga el panel de Availability
+        } else {
+            showErrorToast(result.message || 'Error al realizar el check-out');
+        }
+
+    } catch (error) {
+        console.error('Error en submitCheckout:', error);
+        showErrorToast('Error al procesar el check-out');
+    }
+}
+
+function checkoutGestionarPagos(reservationId) {
+    Swal.close();
+    // Pequeño delay para que el close animation termine antes de abrir el siguiente modal
+    setTimeout(() => openPaymentModal(reservationId), 300);
+}
+
+async function loadReservations() {
+    const tab = AvailabilityModule.currentTab;
+
+    if (tab === 'today') {
+        await loadTodayReservations();
+    }
+    else if (tab === 'upcoming') {
+        await loadUpcomingReservations();
+    }
+    else if (tab === 'bydate') {
+        const date = AvailabilityModule.selectedDate;
+
+        if (!date) {
+            showEmptyState(
+                'Selecciona un día',
+                'Haz clic en un día del calendario para ver sus reservas.'
+            );
+            return;
+        }
+
+        await loadReservationsByDate(date);
+    }
 }

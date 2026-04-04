@@ -56,5 +56,17 @@ namespace GarthHMS.Core.Interfaces.Repositories
             Guid hotelId,
             Guid reservationId);
 
+        /// <summary>Ejecuta el check-in de una reserva.</summary>
+        Task<(bool Success, string Message)> CheckInAsync(
+            Guid hotelId,
+            Guid reservationId,
+            Guid checkedInBy,
+            string? guestEmail,
+            string? vehiclePlatesJson,
+            string? companionsJson);
+
+        Task<bool> UpdateVehicleAsync(Guid hotelId, Guid reservationRoomId,string? vehiclePlate, string? vehicleDescription);
+
+        Task<(bool Success, string Message)> CheckOutAsync(Guid hotelId, Guid reservationId, Guid checkedOutBy);
     }
 }

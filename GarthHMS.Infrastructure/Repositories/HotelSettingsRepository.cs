@@ -67,7 +67,8 @@ namespace GarthHMS.Infrastructure.Repositories
                 UpdatedAt = result.updated_at,
                 UpdatedBy = result.updated_by,
                 AutoVerifyCard = (bool)(result.auto_verify_card ?? false),
-                AutoVerifyTransfer = (bool)(result.auto_verify_transfer ?? false)
+                AutoVerifyTransfer = (bool)(result.auto_verify_transfer ?? false),
+                BlockCheckinIfBalance = (bool)(result.block_checkin_if_balance ?? false)
             };
         }
 

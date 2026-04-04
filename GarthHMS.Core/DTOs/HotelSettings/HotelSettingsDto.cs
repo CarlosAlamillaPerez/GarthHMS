@@ -71,5 +71,6 @@ namespace GarthHMS.Core.DTOs.HotelSettings
 
         public bool AutoVerifyCard { get; set; }
         public bool AutoVerifyTransfer { get; set; }
+        public bool BlockCheckinIfBalance { get; set; }
     }
 }
