@@ -280,6 +280,7 @@ namespace GarthHMS.Web.Controllers
                     return BadRequest(new { success = false, message = "Fecha de check-out inválida" });
 
                 var hotelId = GetCurrentHotelId();
+
                 var query = new AvailabilityQueryDto
                 {
                     HotelId = hotelId,
@@ -288,7 +289,7 @@ namespace GarthHMS.Web.Controllers
                     RoomTypeId = roomTypeId
                 };
 
-                var rooms = await _availabilityService.GetAvailableRoomsAsync(hotelId, checkIn, checkOut, roomTypeId, requiresPets);
+                var rooms = await _availabilityService.GetAvailableRoomsAsync(query, requiresPets);
 
                 return Ok(new
                 {

@@ -568,7 +568,11 @@ async function openRoomSelector() {
 
 async function loadRoomTypes(checkIn, checkOut) {
     try {
-        const url = `/Availability/GetAvailableRooms?checkIn=${checkIn}&checkOut=${checkOut}`;
+        // Leer si el huésped trae mascotas — filtra habitaciones que las permiten
+        const hasPets = document.getElementById('hasPets')?.checked ?? false;
+        const petsParam = hasPets ? '&requiresPets=true' : '';
+
+        const url = `/Availability/GetAvailableRooms?checkIn=${checkIn}&checkOut=${checkOut}${petsParam}`;
         const res = await fetch(url);
         const data = await res.json();
 
@@ -577,7 +581,9 @@ async function loadRoomTypes(checkIn, checkOut) {
             grid.innerHTML = `
                 <div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-secondary);">
                     <i class="fas fa-bed fa-2x mb-2 d-block opacity-25"></i>
-                    No hay habitaciones disponibles para esas fechas
+                    ${hasPets
+                    ? 'No hay habitaciones disponibles que permitan mascotas para esas fechas'
+                    : 'No hay habitaciones disponibles para esas fechas'}
                 </div>`;
             ResCreate.sel.roomTypes = [];
             return;
@@ -594,18 +600,17 @@ async function loadRoomTypes(checkIn, checkOut) {
                     pricePerNight: room.basePriceNightly,
                     baseCapacity: room.baseCapacity,
                     maxCapacity: room.maxCapacity,
-                    extraPersonCharge: room.extraPersonCharge, 
+                    extraPersonCharge: room.extraPersonCharge,
+                    allowsPets: room.allowsPets,
+                    petCharge: room.petCharge,
                     available: 0,
                     rooms: []
                 });
             }
 
             const t = typeMap.get(room.roomTypeId);
-
-            // Ajustar capacidades de forma segura
             t.maxCapacity = Math.max(t.maxCapacity ?? 0, room.maxCapacity);
             t.baseCapacity = t.baseCapacity ?? room.baseCapacity;
-
             t.available++;
             t.rooms.push(room);
         });
@@ -613,10 +618,14 @@ async function loadRoomTypes(checkIn, checkOut) {
         ResCreate.sel.roomTypes = Array.from(typeMap.values());
 
         grid.innerHTML = ResCreate.sel.roomTypes.map(t => `
-            <div class="room-type-card-sel" data-type-id="${t.roomTypeId}" onclick="selectRoomType('${t.roomTypeId}')">
+            <div class="room-type-card-sel" data-type-id="${t.roomTypeId}"
+                 onclick="selectRoomType('${t.roomTypeId}')">
                 <div class="rt-name">
-                    ${t.roomTypeName} 
+                    ${t.roomTypeName}
                     <small style="font-weight:400;opacity:.7;">${t.roomTypeCode}</small>
+                    ${t.allowsPets
+                ? '<span class="ms-1" style="color:var(--warning);font-size:.75rem;" title="Permite mascotas"><i class="fas fa-paw"></i></span>'
+                : ''}
                 </div>
                 <div class="rt-price">$${formatMoney(t.pricePerNight)}/noche</div>
                 <div class="rt-capacity">
@@ -627,13 +636,11 @@ async function loadRoomTypes(checkIn, checkOut) {
                         ${t.available} disponible${t.available !== 1 ? 's' : ''}
                     </span>
                 </div>
-            </div>
-        `).join('');
+            </div>`).join('');
 
     } catch (err) {
         console.error('Error al cargar tipos de habitación:', err);
-        document.getElementById('roomTypeGrid').innerHTML =
-            `<div style="grid-column:1/-1;text-align:center;color:var(--danger);">Error al cargar habitaciones</div>`;
+        showErrorToast('Error al cargar habitaciones disponibles');
     }
 }
 

@@ -89,7 +89,8 @@ namespace GarthHMS.Application.Services
                 roomId, checkInDate, checkOutDate, excludeReservationId);
         }
 
-        public async Task<IEnumerable<AvailableRoomDto>> GetAvailableRoomsAsync(AvailabilityQueryDto query, bool? requiresPets = null)
+        public async Task<IEnumerable<AvailableRoomDto>> GetAvailableRoomsAsync(
+            AvailabilityQueryDto query, bool? requiresPets = null)
         {
             if (query == null)
                 throw new ArgumentNullException(nameof(query));
@@ -101,7 +102,7 @@ namespace GarthHMS.Application.Services
                 query.CheckInDate,
                 query.CheckOutDate,
                 query.RoomTypeId,
-                p_requires_pets = requiresPets);
+                requiresPets);
         }
 
         // ====================================================================
